@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.database.weight
 
 import kotlinx.coroutines.runBlocking
 

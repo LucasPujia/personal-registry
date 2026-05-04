@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.mainActivity
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -40,6 +40,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import com.example.myapplication.database.AppDatabase
+import com.example.myapplication.database.weight.InMemoryWeightsStorage
+import com.example.myapplication.database.weight.RoomWeightsStorage
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainActivityViewModel> {

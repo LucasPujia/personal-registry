@@ -1,5 +1,7 @@
 package com.example.myapplication
 
+import com.example.myapplication.mainActivity.MainActivityModel
+import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

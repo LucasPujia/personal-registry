@@ -1,4 +1,6 @@
-package com.example.myapplication
+package com.example.myapplication.mainActivity
+
+import com.example.myapplication.database.weight.WeightsStorage
 
 class MainActivityModel(
     private val storage: WeightsStorage,
