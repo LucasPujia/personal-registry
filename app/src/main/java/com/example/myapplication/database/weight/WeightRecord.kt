@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 data class WeightRecord(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val weight: Int,
+    val weight: Float,
     val createdAt: Long = System.currentTimeMillis(),
 )
 

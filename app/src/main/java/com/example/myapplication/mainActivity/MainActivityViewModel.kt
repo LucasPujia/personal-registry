@@ -7,13 +7,13 @@ import androidx.lifecycle.ViewModelProvider
 class MainActivityViewModel(
     private val model: MainActivityModel,
 ) : ViewModel() {
-    val weightsList = mutableStateListOf<Int>()
+    val weightsList = mutableStateListOf<Float>()
 
     init {
         syncWeights(model.getWeights())
     }
 
-    fun addWeight(weight: Int) {
+    fun addWeight(weight: Float) {
         syncWeights(model.addWeight(weight))
     }
 
@@ -21,7 +21,7 @@ class MainActivityViewModel(
         syncWeights(model.removeWeight(index))
     }
 
-    private fun syncWeights(weights: List<Int>) {
+    private fun syncWeights(weights: List<Float>) {
         weightsList.clear()
         weightsList.addAll(weights)
     }

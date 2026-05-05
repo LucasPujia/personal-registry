@@ -3,22 +3,22 @@ package com.example.myapplication.database.weight
 import kotlinx.coroutines.runBlocking
 
 interface WeightsStorage {
-    fun readWeights(): List<Int>
-    fun writeWeights(weights: List<Int>)
-    suspend fun readWeightsAsync(): List<Int> = readWeights()
-    suspend fun writeWeightsAsync(weights: List<Int>) = writeWeights(weights)
+    fun readWeights(): List<Float>
+    fun writeWeights(weights: List<Float>)
+    suspend fun readWeightsAsync(): List<Float> = readWeights()
+    suspend fun writeWeightsAsync(weights: List<Float>) = writeWeights(weights)
 }
 
 class RoomWeightsStorage(
     private val dao: WeightRecordDao,
 ) : WeightsStorage {
-    override fun readWeights(): List<Int> {
+    override fun readWeights(): List<Float> {
         return runBlocking {
             dao.getAllWeights().map { it.weight }
         }
     }
 
-    override fun writeWeights(weights: List<Int>) {
+    override fun writeWeights(weights: List<Float>) {
         runBlocking {
             dao.deleteAllWeights()
             weights.forEach { weight ->
@@ -27,11 +27,11 @@ class RoomWeightsStorage(
         }
     }
 
-    override suspend fun readWeightsAsync(): List<Int> {
+    override suspend fun readWeightsAsync(): List<Float> {
         return dao.getAllWeights().map { it.weight }
     }
 
-    override suspend fun writeWeightsAsync(weights: List<Int>) {
+    override suspend fun writeWeightsAsync(weights: List<Float>) {
         dao.deleteAllWeights()
         weights.forEach { weight ->
             dao.insertWeight(WeightRecord(weight = weight))
@@ -40,13 +40,13 @@ class RoomWeightsStorage(
 }
 
 class InMemoryWeightsStorage(
-    initialWeights: List<Int> = emptyList(),
+    initialWeights: List<Float> = emptyList(),
 ) : WeightsStorage {
     private val weights = initialWeights.toMutableList()
 
-    override fun readWeights(): List<Int> = weights.toList()
+    override fun readWeights(): List<Float> = weights.toList()
 
-    override fun writeWeights(weights: List<Int>) {
+    override fun writeWeights(weights: List<Float>) {
         this.weights.clear()
         this.weights.addAll(weights)
     }
