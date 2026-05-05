@@ -7,19 +7,21 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -28,21 +30,38 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.example.myapplication.database.AppDatabase
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.database.weight.RoomWeightsStorage
+import com.example.myapplication.utils.ButtonUtils
+import kotlin.math.pow
+import kotlin.math.roundToInt
+
+
+@Preview(showBackground = true)
+@Composable
+fun MyApplicationAppPreview() {
+    MaterialTheme {
+        val initialValues = listOf(25f, 30f, 35.5f)
+        val memoryStorage = InMemoryWeightsStorage(initialValues)
+        val mainActivityModel = MainActivityModel(memoryStorage)
+        MyApplicationApp(MainActivityViewModel(mainActivityModel))
+    }
+}
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainActivityViewModel> {
@@ -73,63 +92,70 @@ fun MyApplicationApp(viewModel: MainActivityViewModel) {
             .background(color = Color.White),
     ) {
         WeightSelector(viewModel)
-
         WeightsViewer(viewModel)
     }
 }
 
 @Composable
 private fun WeightSelector(viewModel: MainActivityViewModel) {
-    var weight by remember { mutableStateOf("") }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-            .height(64.dp)
-    ) {
-        Text(text = "Agregar peso:")
+    val latestStoredWeight = viewModel.weightsList.lastOrNull()
+    var weight by remember(latestStoredWeight) {
+        mutableFloatStateOf(latestStoredWeight ?: WEIGHT_DEFAULT_VALUE)
+    }
+    val weightStep = (10.0).pow(-WEIGHT_DECIMAL_PRECISION).toFloat()
 
-        BasicTextField(
-            value = weight,
-            onValueChange = { weight = it },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true,
-            modifier = Modifier
-                .width(64.dp)
-                .height(40.dp),
-            decorationBox = { innerTextField ->
-                Box(
-                    contentAlignment = Alignment.CenterStart,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .border(
-                            1.dp,
-                            MaterialTheme.colorScheme.outline,
-                            MaterialTheme.shapes.extraSmall
-                        )
-                        .padding(horizontal = 6.dp, vertical = 6.dp)
-                ) {
-                    if (weight.isEmpty() && LocalInspectionMode.current) {
-                        Text("25", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    innerTextField()
-                }
-            }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = "Peso del día:",
+            style = MaterialTheme.typography.titleMedium,
         )
 
-        FilledIconButton(
-            onClick = {
-                weight.toIntOrNull()?.let {
-                    viewModel.addWeight(it)
-                    weight = ""
-                }
-            },
-            shape = CircleShape
+        VerticalNumberPicker(
+            value = weight,
+            onValueChange = { weight = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp),
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(
-                painter = painterResource(id = android.R.drawable.ic_input_add),
-                contentDescription = "Agregar peso",
-            )
+            FilledIconButton(
+                onClick = { weight -= weightStep },
+                interactionSource = ButtonUtils.pressedInteractionSource { weight -= weightStep },
+            ) {
+                Icon(
+                    painter = painterResource(id = android.R.drawable.arrow_down_float),
+                    contentDescription = "Decrementar peso",
+                )
+            }
+
+            Button(
+                onClick = {
+                    viewModel.addWeight(weight)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                Text("Agregar")
+            }
+
+            FilledIconButton(
+                onClick = { weight += weightStep },
+                interactionSource = ButtonUtils.pressedInteractionSource { weight += weightStep },
+            ) {
+                Icon(
+                    painter = painterResource(id = android.R.drawable.arrow_up_float),
+                    contentDescription = "Aumentar peso",
+                )
+            }
         }
     }
 }
@@ -142,20 +168,18 @@ private fun WeightsViewer(viewModel: MainActivityViewModel) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             ) {
                 Text(
-                    text = "Peso ${index + 1}: ${weightsList[index]} kg",
+                    text = "Peso ${index + 1}: ${"%.${WEIGHT_DECIMAL_PRECISION}f".format(weightsList[index])} kg",
                 )
-
                 IconButton(
                     onClick = { viewModel.removeWeight(index) },
                 ) {
                     Icon(
                         painter = painterResource(id = android.R.drawable.ic_delete),
                         contentDescription = "Eliminar peso",
-                        tint = Color.Red
+                        tint = Color.Red,
                     )
                 }
             }
@@ -164,14 +188,93 @@ private fun WeightsViewer(viewModel: MainActivityViewModel) {
     }
 }
 
-@Preview(showBackground = true)
+
+/**
+ * Selector de número vertical tipo drum-wheel.
+ *
+ * - Arrastrar verticalmente para cambiar el valor.
+ * - El movimiento es estrictamente **lineal**: cada [pixelsPerUnit] píxeles
+ *   de arrastre cambia el valor en exactamente 1.0 unidad, sin aceleración.
+ * - Muestra **un único número** a la vez; el valor se actualiza en tiempo real
+ *   mientras el usuario arrastra.
+ *
+ * @param value         Valor actual.
+ * @param onValueChange Callback llamado con el nuevo valor durante el arrastre.
+ * @param precision     Decimales: 0 = enteros, 1 = pasos de 0.1, 2 = pasos de 0.01, etc.
+ * @param pixelsPerUnit Píxeles de arrastre por 1.0 unidad de cambio (lineal, sin aceleración).
+ * @param isScrollInverted Si es true, arrastrar hacia abajo aumenta el valor.
+ * @param minValue      Valor mínimo permitido (inclusive).
+ * @param maxValue      Valor máximo permitido (inclusive).
+ */
 @Composable
-fun MyApplicationAppPreview() {
-    MaterialTheme {
-        val initialValues = listOf(25, 30, 35)
-        val memoryStorage = InMemoryWeightsStorage(initialValues)
-        val mainActivityModel = MainActivityModel(memoryStorage)
-        MyApplicationApp(MainActivityViewModel(mainActivityModel))
+private fun VerticalNumberPicker(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    precision: Int = WEIGHT_DECIMAL_PRECISION,
+    pixelsPerUnit: Float = WEIGHT_PIXELS_PER_UNIT,
+    isScrollInverted: Boolean = WEIGHT_SCROLL_INVERTED,
+    minValue: Float = WEIGHT_MIN_VALUE,
+    maxValue: Float = WEIGHT_MAX_VALUE,
+) {
+    // Valor en el momento en que inicia el gesto (referencia absoluta)
+    var dragStartValue by remember { mutableFloatStateOf(value) }
+    // Desplazamiento total acumulado en píxeles desde el inicio del gesto
+    var dragAccumulator by remember { mutableFloatStateOf(0f) }
+
+    val draggableState = rememberDraggableState { delta ->
+        dragAccumulator += delta
+        val directionMultiplier = if (isScrollInverted) 1f else -1f
+        val deltaUnits = directionMultiplier * dragAccumulator / pixelsPerUnit
+        val rawNew = dragStartValue + deltaUnits
+        // Ajustar al step más cercano (10^-precision) para evitar artefactos de punto flotante
+        val factor = (10.0).pow(precision)
+        val snapped = ((rawNew * factor).roundToInt() / factor).toFloat()
+        onValueChange(snapped.coerceIn(minValue, maxValue))
+    }
+
+    // Ancho medido del valor para ubicar 'kg' a su derecha sin afectar el centrado.
+    var valueTextWidthPx by remember { mutableIntStateOf(500) }
+    val density = LocalDensity.current
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+            .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
+            .draggable(
+                state = draggableState,
+                orientation = Orientation.Vertical,
+                onDragStarted = {
+                    dragStartValue = value
+                    dragAccumulator = 0f
+                },
+                onDragStopped = {
+                    dragAccumulator = 0f
+                },
+            ),
+    ) {
+        val kgOffsetX = (valueTextWidthPx / (2f * density.density)).dp + 16.dp
+
+        Text(
+            text = "%.${precision}f".format(value),
+//            style = MaterialTheme.typography.displayLarge,
+            fontSize = MaterialTheme.typography.displayLarge.fontSize * 1.4f,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            onTextLayout = { valueTextWidthPx = it.size.width },
+            modifier = Modifier.align(Alignment.Center),
+        )
+
+        Text(
+            text = "kg",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Normal,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(x = kgOffsetX, y = 16.dp),
+        )
     }
 }
-
