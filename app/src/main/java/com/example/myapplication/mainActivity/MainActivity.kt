@@ -108,7 +108,7 @@ fun MyApplicationApp(viewModel: MainActivityViewModel) {
 
 @Composable
 private fun WeightSelector(viewModel: MainActivityViewModel) {
-    val latestStoredWeight = viewModel.weightsList.lastOrNull()
+    val latestStoredWeight = viewModel.filters.weightsF.lastOrNull()
     var weight by remember(latestStoredWeight) {
         mutableFloatStateOf(latestStoredWeight ?: WEIGHT_DEFAULT_VALUE)
     }
@@ -129,12 +129,18 @@ private fun WeightSelector(viewModel: MainActivityViewModel) {
                 style = MaterialTheme.typography.titleMedium,
             )
 
+            val nextViewIconRes = if (viewModel.viewMode == ViewMode.CHART) {
+                android.R.drawable.ic_menu_agenda
+            } else {
+                android.R.drawable.ic_menu_sort_by_size
+            }
+
             FilledIconButton(
                 onClick = { viewModel.changeViewMode() },
                 modifier = Modifier.padding(start = 8.dp),
             ) {
                 Icon(
-                    painter = painterResource(id = android.R.drawable.ic_menu_view),
+                    painter = painterResource(id = nextViewIconRes),
                     contentDescription = "Cambiar vista",
                 )
             }
@@ -197,7 +203,7 @@ private fun WeightsViewer(viewModel: MainActivityViewModel) {
             data = remember {
                 listOf(
                     Line(
-                        values = viewModel.weightsList.map(Float::toDouble).toList(),
+                        values = viewModel.filters.weights,
                         color = SolidColor(Color(0xFF23af92)),
                         firstGradientFillColor = Color(0xFF2BC0A1).copy(alpha = .5f),
                         secondGradientFillColor = Color.Transparent,
@@ -210,8 +216,8 @@ private fun WeightsViewer(viewModel: MainActivityViewModel) {
             animationMode = if (isPreview) AnimationMode.None else AnimationMode.Together(
                 delayBuilder = { it * 500L }
             ),
-            minValue = viewModel.weightsList.min().toDouble() - 2,
-            maxValue = viewModel.weightsList.max().toDouble() + 2,
+            minValue = viewModel.filters.minViewValue,
+            maxValue = viewModel.filters.maxViewValue,
             labelProperties = LabelProperties(
                 enabled = true,
                 textStyle = MaterialTheme.typography.bodyMedium,
@@ -223,7 +229,7 @@ private fun WeightsViewer(viewModel: MainActivityViewModel) {
         )
     } else {
         LazyColumn {
-            val weightsList = viewModel.weightsList
+            val weightsList = viewModel.filters.weights
             items(weightsList.size) { index ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

@@ -10,11 +10,20 @@ import androidx.lifecycle.ViewModelProvider
 class MainActivityViewModel(
     private val model: MainActivityModel,
 ) : ViewModel() {
-    val weightsList = mutableStateListOf<Float>()
-    var viewMode by mutableStateOf(ViewMode.LIST)
+
+    private val weightsList = mutableStateListOf<Float>()
+    var filters by mutableStateOf(ActiveFilters()); private set
+    var viewMode by mutableStateOf(ViewMode.LIST); private set
 
     init {
         syncWeights(model.getWeights())
+        applyFilters(Filters(
+            minViewValue = weightsList.min() - 2,
+            maxViewValue = weightsList.max() + 2,
+        ))
+        filters = filters.copy(
+            weights = weightsList.map(Float::toDouble),
+        )
     }
 
     fun addWeight(weight: Float) {
@@ -25,6 +34,7 @@ class MainActivityViewModel(
         syncWeights(model.removeWeight(index))
     }
 
+    // Cíclico
     fun changeViewMode() {
         viewMode = when (viewMode) {
             ViewMode.LIST -> ViewMode.CHART
@@ -32,11 +42,37 @@ class MainActivityViewModel(
         }
     }
 
+    fun applyFilters(viewFilters: Filters) {
+        filters = filters.copy(
+            minViewValue = viewFilters.minViewValue?.toDouble() ?: filters.minViewValue,
+            maxViewValue = viewFilters.maxViewValue?.toDouble() ?: filters.maxViewValue,
+            objectiveWeight = viewFilters.objectiveWeight?.toDouble() ?: filters.objectiveWeight,
+//            dateRange = viewFilters.dateRange ?: filters.dateRange,
+        )
+    }
+
     private fun syncWeights(weights: List<Float>) {
         weightsList.clear()
         weightsList.addAll(weights)
     }
 }
+
+data class ActiveFilters(
+    val minViewValue: Double = 0.0,
+    val maxViewValue: Double = 100.0,
+    val weights: List<Double> = emptyList(),
+    val objectiveWeight: Double? = null,
+) {
+    val weightsF: List<Float>
+        get() = weights.map(Double::toFloat)
+}
+
+data class Filters(
+    val minViewValue: Float? = null,
+    val maxViewValue: Float? = null,
+    val objectiveWeight: Float? = null,
+    val dateRange: Pair<Long, Long>? = null,
+)
 
 enum class ViewMode {
     LIST,
@@ -46,6 +82,7 @@ enum class ViewMode {
 class MainActivityViewModelFactory(
     private val mainActivityModel: MainActivityModel,
 ) : ViewModelProvider.Factory {
+
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainActivityViewModel::class.java)) {
