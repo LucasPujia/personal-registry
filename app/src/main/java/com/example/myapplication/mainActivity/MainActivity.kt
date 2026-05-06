@@ -51,7 +51,7 @@ import androidx.core.view.WindowCompat
 import com.example.myapplication.database.AppDatabase
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.database.weight.RoomWeightsStorage
-import com.example.myapplication.utils.ButtonUtils
+import com.example.myapplication.utils.pressedInteractionSource2
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DrawStyle
@@ -160,7 +160,7 @@ private fun WeightSelector(viewModel: MainActivityViewModel) {
         ) {
             FilledIconButton(
                 onClick = { weight -= weightStep },
-                interactionSource = ButtonUtils.pressedInteractionSource { weight -= weightStep },
+                interactionSource = pressedInteractionSource2 { weight -= weightStep },
             ) {
                 Icon(
                     painter = painterResource(id = android.R.drawable.arrow_down_float),
@@ -169,19 +169,15 @@ private fun WeightSelector(viewModel: MainActivityViewModel) {
             }
 
             Button(
-                onClick = {
-                    viewModel.addWeight(weight)
-                },
+                onClick = { viewModel.addWeight(weight) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-            ) {
-                Text("Agregar")
-            }
+            ) { Text("Agregar") }
 
             FilledIconButton(
                 onClick = { weight += weightStep },
-                interactionSource = ButtonUtils.pressedInteractionSource { weight += weightStep },
+                interactionSource = pressedInteractionSource2 { weight += weightStep },
             ) {
                 Icon(
                     painter = painterResource(id = android.R.drawable.arrow_up_float),
