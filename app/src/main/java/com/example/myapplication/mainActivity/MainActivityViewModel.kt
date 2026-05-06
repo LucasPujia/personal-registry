@@ -1,6 +1,9 @@
 package com.example.myapplication.mainActivity
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
@@ -8,6 +11,7 @@ class MainActivityViewModel(
     private val model: MainActivityModel,
 ) : ViewModel() {
     val weightsList = mutableStateListOf<Float>()
+    var viewMode by mutableStateOf(ViewMode.LIST)
 
     init {
         syncWeights(model.getWeights())
@@ -21,10 +25,22 @@ class MainActivityViewModel(
         syncWeights(model.removeWeight(index))
     }
 
+    fun changeViewMode() {
+        viewMode = when (viewMode) {
+            ViewMode.LIST -> ViewMode.CHART
+            ViewMode.CHART -> ViewMode.LIST
+        }
+    }
+
     private fun syncWeights(weights: List<Float>) {
         weightsList.clear()
         weightsList.addAll(weights)
     }
+}
+
+enum class ViewMode {
+    LIST,
+    CHART
 }
 
 class MainActivityViewModelFactory(

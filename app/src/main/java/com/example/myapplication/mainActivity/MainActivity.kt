@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
@@ -38,7 +40,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,6 +52,12 @@ import com.example.myapplication.database.AppDatabase
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.database.weight.RoomWeightsStorage
 import com.example.myapplication.utils.ButtonUtils
+import ir.ehsannarmani.compose_charts.LineChart
+import ir.ehsannarmani.compose_charts.models.AnimationMode
+import ir.ehsannarmani.compose_charts.models.DrawStyle
+import ir.ehsannarmani.compose_charts.models.GridProperties
+import ir.ehsannarmani.compose_charts.models.LabelProperties
+import ir.ehsannarmani.compose_charts.models.Line
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -109,10 +119,26 @@ private fun WeightSelector(viewModel: MainActivityViewModel) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Text(
-            text = "Peso del día:",
-            style = MaterialTheme.typography.titleMedium,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = "Peso del día:",
+                style = MaterialTheme.typography.titleMedium,
+            )
+
+            FilledIconButton(
+                onClick = { viewModel.changeViewMode() },
+                modifier = Modifier.padding(start = 8.dp),
+            ) {
+                Icon(
+                    painter = painterResource(id = android.R.drawable.ic_menu_view),
+                    contentDescription = "Cambiar vista",
+                )
+            }
+        }
 
         VerticalNumberPicker(
             value = weight,
@@ -162,28 +188,67 @@ private fun WeightSelector(viewModel: MainActivityViewModel) {
 
 @Composable
 private fun WeightsViewer(viewModel: MainActivityViewModel) {
-    LazyColumn {
-        val weightsList = viewModel.weightsList
-        items(weightsList.size) { index ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                Text(
-                    text = "Peso ${index + 1}: ${"%.${WEIGHT_DECIMAL_PRECISION}f".format(weightsList[index])} kg",
-                )
-                IconButton(
-                    onClick = { viewModel.removeWeight(index) },
-                ) {
-                    Icon(
-                        painter = painterResource(id = android.R.drawable.ic_delete),
-                        contentDescription = "Eliminar peso",
-                        tint = Color.Red,
+    val isPreview = LocalInspectionMode.current
+    if (viewModel.viewMode == ViewMode.CHART) {
+        LineChart(
+            modifier = Modifier
+                .height(300.dp)
+                .padding(top = 24.dp),
+            data = remember {
+                listOf(
+                    Line(
+                        values = viewModel.weightsList.map(Float::toDouble).toList(),
+                        color = SolidColor(Color(0xFF23af92)),
+                        firstGradientFillColor = Color(0xFF2BC0A1).copy(alpha = .5f),
+                        secondGradientFillColor = Color.Transparent,
+                        strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
+                        gradientAnimationDelay = 1000,
+                        drawStyle = DrawStyle.Stroke(width = 2.dp),
                     )
+                )
+            },
+            animationMode = if (isPreview) AnimationMode.None else AnimationMode.Together(
+                delayBuilder = { it * 500L }
+            ),
+            minValue = viewModel.weightsList.min().toDouble() - 2,
+            maxValue = viewModel.weightsList.max().toDouble() + 2,
+            labelProperties = LabelProperties(
+                enabled = true,
+                textStyle = MaterialTheme.typography.bodyMedium,
+                labels = listOf("Peso", "test"),
+            ),
+            gridProperties = GridProperties(
+                yAxisProperties = GridProperties.AxisProperties(lineCount = 10)
+            )
+        )
+    } else {
+        LazyColumn {
+            val weightsList = viewModel.weightsList
+            items(weightsList.size) { index ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    Text(
+                        text = "Peso ${index + 1}: ${
+                            "%.${WEIGHT_DECIMAL_PRECISION}f".format(
+                                weightsList[index]
+                            )
+                        } kg",
+                    )
+                    IconButton(
+                        onClick = { viewModel.removeWeight(index) },
+                    ) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_delete),
+                            contentDescription = "Eliminar peso",
+                            tint = Color.Red,
+                        )
+                    }
                 }
+                if (index != weightsList.size - 1) HorizontalDivider(thickness = 2.dp)
             }
-            if (index != weightsList.size - 1) HorizontalDivider(thickness = 2.dp)
         }
     }
 }

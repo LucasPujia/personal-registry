@@ -1,5 +1,6 @@
 [versions]
-agp = "9.2.0"
+agp = "9.2.1"
+composeCharts = "0.2.5"
 kotlin = "2.3.21"
 ksp = "2.3.7"
 coreKtx = "1.18.0"
@@ -16,6 +17,7 @@ room = "2.8.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+compose-charts = { module = "io.github.ehsannarmani:compose-charts", version.ref = "composeCharts" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
