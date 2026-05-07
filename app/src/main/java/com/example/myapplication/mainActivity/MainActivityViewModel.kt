@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import kotlin.math.roundToInt
 
 class MainActivityViewModel(
     private val model: MainActivityModel,
@@ -14,12 +15,13 @@ class MainActivityViewModel(
     private val weightsList = mutableStateListOf<Float>()
     var filters by mutableStateOf(ActiveFilters()); private set
     var viewMode by mutableStateOf(ViewMode.LIST); private set
+    var filtersOpened by mutableStateOf(false)
 
     init {
         syncWeights(model.getWeights())
         applyFilters(Filters(
-            minViewValue = weightsList.min() - 2,
-            maxViewValue = weightsList.max() + 2,
+            minViewValue = weightsList.min().roundToInt() - 2,
+            maxViewValue = weightsList.max().roundToInt() + 2,
         ))
         filters = filters.copy(
             weights = weightsList.map(Float::toDouble),
@@ -44,9 +46,9 @@ class MainActivityViewModel(
 
     fun applyFilters(viewFilters: Filters) {
         filters = filters.copy(
-            minViewValue = viewFilters.minViewValue?.toDouble() ?: filters.minViewValue,
-            maxViewValue = viewFilters.maxViewValue?.toDouble() ?: filters.maxViewValue,
-            objectiveWeight = viewFilters.objectiveWeight?.toDouble() ?: filters.objectiveWeight,
+            minViewValue = viewFilters.minViewValue ?: filters.minViewValue,
+            maxViewValue = viewFilters.maxViewValue ?: filters.maxViewValue,
+            goalWeight = viewFilters.goalWeight ?: filters.goalWeight,
 //            dateRange = viewFilters.dateRange ?: filters.dateRange,
         )
     }
@@ -54,23 +56,24 @@ class MainActivityViewModel(
     private fun syncWeights(weights: List<Float>) {
         weightsList.clear()
         weightsList.addAll(weights)
+            filters = filters.copy( weights = weightsList.map(Float::toDouble) )
     }
 }
 
 data class ActiveFilters(
-    val minViewValue: Double = 0.0,
-    val maxViewValue: Double = 100.0,
+    val minViewValue: Int = 0,
+    val maxViewValue: Int = 100,
     val weights: List<Double> = emptyList(),
-    val objectiveWeight: Double? = null,
+    val goalWeight: Int? = null,
 ) {
     val weightsF: List<Float>
         get() = weights.map(Double::toFloat)
 }
 
 data class Filters(
-    val minViewValue: Float? = null,
-    val maxViewValue: Float? = null,
-    val objectiveWeight: Float? = null,
+    val minViewValue: Int? = null,
+    val maxViewValue: Int? = null,
+    val goalWeight: Int? = null,
     val dateRange: Pair<Long, Long>? = null,
 )
 
@@ -78,6 +81,7 @@ enum class ViewMode {
     LIST,
     CHART
 }
+
 
 class MainActivityViewModelFactory(
     private val mainActivityModel: MainActivityModel,

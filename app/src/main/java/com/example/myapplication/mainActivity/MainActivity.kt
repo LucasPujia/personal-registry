@@ -23,17 +23,23 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,6 +51,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -104,10 +111,19 @@ fun MyApplicationApp(viewModel: MainActivityViewModel) {
         WeightSelector(viewModel)
         WeightsViewer(viewModel)
     }
+
+    if (viewModel.filtersOpened) {
+        FiltersBottomSheet(
+            viewModel = viewModel,
+            onDismissRequest = { viewModel.filtersOpened = false }
+        )
+    }
 }
 
 @Composable
-private fun WeightSelector(viewModel: MainActivityViewModel) {
+private fun WeightSelector(
+    viewModel: MainActivityViewModel,
+) {
     val latestStoredWeight = viewModel.filters.weightsF.lastOrNull()
     var weight by remember(latestStoredWeight) {
         mutableFloatStateOf(latestStoredWeight ?: WEIGHT_DEFAULT_VALUE)
@@ -129,20 +145,33 @@ private fun WeightSelector(viewModel: MainActivityViewModel) {
                 style = MaterialTheme.typography.titleMedium,
             )
 
-            val nextViewIconRes = if (viewModel.viewMode == ViewMode.CHART) {
-                android.R.drawable.ic_menu_agenda
-            } else {
-                android.R.drawable.ic_menu_sort_by_size
-            }
+            Row {
+                val nextViewIconRes = if (viewModel.viewMode == ViewMode.CHART) {
+                    android.R.drawable.ic_menu_agenda
+                } else {
+                    android.R.drawable.ic_menu_sort_by_size
+                }
 
-            FilledIconButton(
-                onClick = { viewModel.changeViewMode() },
-                modifier = Modifier.padding(start = 8.dp),
-            ) {
-                Icon(
-                    painter = painterResource(id = nextViewIconRes),
-                    contentDescription = "Cambiar vista",
-                )
+
+                FilledIconButton(
+                    onClick = { viewModel.changeViewMode() },
+                    modifier = Modifier.padding(start = 8.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(id = nextViewIconRes),
+                        contentDescription = "Cambiar vista",
+                    )
+                }
+
+                FilledIconButton(
+                    onClick = { viewModel.filtersOpened = true },
+                    modifier = Modifier.padding(start = 8.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(id = android.R.drawable.ic_menu_manage),
+                        contentDescription = "Filtros",
+                    )
+                }
             }
         }
 
@@ -192,28 +221,34 @@ private fun WeightSelector(viewModel: MainActivityViewModel) {
 private fun WeightsViewer(viewModel: MainActivityViewModel) {
     val isPreview = LocalInspectionMode.current
     if (viewModel.viewMode == ViewMode.CHART) {
+        var isFirstLoad by remember { mutableStateOf(true) }
         LineChart(
             modifier = Modifier
                 .height(300.dp)
                 .padding(top = 24.dp),
-            data = remember {
-                listOf(
-                    Line(
-                        values = viewModel.filters.weights,
-                        color = SolidColor(Color(0xFF23af92)),
-                        firstGradientFillColor = Color(0xFF2BC0A1).copy(alpha = .5f),
-                        secondGradientFillColor = Color.Transparent,
-                        strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
-                        gradientAnimationDelay = 1000,
+            data = buildList {
+                add(Line(
+                    values = viewModel.filters.weights,
+                    color = SolidColor(Color(0xFF23af92)),
+                    firstGradientFillColor = Color(0xFF2BC0A1).copy(alpha = .5f),
+                    secondGradientFillColor = Color.Transparent,
+                    strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
+                    gradientAnimationDelay = 1000,
+                    drawStyle = DrawStyle.Stroke(width = 2.dp),
+                ))
+                viewModel.filters.goalWeight?.let { goal ->
+                    add(Line(
+                        values = viewModel.filters.weights.map { goal.toDouble() },
+                        color = SolidColor(Color(0xFFf57c00)),
                         drawStyle = DrawStyle.Stroke(width = 2.dp),
-                    )
-                )
+                    ))
+                }
             },
-            animationMode = if (isPreview) AnimationMode.None else AnimationMode.Together(
+            animationMode = if (isPreview || !isFirstLoad) AnimationMode.None else AnimationMode.Together(
                 delayBuilder = { it * 500L }
             ),
-            minValue = viewModel.filters.minViewValue,
-            maxValue = viewModel.filters.maxViewValue,
+            minValue = viewModel.filters.minViewValue.toDouble(),
+            maxValue = viewModel.filters.maxViewValue.toDouble(),
             labelProperties = LabelProperties(
                 enabled = true,
                 textStyle = MaterialTheme.typography.bodyMedium,
@@ -223,6 +258,7 @@ private fun WeightsViewer(viewModel: MainActivityViewModel) {
                 yAxisProperties = GridProperties.AxisProperties(lineCount = 10)
             )
         )
+        isFirstLoad = false
     } else {
         LazyColumn {
             val weightsList = viewModel.filters.weights
@@ -343,5 +379,77 @@ private fun VerticalNumberPicker(
                 .align(Alignment.Center)
                 .offset(x = kgOffsetX, y = 16.dp),
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FiltersBottomSheet(
+    viewModel: MainActivityViewModel,
+    onDismissRequest: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+
+    var minVal by remember { mutableStateOf(viewModel.filters.minViewValue.toString()) }
+    var maxVal by remember { mutableStateOf(viewModel.filters.maxViewValue.toString()) }
+    var goal by remember { mutableStateOf(viewModel.filters.goalWeight?.toString() ?: "") }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Filtros",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+
+            OutlinedTextField(
+                value = minVal,
+                onValueChange = { minVal = it },
+                label = { Text("Mínimo (Gráfico)") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+
+            OutlinedTextField(
+                value = maxVal,
+                onValueChange = { maxVal = it },
+                label = { Text("Máximo (Gráfico)") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+
+            OutlinedTextField(
+                value = goal,
+                onValueChange = { goal = it },
+                label = { Text("Peso Objetivo") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+
+            Button(
+                onClick = {
+                    viewModel.applyFilters(
+                        Filters(
+                            minViewValue = minVal.toInt(),
+                            maxViewValue = maxVal.toInt(),
+                            goalWeight = goal.toIntOrNull()
+                        )
+                    )
+                    onDismissRequest()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Aplicar")
+            }
+        }
     }
 }
