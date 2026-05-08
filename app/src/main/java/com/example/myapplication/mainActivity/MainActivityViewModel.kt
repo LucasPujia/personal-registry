@@ -14,7 +14,7 @@ class MainActivityViewModel(
 
     private val weightsList = mutableStateListOf<Float>()
     var filters by mutableStateOf(ActiveFilters()); private set
-    var viewMode by mutableStateOf(ViewMode.LIST); private set
+    var viewMode by mutableStateOf(ViewMode.CHART); private set
     var filtersOpened by mutableStateOf(false)
 
     init {
@@ -48,7 +48,7 @@ class MainActivityViewModel(
         filters = filters.copy(
             minViewValue = viewFilters.minViewValue ?: filters.minViewValue,
             maxViewValue = viewFilters.maxViewValue ?: filters.maxViewValue,
-            goalWeight = viewFilters.goalWeight ?: filters.goalWeight,
+            goalWeight = viewFilters.goalWeight,
 //            dateRange = viewFilters.dateRange ?: filters.dateRange,
         )
     }
