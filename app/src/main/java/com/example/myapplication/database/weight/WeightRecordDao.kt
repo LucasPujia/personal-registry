@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Upsert
 
 @Dao
 interface WeightRecordDao {
@@ -12,6 +13,9 @@ interface WeightRecordDao {
 
     @Insert
     suspend fun insertWeight(weightRecord: WeightRecord): Long
+
+    @Upsert
+    suspend fun upsertWeights(weightRecords: List<WeightRecord>)
 
     @Delete
     suspend fun deleteWeight(weightRecord: WeightRecord)
@@ -22,4 +26,3 @@ interface WeightRecordDao {
     @Query("DELETE FROM weight_records")
     suspend fun deleteAllWeights()
 }
-

@@ -27,7 +27,7 @@ import com.example.myapplication.database.weight.RoomWeightsStorage
 fun MyApplicationAppPreview() {
     MaterialTheme {
         val initialValues = listOf(25f, 30f, 35.5f)
-        val memoryStorage = InMemoryWeightsStorage(initialValues)
+        val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
         val mainActivityModel = MainActivityModel(memoryStorage)
         MyApplicationApp(MainActivityViewModel(mainActivityModel))
     }

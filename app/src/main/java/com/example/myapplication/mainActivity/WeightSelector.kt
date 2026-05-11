@@ -6,21 +6,40 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.AreaChart
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.database.weight.InMemoryWeightsStorage
+import com.example.myapplication.utils.longUTCToLDT
+import com.example.myapplication.utils.nowUTC
 import com.example.myapplication.utils.pressedInteractionSource2
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlin.math.pow
 
 @Composable
@@ -28,10 +47,19 @@ fun WeightSelector(
     viewModel: MainActivityViewModel,
 ) {
     val latestStoredWeight = viewModel.filters.weightsF.lastOrNull()
+    val weightStep = (10.0).pow(-WEIGHT_DECIMAL_PRECISION).toFloat()
     var weight by remember(latestStoredWeight) {
         mutableFloatStateOf(latestStoredWeight ?: WEIGHT_DEFAULT_VALUE)
     }
-    val weightStep = (10.0).pow(-WEIGHT_DECIMAL_PRECISION).toFloat()
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = nowUTC(),
+        selectableDates =  object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                return utcTimeMillis <= nowUTC()
+            }
+        },
+        yearRange = IntRange(LocalDate.now().year - 1, LocalDate.now().year),
+    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -43,16 +71,45 @@ fun WeightSelector(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(
-                text = "Peso del día:",
-                style = MaterialTheme.typography.titleMedium,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Peso del día:",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+
+                var openedDatePicker by remember { mutableStateOf(false) }
+                Text(
+                    text = resolveDateText(datePickerState.selectedDateMillis),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+                FilledIconButton(
+                    modifier = Modifier.size(32.dp).padding(start = 4.dp),
+                    onClick = { openedDatePicker = true },
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = "Seleccionar fecha",
+                    )
+                }
+                if (openedDatePicker) DatePickerDialog(
+                    modifier = Modifier.padding(start = 8.dp),
+                    onDismissRequest = { openedDatePicker = false },
+                    confirmButton = {
+                        Button(onClick = { openedDatePicker = false }) { Text("Aceptar") }
+                    },
+                    content = {
+                        DatePicker(state = datePickerState)
+                    }
+                )
+            }
 
             Row {
                 val nextViewIconRes = if (viewModel.viewMode == ViewMode.CHART) {
-                    android.R.drawable.ic_menu_agenda
+                    Icons.AutoMirrored.Filled.List
                 } else {
-                    android.R.drawable.ic_menu_sort_by_size
+                    Icons.Default.AreaChart
                 }
 
 
@@ -61,7 +118,7 @@ fun WeightSelector(
                     modifier = Modifier.padding(start = 8.dp),
                 ) {
                     Icon(
-                        painter = painterResource(id = nextViewIconRes),
+                        imageVector = nextViewIconRes,
                         contentDescription = "Cambiar vista",
                     )
                 }
@@ -71,7 +128,7 @@ fun WeightSelector(
                     modifier = Modifier.padding(start = 8.dp),
                 ) {
                     Icon(
-                        painter = painterResource(id = android.R.drawable.ic_menu_manage),
+                        imageVector = Icons.Default.FilterAlt,
                         contentDescription = "Filtros",
                     )
                 }
@@ -101,7 +158,7 @@ fun WeightSelector(
             }
 
             Button(
-                onClick = { viewModel.addWeight(weight) },
+                onClick = { viewModel.addWeight(weight, datePickerState.selectedDateMillis) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
@@ -117,5 +174,30 @@ fun WeightSelector(
                 )
             }
         }
+    }
+}
+
+private fun resolveDateText(selectedDateMillisUTC: Long?): String {
+    return selectedDateMillisUTC?.let {
+        val selectedDate = longUTCToLDT(it)
+        val today = longUTCToLDT(nowUTC())
+        val dateFormat = DateTimeFormatter.ofPattern("dd/MM", Locale.getDefault())
+
+        when (dateFormat.format(selectedDate)) {
+            dateFormat.format(today) -> "Hoy"
+            dateFormat.format(today.minusDays(1)) -> "Ayer"
+            else -> dateFormat.format(selectedDate)
+        }
+    } ?: "Hoy"
+}
+
+@Preview(showBackground = true)
+@Composable
+fun WeightSelectorPreview() {
+    MaterialTheme {
+        val initialValues = listOf(25f, 30f, 35.5f)
+        val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
+        val viewModel = MainActivityViewModel(MainActivityModel(memoryStorage))
+        WeightSelector(viewModel)
     }
 }

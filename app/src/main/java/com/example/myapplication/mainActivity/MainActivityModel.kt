@@ -1,31 +1,30 @@
 package com.example.myapplication.mainActivity
 
+import com.example.myapplication.database.weight.WeightRecord
 import com.example.myapplication.database.weight.WeightsStorage
 
 class MainActivityModel(
     private val storage: WeightsStorage,
 ) {
-    fun getWeights(): List<Float> {
+    fun getWeights(): List<WeightRecord> {
         return storage.readWeights()
     }
 
-    fun addWeight(weight: Float): List<Float> {
-        val updatedWeights = getWeights().toMutableList().apply {
-            add(weight)
-        }
-        storage.writeWeights(updatedWeights)
-        return updatedWeights
+    fun addWeight(weight: Float, date: Long): List<WeightRecord> {
+        val newRecord = WeightRecord(weight = weight, createdAt = date)
+        storage.addWeight(newRecord)
+        return getWeights()
     }
 
-    fun removeWeight(index: Int): List<Float> {
-        val updatedWeights = getWeights().toMutableList()
+    fun removeWeight(index: Int): List<WeightRecord> {
+        val currentWeights = getWeights()
 
-        if (index !in updatedWeights.indices) {
-            return updatedWeights
+        if (index !in currentWeights.indices) {
+            return currentWeights
         }
 
-        updatedWeights.removeAt(index)
-        storage.writeWeights(updatedWeights)
-        return updatedWeights
+        val weightToRemove = currentWeights[index]
+        storage.deleteWeight(weightToRemove)
+        return getWeights()
     }
 }

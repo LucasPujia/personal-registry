@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.myapplication.database.weight.WeightRecord
+import com.example.myapplication.utils.nowUTC
 import kotlin.math.roundToInt
 
 class MainActivityViewModel(
@@ -28,8 +30,8 @@ class MainActivityViewModel(
         )
     }
 
-    fun addWeight(weight: Float) {
-        syncWeights(model.addWeight(weight))
+    fun addWeight(weight: Float, date: Long?) {
+        syncWeights(model.addWeight(weight, date ?: nowUTC()))
     }
 
     fun removeWeight(index: Int) {
@@ -53,10 +55,10 @@ class MainActivityViewModel(
         )
     }
 
-    private fun syncWeights(weights: List<Float>) {
+    private fun syncWeights(weights: List<WeightRecord>) {
         weightsList.clear()
-        weightsList.addAll(weights)
-            filters = filters.copy( weights = weightsList.map(Float::toDouble) )
+        weightsList.addAll(weights.map { it.weight })
+        filters = filters.copy( weights = weightsList.map(Float::toDouble) )
     }
 }
 
