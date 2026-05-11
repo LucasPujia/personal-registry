@@ -10,12 +10,13 @@ espressoCore = "3.7.0"
 appcompat = "1.7.1"
 material = "1.13.0"
 activityCompose = "1.13.0"
-composeBom = "2026.04.01"
-uiToolingPreview = "1.11.0"
-uiTooling = "1.11.0"
+composeBom = "2026.05.00"
+uiToolingPreview = "1.11.1"
+uiTooling = "1.11.1"
 room = "2.8.4"
 
 [libraries]
+androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 compose-charts = { module = "io.github.ehsannarmani:compose-charts", version.ref = "composeCharts" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
