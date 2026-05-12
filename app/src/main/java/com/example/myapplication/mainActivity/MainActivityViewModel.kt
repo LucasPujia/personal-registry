@@ -21,10 +21,10 @@ class MainActivityViewModel(
 
     init {
         syncWeights(model.getWeights())
-        applyFilters(Filters(
+        applyFilters(
             minViewValue = weightsList.min().roundToInt() - 2,
             maxViewValue = weightsList.max().roundToInt() + 2,
-        ))
+        )
         filters = filters.copy(
             weights = weightsList.map(Float::toDouble),
         )
@@ -46,12 +46,20 @@ class MainActivityViewModel(
         }
     }
 
-    fun applyFilters(viewFilters: Filters) {
+    fun applyFilters(
+        minViewValue: Int?,
+        maxViewValue: Int?,
+        goalWeight: Int? = null,
+        dateRange: Pair<Long, Long>? = null
+    ) {
         filters = filters.copy(
-            minViewValue = viewFilters.minViewValue ?: filters.minViewValue,
-            maxViewValue = viewFilters.maxViewValue ?: filters.maxViewValue,
-            goalWeight = viewFilters.goalWeight,
-//            dateRange = viewFilters.dateRange ?: filters.dateRange,
+            minViewValue = minViewValue ?: filters.minViewValue,
+            maxViewValue = maxViewValue ?: filters.maxViewValue,
+            goalWeight = goalWeight,
+            weights = dateRange?.let { dr ->
+                getWeightsFilteredByDate(dr).map { it.weight.toDouble() }
+            } ?: this.weightsList.map(Float::toDouble),
+            dateRange = dateRange ?: filters.dateRange,
         )
     }
 
@@ -60,6 +68,10 @@ class MainActivityViewModel(
         weightsList.addAll(weights.map { it.weight })
         filters = filters.copy( weights = weightsList.map(Float::toDouble) )
     }
+
+    private fun getWeightsFilteredByDate(dateRange: Pair<Long, Long>): List<WeightRecord> {
+        return model.getWeights().filter { it.createdAt in dateRange.first..dateRange.second }
+    }
 }
 
 data class ActiveFilters(
@@ -67,17 +79,11 @@ data class ActiveFilters(
     val maxViewValue: Int = 100,
     val weights: List<Double> = emptyList(),
     val goalWeight: Int? = null,
+    val dateRange: Pair<Long, Long>? = null,
 ) {
     val weightsF: List<Float>
         get() = weights.map(Double::toFloat)
 }
-
-data class Filters(
-    val minViewValue: Int? = null,
-    val maxViewValue: Int? = null,
-    val goalWeight: Int? = null,
-    val dateRange: Pair<Long, Long>? = null,
-)
 
 enum class ViewMode {
     LIST,

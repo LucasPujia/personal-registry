@@ -16,10 +16,10 @@ import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
@@ -34,12 +34,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
-import com.example.myapplication.utils.longUTCToLDT
 import com.example.myapplication.utils.nowUTC
 import com.example.myapplication.utils.pressedInteractionSource2
+import com.example.myapplication.utils.resolveDateText
+import com.example.myapplication.utils.selectableDatesTilNow
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlin.math.pow
 
 @Composable
@@ -53,11 +52,7 @@ fun WeightSelector(
     }
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = nowUTC(),
-        selectableDates =  object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis <= nowUTC()
-            }
-        },
+        selectableDates = selectableDatesTilNow(),
         yearRange = IntRange(LocalDate.now().year - 1, LocalDate.now().year),
     )
 
@@ -66,74 +61,7 @@ fun WeightSelector(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Peso del día:",
-                    style = MaterialTheme.typography.titleMedium,
-                )
-
-                var openedDatePicker by remember { mutableStateOf(false) }
-                Text(
-                    text = resolveDateText(datePickerState.selectedDateMillis),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-                FilledIconButton(
-                    modifier = Modifier.size(32.dp).padding(start = 4.dp),
-                    onClick = { openedDatePicker = true },
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = "Seleccionar fecha",
-                    )
-                }
-                if (openedDatePicker) DatePickerDialog(
-                    modifier = Modifier.padding(start = 8.dp),
-                    onDismissRequest = { openedDatePicker = false },
-                    confirmButton = {
-                        Button(onClick = { openedDatePicker = false }) { Text("Aceptar") }
-                    },
-                    content = {
-                        DatePicker(state = datePickerState)
-                    }
-                )
-            }
-
-            Row {
-                val nextViewIconRes = if (viewModel.viewMode == ViewMode.CHART) {
-                    Icons.AutoMirrored.Filled.List
-                } else {
-                    Icons.Default.AreaChart
-                }
-
-
-                FilledIconButton(
-                    onClick = { viewModel.changeViewMode() },
-                    modifier = Modifier.padding(start = 8.dp),
-                ) {
-                    Icon(
-                        imageVector = nextViewIconRes,
-                        contentDescription = "Cambiar vista",
-                    )
-                }
-
-                FilledIconButton(
-                    onClick = { viewModel.filtersOpened = true },
-                    modifier = Modifier.padding(start = 8.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.FilterAlt,
-                        contentDescription = "Filtros",
-                    )
-                }
-            }
-        }
+        FilterControls(datePickerState, viewModel)
 
         VerticalNumberPicker(
             value = weight,
@@ -177,18 +105,81 @@ fun WeightSelector(
     }
 }
 
-private fun resolveDateText(selectedDateMillisUTC: Long?): String {
-    return selectedDateMillisUTC?.let {
-        val selectedDate = longUTCToLDT(it)
-        val today = longUTCToLDT(nowUTC())
-        val dateFormat = DateTimeFormatter.ofPattern("dd/MM", Locale.getDefault())
+@Composable
+private fun FilterControls(
+    datePickerState: DatePickerState,
+    viewModel: MainActivityViewModel
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Peso del día:",
+                style = MaterialTheme.typography.titleMedium,
+            )
 
-        when (dateFormat.format(selectedDate)) {
-            dateFormat.format(today) -> "Hoy"
-            dateFormat.format(today.minusDays(1)) -> "Ayer"
-            else -> dateFormat.format(selectedDate)
+            var openedDatePicker by remember { mutableStateOf(false) }
+            Text(
+                text = resolveDateText(datePickerState.selectedDateMillis),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+            FilledIconButton(
+                modifier = Modifier
+                    .size(32.dp)
+                    .padding(start = 4.dp),
+                onClick = { openedDatePicker = true },
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CalendarMonth,
+                    contentDescription = "Seleccionar fecha",
+                )
+            }
+            if (openedDatePicker) DatePickerDialog(
+                modifier = Modifier.padding(start = 8.dp),
+                onDismissRequest = { openedDatePicker = false },
+                confirmButton = {
+                    Button(onClick = { openedDatePicker = false }) { Text("Aceptar") }
+                },
+                content = {
+                    DatePicker(state = datePickerState)
+                }
+            )
         }
-    } ?: "Hoy"
+
+        Row {
+            val nextViewIconRes = if (viewModel.viewMode == ViewMode.CHART) {
+                Icons.AutoMirrored.Filled.List
+            } else {
+                Icons.Default.AreaChart
+            }
+
+
+            FilledIconButton(
+                onClick = { viewModel.changeViewMode() },
+                modifier = Modifier.padding(start = 8.dp),
+            ) {
+                Icon(
+                    imageVector = nextViewIconRes,
+                    contentDescription = "Cambiar vista",
+                )
+            }
+
+            FilledIconButton(
+                onClick = { viewModel.filtersOpened = true },
+                modifier = Modifier.padding(start = 8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.FilterAlt,
+                    contentDescription = "Abrir Filtros",
+                )
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true)

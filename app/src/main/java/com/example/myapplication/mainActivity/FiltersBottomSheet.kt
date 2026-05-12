@@ -2,25 +2,38 @@ package com.example.myapplication.mainActivity
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.extensionFunctions.selectedDateRange
+import com.example.myapplication.utils.resolveDateText
+import com.example.myapplication.utils.selectableDatesTilNow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,11 +41,18 @@ fun FiltersBottomSheet(
     viewModel: MainActivityViewModel,
     onDismissRequest: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var minVal by remember { mutableStateOf(viewModel.filters.minViewValue.toString()) }
     var maxVal by remember { mutableStateOf(viewModel.filters.maxViewValue.toString()) }
     var goal by remember { mutableStateOf(viewModel.filters.goalWeight?.toString() ?: "") }
+    val dateRangePickerState = rememberDateRangePickerState(
+        initialSelectedStartDateMillis = viewModel.filters.dateRange?.first,
+        initialSelectedEndDateMillis = viewModel.filters.dateRange?.second,
+        selectableDates = selectableDatesTilNow()
+    )
+
+    var openedDateRangePicker by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -75,14 +95,57 @@ fun FiltersBottomSheet(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    val dateRangeText = dateRangePickerState.selectedDateRange()?.let { (start, end) ->
+                        "${resolveDateText(start)} - ${resolveDateText(end)}"
+                    } ?: "Sin rango seleccionado"
+                    Text(
+                        text = "Rango de fechas",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = dateRangeText,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                FilledIconButton(
+                    onClick = { openedDateRangePicker = true },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = "Seleccionar rango de fechas",
+                    )
+                }
+            }
+
+            if (openedDateRangePicker) DatePickerDialog(
+                onDismissRequest = { openedDateRangePicker = false },
+                confirmButton = {
+                    Button(onClick = { openedDateRangePicker = false }) { Text("Aceptar") }
+                },
+                dismissButton = {
+                    Button(onClick = {
+                        dateRangePickerState.setSelection(null, null)
+                        openedDateRangePicker = false
+                    }) { Text("Limpiar") }
+                }
+            ) { DateRangePicker(state = dateRangePickerState) }
+
             Button(
                 onClick = {
                     viewModel.applyFilters(
-                        Filters(
-                            minViewValue = minVal.toInt(),
-                            maxViewValue = maxVal.toInt(),
-                            goalWeight = goal.toIntOrNull()
-                        )
+                        minViewValue = minVal.toIntOrNull(),
+                        maxViewValue = maxVal.toIntOrNull(),
+                        goalWeight = goal.toIntOrNull(),
+                        dateRange = dateRangePickerState.selectedDateRange()
                     )
                     onDismissRequest()
                 },
