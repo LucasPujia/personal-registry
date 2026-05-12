@@ -3,6 +3,7 @@ package com.example.myapplication.mainActivity
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -25,11 +26,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
+import ir.ehsannarmani.compose_charts.models.DotProperties
 import ir.ehsannarmani.compose_charts.models.DrawStyle
 import ir.ehsannarmani.compose_charts.models.GridProperties
+import ir.ehsannarmani.compose_charts.models.LabelHelperProperties
 import ir.ehsannarmani.compose_charts.models.LabelProperties
 import ir.ehsannarmani.compose_charts.models.Line
 
@@ -55,32 +60,46 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
                             strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
                             gradientAnimationDelay = 1000,
                             drawStyle = DrawStyle.Stroke(width = 2.dp),
-                        )
-                    )
-                    viewModel.filters.goalWeight?.let { goal ->
-                        add(
-                            Line(
-                                values = viewModel.filters.weights.map { goal.toDouble() },
-                                color = SolidColor(Color(0xFFf57c00)),
-                                strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
-                                drawStyle = DrawStyle.Stroke(width = 2.dp),
+                            curvedEdges = viewModel.filters.weights.size >= 32,
+//                            popupProperties = PopupProperties(
+//                                enabled = false,
+//                            ),
+                            dotProperties = DotProperties(
+                                enabled = viewModel.filters.weights.size < 32,
+                                radius = 4.dp,
+                                color = SolidColor(Color(0xFF23af92))
                             )
                         )
-                    }
+                    )
+                    viewModel.filters.goalWeight?.let { goal -> add(
+                        Line(
+                            values = viewModel.filters.weights.map { goal.toDouble() },
+                            color = SolidColor(Color(0xFFf57c00)),
+                            strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
+                            drawStyle = DrawStyle.Stroke(width = 2.dp),
+                        )
+                    )}
                 }
             },
+            // TODO: Mejorar
             animationMode = if (isPreview || !isFirstLoad) AnimationMode.None else AnimationMode.Together(
                 delayBuilder = { it * 500L }
             ),
+            labelHelperProperties = LabelHelperProperties(enabled = true, labelCountPerLine = 5, textStyle = MaterialTheme.typography.bodyMedium),
             minValue = viewModel.filters.minViewValue.toDouble(),
             maxValue = viewModel.filters.maxViewValue.toDouble(),
             labelProperties = LabelProperties(
                 enabled = true,
                 textStyle = MaterialTheme.typography.bodyMedium,
-                labels = listOf("Peso", "test"),
+                labels = viewModel.filters.dates,
+                padding = 0.dp,
+                rotation = LabelProperties.Rotation(
+                    degree = -45f,
+                    mode = LabelProperties.Rotation.Mode.Force
+                )
             ),
             gridProperties = GridProperties(
-                yAxisProperties = GridProperties.AxisProperties(lineCount = 10)
+                yAxisProperties = GridProperties.AxisProperties(lineCount = viewModel.filters.weights.size)
             )
         )
         LaunchedEffect(Unit) {
@@ -114,6 +133,19 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
                 }
                 if (index != weightsList.size - 1) HorizontalDivider(thickness = 2.dp)
             }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun WeightsViewerPreview() {
+    val initialValues = listOf(25f, 30f, 35.5f, 32f, 28f, 29f)
+    val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
+    val mainActivityModel = MainActivityModel(memoryStorage)
+    MaterialTheme {
+        Box(modifier = Modifier.padding(32.dp)) {
+            WeightsViewer(MainActivityViewModel(mainActivityModel))
         }
     }
 }

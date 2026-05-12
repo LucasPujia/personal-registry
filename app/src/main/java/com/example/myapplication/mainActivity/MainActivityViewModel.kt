@@ -8,6 +8,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.myapplication.database.weight.WeightRecord
 import com.example.myapplication.utils.nowUTC
+import java.time.Instant.ofEpochMilli
+import java.time.ZoneOffset.UTC
+import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 class MainActivityViewModel(
@@ -25,17 +28,17 @@ class MainActivityViewModel(
             minViewValue = weightsList.min().roundToInt() - 2,
             maxViewValue = weightsList.max().roundToInt() + 2,
         )
-        filters = filters.copy(
-            weights = weightsList.map(Float::toDouble),
-        )
+        reapplyFilters()
     }
 
     fun addWeight(weight: Float, date: Long?) {
         syncWeights(model.addWeight(weight, date ?: nowUTC()))
+        reapplyFilters()
     }
 
     fun removeWeight(index: Int) {
         syncWeights(model.removeWeight(index))
+        reapplyFilters()
     }
 
     // Cíclico
@@ -46,20 +49,31 @@ class MainActivityViewModel(
         }
     }
 
+    fun reapplyFilters() {
+        applyFilters(
+            minViewValue = filters.minViewValue,
+            maxViewValue = filters.maxViewValue,
+            goalWeight = filters.goalWeight,
+            dateRange = filters.dateRange
+        )
+    }
+
     fun applyFilters(
         minViewValue: Int?,
         maxViewValue: Int?,
         goalWeight: Int? = null,
         dateRange: Pair<Long, Long>? = null
     ) {
+        val newWeights = getWeightsFilteredByDate(dateRange)
         filters = filters.copy(
             minViewValue = minViewValue ?: filters.minViewValue,
             maxViewValue = maxViewValue ?: filters.maxViewValue,
-            goalWeight = goalWeight,
-            weights = dateRange?.let { dr ->
-                getWeightsFilteredByDate(dr).map { it.weight.toDouble() }
-            } ?: this.weightsList.map(Float::toDouble),
             dateRange = dateRange ?: filters.dateRange,
+            goalWeight = goalWeight,
+            weights = newWeights.map { it.weight.toDouble() },
+            dates = if (newWeights.size < 10) newWeights.map {
+                DateTimeFormatter.ofPattern("MM/dd").format(ofEpochMilli(it.createdAt).atZone(UTC))
+            } else listOf()
         )
     }
 
@@ -69,7 +83,8 @@ class MainActivityViewModel(
         filters = filters.copy( weights = weightsList.map(Float::toDouble) )
     }
 
-    private fun getWeightsFilteredByDate(dateRange: Pair<Long, Long>): List<WeightRecord> {
+    private fun getWeightsFilteredByDate(dateRange: Pair<Long, Long>?): List<WeightRecord> {
+        if (dateRange == null) return model.getWeights()
         return model.getWeights().filter { it.createdAt in dateRange.first..dateRange.second }
     }
 }
@@ -78,6 +93,7 @@ data class ActiveFilters(
     val minViewValue: Int = 0,
     val maxViewValue: Int = 100,
     val weights: List<Double> = emptyList(),
+    val dates: List<String> = emptyList(),
     val goalWeight: Int? = null,
     val dateRange: Pair<Long, Long>? = null,
 ) {

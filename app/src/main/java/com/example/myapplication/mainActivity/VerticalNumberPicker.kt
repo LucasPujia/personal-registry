@@ -6,6 +6,8 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -110,6 +113,20 @@ fun VerticalNumberPicker(
             modifier = Modifier
                 .align(Alignment.Center)
                 .offset(x = kgOffsetX, y = 16.dp),
+        )
+    }
+}
+
+@Preview
+@Composable
+fun VerticalNumberPickerPreview() {
+    MaterialTheme {
+        VerticalNumberPicker(
+            value = 75.5f,
+            onValueChange = {},
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp),
         )
     }
 }
