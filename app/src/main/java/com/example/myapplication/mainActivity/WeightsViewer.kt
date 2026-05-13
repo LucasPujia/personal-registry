@@ -15,11 +15,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,7 +38,6 @@ import ir.ehsannarmani.compose_charts.models.Line
 fun WeightsViewer(viewModel: MainActivityViewModel) {
     val isPreview = LocalInspectionMode.current
     if (viewModel.viewMode == ViewMode.CHART) {
-        var isFirstLoad by remember { mutableStateOf(true) }
         LineChart(
             modifier = Modifier
                 .height(300.dp)
@@ -81,8 +76,7 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
                     )}
                 }
             },
-            // TODO: Mejorar
-            animationMode = if (isPreview || !isFirstLoad) AnimationMode.None else AnimationMode.Together(
+            animationMode = if (isPreview || !viewModel.filters.shouldAnimate) AnimationMode.None else AnimationMode.Together(
                 delayBuilder = { it * 500L }
             ),
             labelHelperProperties = LabelHelperProperties(enabled = true, labelCountPerLine = 5, textStyle = MaterialTheme.typography.bodyMedium),
@@ -102,9 +96,6 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
                 yAxisProperties = GridProperties.AxisProperties(lineCount = viewModel.filters.weights.size)
             )
         )
-        LaunchedEffect(Unit) {
-            if (isFirstLoad) isFirstLoad = false
-        }
     } else {
         LazyColumn {
             val weightsList = viewModel.filters.weights

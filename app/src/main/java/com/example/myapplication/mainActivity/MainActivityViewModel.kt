@@ -54,7 +54,7 @@ class MainActivityViewModel(
             minViewValue = filters.minViewValue,
             maxViewValue = filters.maxViewValue,
             goalWeight = filters.goalWeight,
-            dateRange = filters.dateRange
+            dateRange = filters.dateRange,
         )
     }
 
@@ -62,7 +62,7 @@ class MainActivityViewModel(
         minViewValue: Int?,
         maxViewValue: Int?,
         goalWeight: Int? = null,
-        dateRange: Pair<Long, Long>? = null
+        dateRange: Pair<Long, Long>? = null,
     ) {
         val newWeights = getWeightsFilteredByDate(dateRange)
         filters = filters.copy(
@@ -73,7 +73,8 @@ class MainActivityViewModel(
             weights = newWeights.map { it.weight.toDouble() },
             dates = if (newWeights.size < 10) newWeights.map {
                 DateTimeFormatter.ofPattern("MM/dd").format(ofEpochMilli(it.createdAt).atZone(UTC))
-            } else listOf()
+            } else listOf(),
+            shouldAnimate = dateRange != filters.dateRange || goalWeight != filters.goalWeight,
         )
     }
 
@@ -96,6 +97,7 @@ data class ActiveFilters(
     val dates: List<String> = emptyList(),
     val goalWeight: Int? = null,
     val dateRange: Pair<Long, Long>? = null,
+    val shouldAnimate: Boolean = true,
 ) {
     val weightsF: List<Float>
         get() = weights.map(Double::toFloat)
