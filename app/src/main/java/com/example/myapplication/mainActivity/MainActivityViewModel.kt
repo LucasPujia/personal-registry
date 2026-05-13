@@ -8,9 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.myapplication.database.weight.WeightRecord
 import com.example.myapplication.utils.nowUTC
-import java.time.Instant.ofEpochMilli
-import java.time.ZoneOffset.UTC
-import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 class MainActivityViewModel(
@@ -65,17 +62,23 @@ class MainActivityViewModel(
         dateRange: Pair<Long, Long>? = null,
     ) {
         val newWeights = getWeightsFilteredByDate(dateRange)
+        if (newWeights.isEmpty()) return
         filters = filters.copy(
-            minViewValue = minViewValue ?: filters.minViewValue,
-            maxViewValue = maxViewValue ?: filters.maxViewValue,
+            minViewValue = (minViewValue ?: filters.minViewValue).coerceAtMost((newWeights.minOf { it.weight }).roundToInt() - 2),
+            maxViewValue = (maxViewValue ?: filters.maxViewValue).coerceAtLeast((newWeights.maxOf { it.weight }).roundToInt() + 2),
             dateRange = dateRange ?: filters.dateRange,
             goalWeight = goalWeight,
             weights = newWeights.map { it.weight.toDouble() },
-            dates = if (newWeights.size < 10) newWeights.map {
-                DateTimeFormatter.ofPattern("MM/dd").format(ofEpochMilli(it.createdAt).atZone(UTC))
-            } else listOf(),
             shouldAnimate = dateRange != filters.dateRange || goalWeight != filters.goalWeight,
+            dates = resolveDateLabels(newWeights),
         )
+    }
+
+    private fun resolveDateLabels(newWeights: List<WeightRecord>): List<String> {
+        return if (newWeights.size < 6) newWeights.map { it.formattedDate() } else {
+            val quarterSize = (newWeights.size / 4)
+            List(5) { i -> newWeights[i * quarterSize].formattedDate() }
+        }
     }
 
     private fun syncWeights(weights: List<WeightRecord>) {
@@ -85,8 +88,9 @@ class MainActivityViewModel(
     }
 
     private fun getWeightsFilteredByDate(dateRange: Pair<Long, Long>?): List<WeightRecord> {
-        if (dateRange == null) return model.getWeights()
-        return model.getWeights().filter { it.createdAt in dateRange.first..dateRange.second }
+        val weights = model.getWeights()
+        if (dateRange == null) return weights
+        return weights.filter { it.createdAt in dateRange.first..dateRange.second }
     }
 }
 
