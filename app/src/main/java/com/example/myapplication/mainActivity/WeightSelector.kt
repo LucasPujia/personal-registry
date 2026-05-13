@@ -17,11 +17,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DatePickerState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.setSelectedDate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -64,48 +66,56 @@ fun WeightSelector(
     ) {
         FilterControls(datePickerState, viewModel)
 
-        VerticalNumberPicker(
-            value = weight,
-            onValueChange = { weight = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(160.dp),
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            FilledIconButton(
-                onClick = { weight -= weightStep },
-                interactionSource = pressedInteractionSource2 { weight -= weightStep },
-            ) {
-                Icon(
-                    painter = painterResource(id = android.R.drawable.arrow_down_float),
-                    contentDescription = "Decrementar peso",
-                )
-            }
-
-            Button(
-                onClick = { viewModel.addWeight(weight, datePickerState.selectedDateMillis) },
+        if (!viewModel.isSelectableDate(datePickerState.selectedDateMillis ?: nowUTC())) {
+            Text(
+                text = "Ya hay un peso registrado para esta fecha",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        } else {
+            VerticalNumberPicker(
+                value = weight,
+                onValueChange = { weight = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-            ) { Text("Agregar") }
+                    .height(160.dp),
+            )
 
-            FilledIconButton(
-                onClick = { weight += weightStep },
-                interactionSource = pressedInteractionSource2 { weight += weightStep },
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    painter = painterResource(id = android.R.drawable.arrow_up_float),
-                    contentDescription = "Aumentar peso",
-                )
+                FilledIconButton(
+                    onClick = { weight -= weightStep },
+                    interactionSource = pressedInteractionSource2 { weight -= weightStep },
+                ) {
+                    Icon(
+                        painter = painterResource(id = android.R.drawable.arrow_down_float),
+                        contentDescription = "Decrementar peso",
+                    )
+                }
+
+                Button(
+                    onClick = { viewModel.addWeight(weight, datePickerState.selectedDateMillis) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) { Text("Agregar") }
+
+                FilledIconButton(
+                    onClick = { weight += weightStep },
+                    interactionSource = pressedInteractionSource2 { weight += weightStep },
+                ) {
+                    Icon(
+                        painter = painterResource(id = android.R.drawable.arrow_up_float),
+                        contentDescription = "Aumentar peso",
+                    )
+                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FilterControls(
     datePickerState: DatePickerState,
@@ -143,6 +153,12 @@ private fun FilterControls(
             if (openedDatePicker) DatePickerDialog(
                 modifier = Modifier.padding(start = 8.dp),
                 onDismissRequest = { openedDatePicker = false },
+                dismissButton = {
+                    Button(onClick = {
+                        openedDatePicker = false
+                        datePickerState.setSelectedDate(null)
+                    }) { Text("Limpiar") }
+                },
                 confirmButton = {
                     Button(onClick = { openedDatePicker = false }) { Text("Aceptar") }
                 },

@@ -38,7 +38,7 @@ import ir.ehsannarmani.compose_charts.models.Line
 @Composable
 fun WeightsViewer(viewModel: MainActivityViewModel) {
     val isPreview = LocalInspectionMode.current
-    Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
+    Column() {
         LineChart(
             modifier = Modifier
                 .height(300.dp)
@@ -98,19 +98,21 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
             )
         )
 
+        HorizontalDivider(thickness = 3.dp, modifier = Modifier.padding(top = 32.dp))
         LazyColumn {
             val weightsList = viewModel.filters.weights
             items(weightsList.size) { index ->
+                val reversedIndex = weightsList.lastIndex - index
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     Text(
-                        text = weightsList[index].formatted(),
+                        text = weightsList[reversedIndex].formatted(),
                     )
                     IconButton(
-                        onClick = { viewModel.removeWeight(index) },
+                        onClick = { viewModel.removeWeight(reversedIndex) },
                     ) {
                         Icon(
                             painter = painterResource(id = android.R.drawable.ic_delete),
@@ -122,6 +124,7 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
                 if (index != weightsList.size - 1) HorizontalDivider(thickness = 2.dp)
             }
         }
+        HorizontalDivider(thickness = 3.dp)
     }
 }
 
