@@ -50,6 +50,7 @@ fun WeightSelector(
     var weight by remember(latestStoredWeight) {
         mutableFloatStateOf(latestStoredWeight ?: WEIGHT_DEFAULT_VALUE)
     }
+    // TODO: definir qué valores son válidos y cuáles no
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = nowUTC(),
         selectableDates = selectableDatesTilNow(),

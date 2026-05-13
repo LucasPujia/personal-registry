@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.extensionFunctions.selectedDateRange
+import com.example.myapplication.utils.defaultDatePickerFormatter
 import com.example.myapplication.utils.resolveDateText
 import com.example.myapplication.utils.selectableDatesTilNow
 
@@ -46,13 +47,12 @@ fun FiltersBottomSheet(
     var minVal by remember { mutableStateOf(viewModel.filters.minViewValue.toString()) }
     var maxVal by remember { mutableStateOf(viewModel.filters.maxViewValue.toString()) }
     var goal by remember { mutableStateOf(viewModel.filters.goalWeight?.toString() ?: "") }
+    // TODO: definir qué valores son válidos y cuáles no
     val dateRangePickerState = rememberDateRangePickerState(
         initialSelectedStartDateMillis = viewModel.filters.dateRange?.first,
         initialSelectedEndDateMillis = viewModel.filters.dateRange?.second,
         selectableDates = selectableDatesTilNow()
     )
-
-    var openedDateRangePicker by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -100,6 +100,9 @@ fun FiltersBottomSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                var datePickerOpened by remember { mutableStateOf(false) }
+                var previousStartDateMillis by remember { mutableStateOf<Long?>(null) }
+                var previousEndDateMillis by remember { mutableStateOf<Long?>(null) }
                 Column {
                     val dateRangeText = dateRangePickerState.selectedDateRange()?.let { (start, end) ->
                         "${resolveDateText(start)} - ${resolveDateText(end)}"
@@ -116,7 +119,11 @@ fun FiltersBottomSheet(
                 }
 
                 FilledIconButton(
-                    onClick = { openedDateRangePicker = true },
+                    onClick = {
+                        datePickerOpened = true
+                        previousStartDateMillis = dateRangePickerState.selectedStartDateMillis
+                        previousEndDateMillis = dateRangePickerState.selectedEndDateMillis
+                    },
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Icon(
@@ -124,20 +131,30 @@ fun FiltersBottomSheet(
                         contentDescription = "Seleccionar rango de fechas",
                     )
                 }
+
+                if (datePickerOpened) {
+                    DatePickerDialog(
+                        onDismissRequest = {
+                            datePickerOpened = false
+                            dateRangePickerState.setSelection(previousStartDateMillis, previousEndDateMillis)
+                        },
+                        confirmButton = {
+                            Button(onClick = { datePickerOpened = false }) { Text("Aceptar") }
+                        },
+                        dismissButton = {
+                            Button(onClick = {
+                                datePickerOpened = false
+                                dateRangePickerState.setSelection(null, null)
+                            }) { Text("Limpiar") }
+                        }
+                    ) { DateRangePicker(
+                        state = dateRangePickerState,
+                        dateFormatter = defaultDatePickerFormatter(),
+                        title = null,
+                    ) }
+                }
             }
 
-            if (openedDateRangePicker) DatePickerDialog(
-                onDismissRequest = { openedDateRangePicker = false },
-                confirmButton = {
-                    Button(onClick = { openedDateRangePicker = false }) { Text("Aceptar") }
-                },
-                dismissButton = {
-                    Button(onClick = {
-                        dateRangePickerState.setSelection(null, null)
-                        openedDateRangePicker = false
-                    }) { Text("Limpiar") }
-                }
-            ) { DateRangePicker(state = dateRangePickerState) }
 
             Button(
                 onClick = {
