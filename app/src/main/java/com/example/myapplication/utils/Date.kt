@@ -9,13 +9,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-fun now(): Long {
-    return LocalDateTime.now()
-        .atZone(ZoneId.systemDefault())
-        .toInstant()
-        .toEpochMilli()
-}
-
 fun nowUTC(): Long {
     return LocalDateTime.now()
         .atZone(ZoneId.of("UTC"))
@@ -30,24 +23,10 @@ fun longUTCToLDT(milliseconds: Long): LocalDateTime {
         .toLocalDateTime()
 }
 
-fun longToLDT(milliseconds: Long): LocalDateTime {
-    return Instant
-        .ofEpochMilli(milliseconds)
-        .atZone(ZoneId.systemDefault())
-        .toLocalDateTime()
-}
 fun selectableDatesFromFunction(isSelectableDate: (Long) -> Boolean): SelectableDates {
     return object : SelectableDates {
         override fun isSelectableDate(utcTimeMillis: Long): Boolean {
             return isSelectableDate(utcTimeMillis)
-        }
-    }
-}
-
-fun selectableDatesTilNow(): SelectableDates {
-    return object : SelectableDates {
-        override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-            return utcTimeMillis <= nowUTC()
         }
     }
 }

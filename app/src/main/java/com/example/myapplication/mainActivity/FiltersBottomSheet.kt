@@ -33,8 +33,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.extensionFunctions.selectedDateRange
 import com.example.myapplication.utils.defaultDatePickerFormatter
+import com.example.myapplication.utils.nowUTC
 import com.example.myapplication.utils.resolveDateText
-import com.example.myapplication.utils.selectableDatesTilNow
+import com.example.myapplication.utils.selectableDatesFromFunction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,11 +48,10 @@ fun FiltersBottomSheet(
     var minVal by remember { mutableStateOf(viewModel.filters.minViewValue.toString()) }
     var maxVal by remember { mutableStateOf(viewModel.filters.maxViewValue.toString()) }
     var goal by remember { mutableStateOf(viewModel.filters.goalWeight?.toString() ?: "") }
-    // TODO: definir qué valores son válidos y cuáles no
     val dateRangePickerState = rememberDateRangePickerState(
         initialSelectedStartDateMillis = viewModel.filters.dateRange?.first,
         initialSelectedEndDateMillis = viewModel.filters.dateRange?.second,
-        selectableDates = selectableDatesTilNow()
+        selectableDates = selectableDatesFromFunction { it <= nowUTC() }
     )
 
     ModalBottomSheet(
