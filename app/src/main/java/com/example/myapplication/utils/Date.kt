@@ -36,6 +36,13 @@ fun longToLDT(milliseconds: Long): LocalDateTime {
         .atZone(ZoneId.systemDefault())
         .toLocalDateTime()
 }
+fun selectableDatesFromFunction(isSelectableDate: (Long) -> Boolean): SelectableDates {
+    return object : SelectableDates {
+        override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+            return isSelectableDate(utcTimeMillis)
+        }
+    }
+}
 
 fun selectableDatesTilNow(): SelectableDates {
     return object : SelectableDates {

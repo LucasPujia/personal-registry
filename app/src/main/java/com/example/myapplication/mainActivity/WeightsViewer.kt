@@ -4,6 +4,7 @@ import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -37,7 +38,7 @@ import ir.ehsannarmani.compose_charts.models.Line
 @Composable
 fun WeightsViewer(viewModel: MainActivityViewModel) {
     val isPreview = LocalInspectionMode.current
-    if (viewModel.viewMode == ViewMode.CHART) {
+    Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
         LineChart(
             modifier = Modifier
                 .height(300.dp)
@@ -48,7 +49,7 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
                 buildList {
                     add(
                         Line(
-                            values = viewModel.filters.weights,
+                            values = viewModel.filters.weightsD,
                             color = SolidColor(Color(0xFF23af92)),
                             firstGradientFillColor = Color(0xFF2BC0A1).copy(alpha = .8f),
                             secondGradientFillColor = Color(0xFF2BC0A1).copy(alpha = .3f),
@@ -96,7 +97,7 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
                 yAxisProperties = GridProperties.AxisProperties(lineCount = viewModel.filters.weights.size)
             )
         )
-    } else {
+
         LazyColumn {
             val weightsList = viewModel.filters.weights
             items(weightsList.size) { index ->
@@ -106,11 +107,7 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     Text(
-                        text = "Peso ${index + 1}: ${
-                            "%.${WEIGHT_DECIMAL_PRECISION}f".format(
-                                weightsList[index]
-                            )
-                        } kg",
+                        text = weightsList[index].formatted(),
                     )
                     IconButton(
                         onClick = { viewModel.removeWeight(index) },

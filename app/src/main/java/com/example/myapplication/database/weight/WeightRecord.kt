@@ -2,6 +2,7 @@ package com.example.myapplication.database.weight
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.myapplication.mainActivity.WeightItem
 import java.time.Instant.ofEpochMilli
 import java.time.ZoneOffset.UTC
 import java.time.format.DateTimeFormatter
@@ -14,7 +15,11 @@ data class WeightRecord(
     val createdAt: Long = System.currentTimeMillis(),
 ) {
     fun formattedDate(): String {
-        return DateTimeFormatter.ofPattern("MM/dd").format(ofEpochMilli(this.createdAt).atZone(UTC))
+        return DateTimeFormatter.ofPattern("dd/MM").format(ofEpochMilli(this.createdAt).atZone(UTC))
+    }
+
+    fun toWeightItem(): WeightItem {
+        return WeightItem(weight.toDouble(), formattedDate())
     }
 }
 

@@ -37,7 +37,7 @@ import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.utils.nowUTC
 import com.example.myapplication.utils.pressedInteractionSource2
 import com.example.myapplication.utils.resolveDateText
-import com.example.myapplication.utils.selectableDatesTilNow
+import com.example.myapplication.utils.selectableDatesFromFunction
 import java.time.LocalDate
 import kotlin.math.pow
 
@@ -53,7 +53,7 @@ fun WeightSelector(
     // TODO: definir qué valores son válidos y cuáles no
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = nowUTC(),
-        selectableDates = selectableDatesTilNow(),
+        selectableDates = selectableDatesFromFunction { viewModel.isSelectableDate(it) },
         yearRange = IntRange(LocalDate.now().year - 1, LocalDate.now().year),
     )
 
