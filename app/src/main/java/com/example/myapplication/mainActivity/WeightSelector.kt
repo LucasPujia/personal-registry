@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.AreaChart
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material3.Button
@@ -75,9 +73,7 @@ fun WeightSelector(
             VerticalNumberPicker(
                 value = weight,
                 onValueChange = { weight = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp),
+                modifier = Modifier.fillMaxWidth().height(160.dp),
             )
 
             Row(
@@ -96,9 +92,7 @@ fun WeightSelector(
 
                 Button(
                     onClick = { viewModel.addWeight(weight, datePickerState.selectedDateMillis) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+                    modifier = Modifier.fillMaxWidth().weight(1f),
                 ) { Text("Agregar") }
 
                 FilledIconButton(
@@ -136,12 +130,10 @@ private fun FilterControls(
             Text(
                 text = resolveDateText(datePickerState.selectedDateMillis),
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 8.dp),
+                modifier = Modifier.padding(start = 8.dp, end = 8.dp),
             )
             FilledIconButton(
-                modifier = Modifier
-                    .size(32.dp)
-                    .padding(start = 4.dp),
+                modifier = Modifier.size(32.dp),
                 onClick = { openedDatePicker = true },
                 shape = RoundedCornerShape(8.dp),
             ) {
@@ -168,33 +160,14 @@ private fun FilterControls(
             )
         }
 
-        Row {
-            val nextViewIconRes = if (viewModel.viewMode == ViewMode.CHART) {
-                Icons.AutoMirrored.Filled.List
-            } else {
-                Icons.Default.AreaChart
-            }
-
-
-            FilledIconButton(
-                onClick = { viewModel.changeViewMode() },
-                modifier = Modifier.padding(start = 8.dp),
-            ) {
-                Icon(
-                    imageVector = nextViewIconRes,
-                    contentDescription = "Cambiar vista",
-                )
-            }
-
-            FilledIconButton(
-                onClick = { viewModel.filtersOpened = true },
-                modifier = Modifier.padding(start = 8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.FilterAlt,
-                    contentDescription = "Abrir Filtros",
-                )
-            }
+        FilledIconButton(
+            onClick = { viewModel.filtersOpened = true },
+            modifier = Modifier.padding(start = 8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.FilterAlt,
+                contentDescription = "Abrir Filtros",
+            )
         }
     }
 }

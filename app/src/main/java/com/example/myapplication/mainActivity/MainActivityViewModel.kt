@@ -16,7 +16,6 @@ class MainActivityViewModel(
 
     private val weightsList = mutableStateListOf<Float>()
     var filters by mutableStateOf(ActiveFilters()); private set
-    var viewMode by mutableStateOf(ViewMode.CHART); private set
     var filtersOpened by mutableStateOf(false)
 
     init {
@@ -36,14 +35,6 @@ class MainActivityViewModel(
     fun removeWeight(index: Int) {
         syncWeights(model.removeWeight(index))
         reapplyFilters()
-    }
-
-    // Cíclico
-    fun changeViewMode() {
-        viewMode = when (viewMode) {
-            ViewMode.LIST -> ViewMode.CHART
-            ViewMode.CHART -> ViewMode.LIST
-        }
     }
 
     fun isSelectableDate(utcTimeMillis: Long): Boolean {
@@ -120,11 +111,6 @@ data class ActiveFilters(
         get() = weights.map{ it.weight.toFloat() }
     val weightsD: List<Double>
         get() = weights.map{ it.weight }
-}
-
-enum class ViewMode {
-    LIST,
-    CHART
 }
 
 
