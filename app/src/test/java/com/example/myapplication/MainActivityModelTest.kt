@@ -15,17 +15,19 @@ class MainActivityModelTest {
         model.addWeight(70f, LocalDate.of(2030, 1, 1))
         model.addWeight(71f, LocalDate.of(2030, 1, 2))
 
-        assertEquals(listOf(70f, 71f), model.getWeights().map { it.weight })
+        assertEquals(listOf(70.0, 71.0), model.getWeights().map { it.weight })
     }
 
     @Test
-    fun removeWeight_ignoresInvalidIndex() {
-        val model = MainActivityModel(InMemoryWeightsStorage())
+    fun removeWeight_removesSpecificRecord() {
+        val storage = InMemoryWeightsStorage()
+        val model = MainActivityModel(storage)
 
         model.addWeight(65f, LocalDate.of(2030, 1, 1))
-        model.removeWeight(3)
+        val records = model.getWeights()
+        model.removeWeight(records.first())
 
-        assertEquals(listOf(65f), model.getWeights().map { it.weight })
+        assertEquals(emptyList<Double>(), model.getWeights().map { it.weight })
     }
 
     @Test

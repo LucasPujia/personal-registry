@@ -84,7 +84,7 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
             labelProperties = LabelProperties(
                 enabled = true,
                 textStyle = MaterialTheme.typography.bodyMedium,
-                labels = viewModel.filters.dates,
+                labels = viewModel.filters.dateLabels,
                 padding = 0.dp,
                 rotation = LabelProperties.Rotation(
                     degree = -45f,
@@ -92,7 +92,7 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
                 )
             ),
             gridProperties = GridProperties(
-                yAxisProperties = GridProperties.AxisProperties(lineCount = viewModel.filters.weights.size)
+                yAxisProperties = GridProperties.AxisProperties(lineCount = viewModel.filters.dateLabels.size)
             )
         )
 
@@ -111,7 +111,7 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
                             text = weightsList[reversedIndex].formatted(),
                         )
                         IconButton(
-                            onClick = { viewModel.removeWeight(reversedIndex) },
+                            onClick = { viewModel.removeWeight(weightsList[reversedIndex]) },
                         ) {
                             Icon(
                                 painter = painterResource(id = android.R.drawable.ic_delete),

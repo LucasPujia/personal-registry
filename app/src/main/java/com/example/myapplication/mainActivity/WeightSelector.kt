@@ -47,7 +47,7 @@ fun WeightSelector(
     viewModel: MainActivityViewModel,
 ) {
     val latestStoredWeight = viewModel.filters.weightsF.lastOrNull()
-    val weightStep = (10.0).pow(-WEIGHT_DECIMAL_PRECISION).toFloat()
+    val weightStep = remember { (10.0).pow(-WEIGHT_DECIMAL_PRECISION).toFloat() }
     var weight by remember(latestStoredWeight) {
         mutableFloatStateOf(latestStoredWeight ?: WEIGHT_DEFAULT_VALUE)
     }

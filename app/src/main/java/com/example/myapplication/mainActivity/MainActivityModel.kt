@@ -9,11 +9,11 @@ import java.time.LocalDate
 class MainActivityModel(
     private val storage: WeightsStorage,
 ) {
-    fun getWeights(): List<WeightRecord> {
-        return storage.readWeights()
+    fun getWeights(): List<WeightItem> {
+        return storage.readWeights().map { it.toWeightItem() }
     }
 
-    fun addWeight(weight: Float, date: LocalDate): List<WeightRecord> {
+    fun addWeight(weight: Float, date: LocalDate): List<WeightItem> {
         val newRecord = WeightRecord(
             weight = weight,
             dateKey = localDateToDateKey(date),
@@ -23,15 +23,12 @@ class MainActivityModel(
         return getWeights()
     }
 
-    fun removeWeight(index: Int): List<WeightRecord> {
-        val currentWeights = getWeights()
-
-        if (index !in currentWeights.indices) {
-            return currentWeights
+    fun removeWeight(weightItem: WeightItem): List<WeightItem> {
+        val allRecords = storage.readWeights()
+        val recordToRemove = allRecords.find { it.dateKey == weightItem.dateKey }
+        if (recordToRemove != null) {
+            storage.deleteWeight(recordToRemove)
         }
-
-        val weightToRemove = currentWeights[index]
-        storage.deleteWeight(weightToRemove)
         return getWeights()
     }
 }
