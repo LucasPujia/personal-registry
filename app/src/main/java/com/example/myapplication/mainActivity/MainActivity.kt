@@ -26,7 +26,7 @@ import com.example.myapplication.database.weight.RoomWeightsStorage
 @Composable
 fun MyApplicationAppPreview() {
     MaterialTheme {
-        val initialValues = listOf(25f, 30f, 35.5f)
+        val initialValues = listOf(61f, 60f, 58f, 62f)
         val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
         val mainActivityModel = MainActivityModel(memoryStorage)
         MyApplicationApp(MainActivityViewModel(mainActivityModel))
@@ -57,12 +57,12 @@ fun MyApplicationApp(viewModel: MainActivityViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(color = Color.White)
             .statusBarsPadding()
-            .padding(16.dp)
-            .background(color = Color.White),
+            .padding(16.dp),
     ) {
         WeightSelector(viewModel)
-        WeightsViewer(viewModel)
+        if (viewModel.filters.weights.isNotEmpty()) WeightsViewer(viewModel)
     }
 
     if (viewModel.filtersOpened) {
