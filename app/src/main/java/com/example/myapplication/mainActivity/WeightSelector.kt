@@ -176,7 +176,7 @@ private fun FilterControls(
 @Composable
 fun WeightSelectorPreview() {
     MaterialTheme {
-        val initialValues = listOf(25f, 30f, 35.5f)
+        val initialValues: List<Float> = listOf()
         val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
         val viewModel = MainActivityViewModel(MainActivityModel(memoryStorage))
         WeightSelector(viewModel)
