@@ -160,14 +160,26 @@ private fun FilterControls(
             )
         }
 
-        FilledIconButton(
-            onClick = { viewModel.filtersOpened = true },
-            modifier = Modifier.padding(start = 8.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Default.FilterAlt,
-                contentDescription = "Abrir Filtros",
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            FilledIconButton(
+                onClick = { viewModel.viewTogglesOpened = true },
+                modifier = Modifier.padding(start = 8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.RemoveRedEye,
+                    contentDescription = "Abrir Controles de vista",
+                )
+            }
+
+            FilledIconButton(
+                onClick = { viewModel.filtersOpened = true },
+                modifier = Modifier.padding(start = 8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.FilterAlt,
+                    contentDescription = "Abrir Filtros",
+                )
+            }
         }
     }
 }

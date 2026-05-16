@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -20,6 +21,7 @@ import androidx.core.view.WindowCompat
 import com.example.myapplication.database.AppDatabase
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.database.weight.RoomWeightsStorage
+import com.example.myapplication.mainActivity.bottomSheet.BottomSheetHandler
 
 
 @Preview(showBackground = true)
@@ -52,6 +54,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApplicationApp(viewModel: MainActivityViewModel) {
     Column(
@@ -65,12 +68,7 @@ fun MyApplicationApp(viewModel: MainActivityViewModel) {
         if (viewModel.filters.weights.isNotEmpty()) WeightsViewer(viewModel)
     }
 
-    if (viewModel.filtersOpened) {
-        FiltersBottomSheet(
-            viewModel = viewModel,
-            onDismissRequest = { viewModel.filtersOpened = false }
-        )
-    }
+    BottomSheetHandler(viewModel)
 }
 
 

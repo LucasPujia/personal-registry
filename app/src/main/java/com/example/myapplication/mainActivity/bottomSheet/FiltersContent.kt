@@ -1,12 +1,10 @@
-package com.example.myapplication.mainActivity
+package com.example.myapplication.mainActivity.bottomSheet
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -18,12 +16,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDateRangePickerState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +32,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.extensionFunctions.selectedDateRange
+import com.example.myapplication.mainActivity.MainActivityModel
+import com.example.myapplication.mainActivity.MainActivityViewModel
 import com.example.myapplication.utils.defaultDatePickerFormatter
 import com.example.myapplication.utils.resolveDatePickerText
 import com.example.myapplication.utils.selectableDatesFromFunction
@@ -44,34 +41,13 @@ import com.example.myapplication.utils.todayForDatePicker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FiltersBottomSheet(
-    viewModel: MainActivityViewModel,
-    onDismissRequest: () -> Unit
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
-        sheetState = sheetState,
-    ) {
-        FiltersBottomSheetContent(
-            viewModel = viewModel,
-            onDismissRequest = onDismissRequest
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FiltersBottomSheetContent(
+fun FiltersContent(
     viewModel: MainActivityViewModel,
     onDismissRequest: () -> Unit
 ) {
     var minVal by remember { mutableStateOf(viewModel.filters.minViewValue.toString()) }
     var maxVal by remember { mutableStateOf(viewModel.filters.maxViewValue.toString()) }
     var goal by remember { mutableStateOf(viewModel.filters.goalWeight?.toString() ?: "") }
-    var showGraph by remember { mutableStateOf(viewModel.viewToggles.graph) }
-    var showList by remember { mutableStateOf(viewModel.viewToggles.list) }
     val dateRangePickerState = rememberDateRangePickerState(
         initialSelectedStartDateMillis = viewModel.filters.dateRange?.first,
         initialSelectedEndDateMillis = viewModel.filters.dateRange?.second,
@@ -177,23 +153,6 @@ fun FiltersBottomSheetContent(
             }
         }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Mostrar gráfico")
-                Spacer(modifier = Modifier.width(8.dp))
-                Switch(checked = showGraph, onCheckedChange = { showGraph = it })
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Mostrar lista")
-                Spacer(modifier = Modifier.width(8.dp))
-                Switch(checked = showList, onCheckedChange = { showList = it })
-            }
-        }
-
         Button(
             onClick = {
                 viewModel.applyFilters(
@@ -202,7 +161,6 @@ fun FiltersBottomSheetContent(
                     goalWeight = goal.toIntOrNull(),
                     dateRange = dateRangePickerState.selectedDateRange()
                 )
-                viewModel.applyViewToggles(showGraph, showList)
                 onDismissRequest()
             },
             modifier = Modifier.fillMaxWidth()
@@ -214,11 +172,11 @@ fun FiltersBottomSheetContent(
 
 @Preview(showBackground = true)
 @Composable
-fun FiltersBottomSheetPreview() {
+fun FiltersContentPreview() {
     MaterialTheme {
         val initialValues: List<Float> = listOf()
         val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
         val viewModel = MainActivityViewModel(MainActivityModel(memoryStorage))
-        FiltersBottomSheetContent(viewModel = viewModel, onDismissRequest = {})
+        FiltersContent(viewModel = viewModel, onDismissRequest = {})
     }
 }

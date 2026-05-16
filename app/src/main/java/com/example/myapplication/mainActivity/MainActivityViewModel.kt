@@ -21,6 +21,7 @@ class MainActivityViewModel(
     var filters by mutableStateOf(ActiveFilters()); private set
     var viewToggles by mutableStateOf(ViewToggles()); private set
     var filtersOpened by mutableStateOf(false)
+    var viewTogglesOpened by mutableStateOf(false)
 
     init {
         syncWeights(model.getWeights())
