@@ -24,12 +24,18 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+        // Descomentar para reducir el tamaño de la apk de debug, pero considerar que esto puede dificultar el debugging
+//        debug {
+//            isMinifyEnabled = true
+//            isShrinkResources = true
+//        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
