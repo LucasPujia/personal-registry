@@ -37,10 +37,15 @@ class MainActivityViewModel(
      * Se convierten a LocalDate y dateKey justo aquí; no viajan como Long al modelo.
      */
     fun addWeight(weight: Float, pickerMillis: Long?) {
-        val date = pickerMillis?.let { fromDatePicker(it) }
-            ?: now()
+        val date = pickerMillis?.let { fromDatePicker(it) } ?: now()
         syncWeights(model.addWeight(weight, date))
         reapplyFilters()
+        if (model.getWeights().size == 1) {
+            applyFilters(
+                minViewValue = weightsList.min().roundToInt() - 2,
+                maxViewValue = weightsList.max().roundToInt() + 2,
+            )
+        }
     }
 
     fun removeWeight(index: Int) {
