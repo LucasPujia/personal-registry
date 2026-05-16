@@ -1,7 +1,5 @@
 package com.example.myapplication.utils
 
-import androidx.compose.material3.CalendarLocale
-import androidx.compose.material3.DatePickerFormatter
 import androidx.compose.material3.SelectableDates
 import com.example.myapplication.extensionFunctions.capitalize
 import java.time.Instant
@@ -34,30 +32,18 @@ fun localDateToDateKey(date: LocalDate): String = date.format(DateTimeFormatter.
 
 fun dateKeyToLocalDate(dateKey: String): LocalDate = LocalDate.parse(dateKey)
 
-fun now(): LocalDate = LocalDate.now()
-
 /**
  * Retorna el UTC-midnight del día actual.
  * Usar SOLO para inicializar/comparar DatePicker, no para persistir.
  */
 fun todayForDatePicker(): Long = forDatePicker(now())
 
+fun now(): LocalDate = LocalDate.now()
+
 fun selectableDatesFromFunction(isSelectableDate: (Long) -> Boolean): SelectableDates {
     return object : SelectableDates {
         override fun isSelectableDate(utcTimeMillis: Long): Boolean {
             return isSelectableDate(utcTimeMillis)
-        }
-    }
-}
-
-fun defaultDatePickerFormatter(): DatePickerFormatter {
-    return object : DatePickerFormatter {
-        override fun formatMonthYear(monthMillis: Long?, locale: CalendarLocale): String {
-            return resolveDatePickerMonthYearText(monthMillis)
-        }
-
-        override fun formatDate(dateMillis: Long?, locale: CalendarLocale, forContentDescription: Boolean): String {
-            return resolveDatePickerText(dateMillis)
         }
     }
 }

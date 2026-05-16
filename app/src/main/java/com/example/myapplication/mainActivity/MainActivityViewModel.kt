@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.myapplication.database.weight.WeightRecord
 import com.example.myapplication.utils.fromDatePicker
+import com.example.myapplication.utils.lastMonthRange
 import com.example.myapplication.utils.localDateToDateKey
 import com.example.myapplication.utils.now
 import kotlin.math.roundToInt
@@ -64,7 +65,7 @@ class MainActivityViewModel(
         minViewValue: Int?,
         maxViewValue: Int?,
         goalWeight: Int? = null,
-        dateRange: Pair<Long, Long>? = null,
+        dateRange: Pair<Long, Long>? = lastMonthRange(),
     ) {
         val newWeights = getWeightsFilteredByDate(dateRange)
         if (newWeights.isEmpty()) return
