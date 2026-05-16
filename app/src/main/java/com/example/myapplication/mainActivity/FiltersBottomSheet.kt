@@ -33,9 +33,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.extensionFunctions.selectedDateRange
 import com.example.myapplication.utils.defaultDatePickerFormatter
-import com.example.myapplication.utils.nowUTC
-import com.example.myapplication.utils.resolveDateText
+import com.example.myapplication.utils.resolveDatePickerText
 import com.example.myapplication.utils.selectableDatesFromFunction
+import com.example.myapplication.utils.todayForDatePicker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +51,7 @@ fun FiltersBottomSheet(
     val dateRangePickerState = rememberDateRangePickerState(
         initialSelectedStartDateMillis = viewModel.filters.dateRange?.first,
         initialSelectedEndDateMillis = viewModel.filters.dateRange?.second,
-        selectableDates = selectableDatesFromFunction { it <= nowUTC() }
+        selectableDates = selectableDatesFromFunction { it <= todayForDatePicker() }
     )
 
     ModalBottomSheet(
@@ -105,7 +105,7 @@ fun FiltersBottomSheet(
                 var previousEndDateMillis by remember { mutableStateOf<Long?>(null) }
                 Column {
                     val dateRangeText = dateRangePickerState.selectedDateRange()?.let { (start, end) ->
-                        "${resolveDateText(start)} - ${resolveDateText(end)}"
+                        "${resolveDatePickerText(start)} - ${resolveDatePickerText(end)}"
                     } ?: "Sin rango seleccionado"
                     Text(
                         text = "Rango de fechas",

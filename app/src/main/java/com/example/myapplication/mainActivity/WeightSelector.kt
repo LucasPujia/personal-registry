@@ -34,10 +34,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
-import com.example.myapplication.utils.nowUTC
 import com.example.myapplication.utils.pressedInteractionSource2
-import com.example.myapplication.utils.resolveDateText
+import com.example.myapplication.utils.resolveDatePickerText
 import com.example.myapplication.utils.selectableDatesFromFunction
+import com.example.myapplication.utils.todayForDatePicker
 import java.time.LocalDate
 import kotlin.math.pow
 
@@ -52,7 +52,7 @@ fun WeightSelector(
     }
     // TODO: definir qué valores son válidos y cuáles no
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = nowUTC(),
+        initialSelectedDateMillis = todayForDatePicker(),
         selectableDates = selectableDatesFromFunction { viewModel.isSelectableDate(it) },
         yearRange = IntRange(LocalDate.now().year - 1, LocalDate.now().year),
     )
@@ -64,7 +64,7 @@ fun WeightSelector(
     ) {
         FilterControls(datePickerState, viewModel)
 
-        if (!viewModel.isSelectableDate(datePickerState.selectedDateMillis ?: nowUTC())) {
+        if (!viewModel.isSelectableDate(datePickerState.selectedDateMillis ?: todayForDatePicker())) {
             Text(
                 text = "Ya hay un peso registrado para esta fecha",
                 style = MaterialTheme.typography.bodyLarge,
@@ -128,7 +128,7 @@ private fun FilterControls(
 
             var openedDatePicker by remember { mutableStateOf(false) }
             Text(
-                text = resolveDateText(datePickerState.selectedDateMillis),
+                text = resolveDatePickerText(datePickerState.selectedDateMillis),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 8.dp, end = 8.dp),
             )

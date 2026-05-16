@@ -1,25 +1,39 @@
 package com.example.myapplication.database.weight
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.myapplication.mainActivity.WeightItem
-import java.time.Instant.ofEpochMilli
-import java.time.ZoneOffset.UTC
+import com.example.myapplication.utils.dateKeyToLocalDate
+import com.example.myapplication.utils.forDatePicker
+import com.example.myapplication.utils.localDateToDateKey
+import com.example.myapplication.utils.now
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-@Entity(tableName = "weight_records")
+private val WEIGHT_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM")
+
+/**
+ * [dateKey] es la clave estable del día calendario ("YYYY-MM-DD").
+ * Se fija en el momento del registro y NUNCA se recalcula a partir de la zona horaria.
+ * Así, si el usuario viaja, sus registros siguen perteneciendo al día en que los creó.
+ *
+ * [createdAt] es solo para ordenación/auditoría, no se usa como identificador de día.
+ */
+@Entity(
+    tableName = "weight_records",
+    indices = [Index(value = ["dateKey"], unique = true)]
+)
 data class WeightRecord(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val weight: Float,
-    val createdAt: Long = System.currentTimeMillis(),
+    val dateKey: String = localDateToDateKey(now()),         // "YYYY-MM-DD" — zona local en el momento del alta
+    val createdAt: Long = forDatePicker(LocalDate.now()),
 ) {
-    fun formattedDate(): String {
-        return DateTimeFormatter.ofPattern("dd/MM").format(ofEpochMilli(this.createdAt).atZone(UTC))
-    }
+    fun localDate(): LocalDate = dateKeyToLocalDate(dateKey)
 
-    fun toWeightItem(): WeightItem {
-        return WeightItem(weight.toDouble(), formattedDate())
-    }
+    fun formattedDate(): String = localDate().format(WEIGHT_DATE_FORMATTER)
+
+    fun toWeightItem(): WeightItem = WeightItem(weight.toDouble(), formattedDate())
 }
-

@@ -7,7 +7,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.myapplication.database.weight.WeightRecord
-import com.example.myapplication.utils.nowUTC
+import com.example.myapplication.utils.fromDatePicker
+import com.example.myapplication.utils.localDateToDateKey
+import com.example.myapplication.utils.now
 import kotlin.math.roundToInt
 
 class MainActivityViewModel(
@@ -20,15 +22,23 @@ class MainActivityViewModel(
 
     init {
         syncWeights(model.getWeights())
-        applyFilters(
-            minViewValue = weightsList.min().roundToInt() - 2,
-            maxViewValue = weightsList.max().roundToInt() + 2,
-        )
-        reapplyFilters()
+        if (weightsList.isNotEmpty()) {
+            applyFilters(
+                minViewValue = weightsList.min().roundToInt() - 2,
+                maxViewValue = weightsList.max().roundToInt() + 2,
+            )
+            reapplyFilters()
+        }
     }
 
-    fun addWeight(weight: Float, date: Long?) {
-        syncWeights(model.addWeight(weight, date ?: nowUTC()))
+    /**
+     * [pickerMillis] son los milisegundos UTC-midnight provenientes del DatePicker.
+     * Se convierten a LocalDate y dateKey justo aquí; no viajan como Long al modelo.
+     */
+    fun addWeight(weight: Float, pickerMillis: Long?) {
+        val date = pickerMillis?.let { fromDatePicker(it) }
+            ?: now()
+        syncWeights(model.addWeight(weight, date))
         reapplyFilters()
     }
 
@@ -37,11 +47,17 @@ class MainActivityViewModel(
         reapplyFilters()
     }
 
+    /**
+     * [utcTimeMillis] proviene del DatePicker (UTC-midnight del día seleccionado).
+     * La comparación de unicidad se hace contra el dateKey almacenado, no contra timestamps.
+     */
     fun isSelectableDate(utcTimeMillis: Long): Boolean {
-        val selectedDay = utcTimeMillis / 86_400_000L
-        val currentDay = nowUTC() / 86_400_000L
-        val weights = model.getWeights()
-        return weights.none { (it.createdAt / 86_400_000L) == selectedDay } && selectedDay <= currentDay
+        val selectedDate = fromDatePicker(utcTimeMillis)
+        val selectedDateKey = localDateToDateKey(selectedDate)
+
+        val hasWeightThisDay = model.getWeights().any { it.dateKey == selectedDateKey }
+
+        return !hasWeightThisDay && !selectedDate.isAfter(now())
     }
 
     fun applyFilters(
@@ -75,26 +91,29 @@ class MainActivityViewModel(
     private fun resolveDateLabels(newWeights: List<WeightRecord>): List<String> {
         val size = newWeights.size
         return if (size < 6) newWeights.map { it.formattedDate() } else {
-            newWeights.slice(listOf(
-                0,
-                size / 4,
-                size / 2,
-                (size * 3) / 4,
-                size - 1
-            )).map { it.formattedDate() }
+            newWeights.slice(listOf(0, size / 4, size / 2, (size * 3) / 4, size - 1))
+                .map { it.formattedDate() }
         }
     }
 
     private fun syncWeights(weights: List<WeightRecord>) {
         weightsList.clear()
         weightsList.addAll(weights.map { it.weight })
-        filters = filters.copy( weights = weights.map(WeightRecord::toWeightItem) )
+        filters = filters.copy(weights = weights.map(WeightRecord::toWeightItem))
     }
 
+    /**
+     * Filtra por rango usando el dateKey de cada registro.
+     * Los extremos del rango provienen del DatePicker (UTC-midnight) y se convierten a LocalDate.
+     * Así no importa en qué zona horaria fue guardado el registro original.
+     */
     private fun getWeightsFilteredByDate(dateRange: Pair<Long, Long>?): List<WeightRecord> {
         val weights = model.getWeights()
-        if (dateRange == null) return weights
-        return weights.filter { it.createdAt in dateRange.first..dateRange.second }
+        dateRange ?: return weights
+
+        val startDate = fromDatePicker(dateRange.first)
+        val endDate = fromDatePicker(dateRange.second)
+        return weights.filter { it.localDate() in startDate..endDate }
     }
 }
 
@@ -108,11 +127,10 @@ data class ActiveFilters(
     val shouldAnimate: Boolean = true,
 ) {
     val weightsF: List<Float>
-        get() = weights.map{ it.weight.toFloat() }
+        get() = weights.map { it.weight.toFloat() }
     val weightsD: List<Double>
-        get() = weights.map{ it.weight }
+        get() = weights.map { it.weight }
 }
-
 
 class MainActivityViewModelFactory(
     private val mainActivityModel: MainActivityModel,

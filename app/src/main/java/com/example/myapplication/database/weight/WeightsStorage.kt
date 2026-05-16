@@ -1,6 +1,8 @@
 package com.example.myapplication.database.weight
 
-import com.example.myapplication.utils.nowUTC
+import com.example.myapplication.utils.forDatePicker
+import com.example.myapplication.utils.localDateToDateKey
+import com.example.myapplication.utils.now
 import kotlinx.coroutines.runBlocking
 
 interface WeightsStorage {
@@ -54,8 +56,13 @@ class InMemoryWeightsStorage(
     companion object {
         fun fromFloats(initialWeightsF: List<Float>): InMemoryWeightsStorage {
             return InMemoryWeightsStorage(
-                initialWeightsF.mapIndexed { index, it ->
-                    WeightRecord(weight = it, createdAt = nowUTC() - (initialWeightsF.size - index))
+                initialWeightsF.mapIndexed { index, weight ->
+                    val date = now().minusDays((initialWeightsF.size - index - 1).toLong())
+                    WeightRecord(
+                        weight = weight,
+                        dateKey = localDateToDateKey(date),
+                        createdAt = forDatePicker(date),
+                    )
                 }
             )
         }

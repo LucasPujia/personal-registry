@@ -3,25 +3,44 @@ package com.example.myapplication.utils
 import androidx.compose.material3.CalendarLocale
 import androidx.compose.material3.DatePickerFormatter
 import androidx.compose.material3.SelectableDates
+import com.example.myapplication.extensionFunctions.capitalize
 import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-fun nowUTC(): Long {
-    return LocalDateTime.now()
-        .atZone(ZoneId.of("UTC"))
-        .toInstant()
-        .toEpochMilli()
-}
+private val UTC_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM")
+private val UTC_MONTH_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM, yyyy")
 
-fun longUTCToLDT(milliseconds: Long): LocalDateTime {
-    return Instant
-        .ofEpochMilli(milliseconds)
-        .atZone(ZoneId.of("UTC"))
-        .toLocalDateTime()
-}
+/**
+ * Convierte una fecha al UTC-midnight que usa Material3 DatePicker internamente.
+ * Solo para inicializar/leer pickers, NO para persistir como identificador de día.
+ */
+fun forDatePicker(date: LocalDate): Long =
+    date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+
+/**
+ * Convierte los milisegundos UTC-midnight del DatePicker de regreso a su fecha calendario.
+ */
+fun fromDatePicker(utcMillis: Long): LocalDate =
+    Instant.ofEpochMilli(utcMillis).atZone(ZoneOffset.UTC).toLocalDate()
+
+/**
+ * Serializa una fecha como clave de día estable.
+ * Este valor es timezone-independent y nunca se recalcula con la zona actual.
+ */
+fun localDateToDateKey(date: LocalDate): String = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+
+fun dateKeyToLocalDate(dateKey: String): LocalDate = LocalDate.parse(dateKey)
+
+fun now(): LocalDate = LocalDate.now()
+
+/**
+ * Retorna el UTC-midnight del día actual.
+ * Usar SOLO para inicializar/comparar DatePicker, no para persistir.
+ */
+fun todayForDatePicker(): Long = forDatePicker(now())
 
 fun selectableDatesFromFunction(isSelectableDate: (Long) -> Boolean): SelectableDates {
     return object : SelectableDates {
@@ -34,39 +53,41 @@ fun selectableDatesFromFunction(isSelectableDate: (Long) -> Boolean): Selectable
 fun defaultDatePickerFormatter(): DatePickerFormatter {
     return object : DatePickerFormatter {
         override fun formatMonthYear(monthMillis: Long?, locale: CalendarLocale): String {
-            return resolveMonthYearText(monthMillis)
+            return resolveDatePickerMonthYearText(monthMillis)
         }
 
         override fun formatDate(dateMillis: Long?, locale: CalendarLocale, forContentDescription: Boolean): String {
-            return resolveDateText(dateMillis)
+            return resolveDatePickerText(dateMillis)
         }
     }
 }
 
-fun resolveDateText(selectedDateMillisUTC: Long?): String {
-    return selectedDateMillisUTC?.let {
-        val selectedDate = longUTCToLDT(it)
-        val today = longUTCToLDT(nowUTC())
-        val dateFormat = DateTimeFormatter.ofPattern("dd/MM")
+fun resolveDateText(date: LocalDate?, today: LocalDate = now()): String {
+    date ?: return "Hoy"
 
-        when (val dateFormatted = dateFormat.format(selectedDate)) {
-            dateFormat.format(today) -> "Hoy"
-            dateFormat.format(today.minusDays(1)) -> "Ayer"
-            else -> dateFormatted
-        }
-    } ?: "Hoy"
+    return when (date) {
+        today -> "Hoy"
+        today.minusDays(1) -> "Ayer"
+        else -> date.format(UTC_DATE_FORMATTER)
+    }
 }
 
-fun resolveMonthYearText(selectedDateMillisUTC: Long?): String {
-    return selectedDateMillisUTC?.let { dateMillis ->
-        val selectedDate = longUTCToLDT(dateMillis)
-        val today = longUTCToLDT(nowUTC())
-        val dateFormat = DateTimeFormatter.ofPattern("MMMM, yyyy")
+fun resolveMonthYearText(selectedDate: LocalDate?, currentMonth: YearMonth = YearMonth.now()): String {
+    selectedDate ?: return "Este mes"
+    val selectedMonth = YearMonth.from(selectedDate)
+    val selectedMonthFormated = selectedDate.format(UTC_MONTH_FORMATTER).capitalize()
 
-        when (val dateFormatted = dateFormat.format(selectedDate)) {
-            dateFormat.format(today) -> "Este mes ($dateFormatted)"
-            dateFormat.format(today.minusMonths(1)) -> "Mes pasado ($dateFormatted)"
-            else -> dateFormatted.capitalize(Locale.getDefault())
-        }
-    } ?: "Este mes"
+    return when (selectedMonth) {
+        currentMonth -> "Este mes ($selectedMonthFormated)"
+        currentMonth.minusMonths(1) -> "Mes pasado ($selectedMonthFormated)"
+        else -> selectedMonthFormated
+    }
+}
+
+fun resolveDatePickerText(selectedDateMillisUTC: Long?): String {
+    return resolveDateText(selectedDateMillisUTC?.let(::fromDatePicker))
+}
+
+fun resolveDatePickerMonthYearText(selectedDateMillisUTC: Long?): String {
+    return resolveMonthYearText(selectedDateMillisUTC?.let(::fromDatePicker))
 }

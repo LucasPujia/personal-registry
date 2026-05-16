@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.example.myapplication.database.weight.WeightRecord
 import com.example.myapplication.database.weight.WeightRecordDao
 
-@Database(entities = [WeightRecord::class], version = 2, exportSchema = false)
+@Database(entities = [WeightRecord::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun weightRecordDao(): WeightRecordDao
 

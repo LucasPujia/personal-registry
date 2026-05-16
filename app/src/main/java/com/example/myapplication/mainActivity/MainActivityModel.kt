@@ -2,6 +2,9 @@ package com.example.myapplication.mainActivity
 
 import com.example.myapplication.database.weight.WeightRecord
 import com.example.myapplication.database.weight.WeightsStorage
+import com.example.myapplication.utils.forDatePicker
+import com.example.myapplication.utils.localDateToDateKey
+import java.time.LocalDate
 
 class MainActivityModel(
     private val storage: WeightsStorage,
@@ -10,8 +13,12 @@ class MainActivityModel(
         return storage.readWeights()
     }
 
-    fun addWeight(weight: Float, date: Long): List<WeightRecord> {
-        val newRecord = WeightRecord(weight = weight, createdAt = date)
+    fun addWeight(weight: Float, date: LocalDate): List<WeightRecord> {
+        val newRecord = WeightRecord(
+            weight = weight,
+            dateKey = localDateToDateKey(date),
+            createdAt = forDatePicker(date),
+        )
         storage.addWeight(newRecord)
         return getWeights()
     }
