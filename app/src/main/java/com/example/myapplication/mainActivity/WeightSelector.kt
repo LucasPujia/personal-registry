@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -34,7 +35,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
-import com.example.myapplication.utils.pressedInteractionSource2
+import com.example.myapplication.utils.pressedInteractionSource
 import com.example.myapplication.utils.resolveDatePickerText
 import com.example.myapplication.utils.selectableDatesFromFunction
 import com.example.myapplication.utils.todayForDatePicker
@@ -82,7 +83,7 @@ fun WeightSelector(
             ) {
                 FilledIconButton(
                     onClick = { weight -= weightStep },
-                    interactionSource = pressedInteractionSource2 { weight -= weightStep },
+                    interactionSource = pressedInteractionSource { weight -= weightStep },
                 ) {
                     Icon(
                         painter = painterResource(id = android.R.drawable.arrow_down_float),
@@ -97,7 +98,7 @@ fun WeightSelector(
 
                 FilledIconButton(
                     onClick = { weight += weightStep },
-                    interactionSource = pressedInteractionSource2 { weight += weightStep },
+                    interactionSource = pressedInteractionSource { weight += weightStep },
                 ) {
                     Icon(
                         painter = painterResource(id = android.R.drawable.arrow_up_float),

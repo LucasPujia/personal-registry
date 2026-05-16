@@ -9,7 +9,7 @@ import androidx.compose.runtime.remember
 import kotlinx.coroutines.delay
 
 @Composable
-fun pressedInteractionSource2(callback: () -> Unit): MutableInteractionSource {
+fun pressedInteractionSource(callback: () -> Unit): MutableInteractionSource {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
