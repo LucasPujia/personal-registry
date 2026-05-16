@@ -117,7 +117,7 @@ fun VerticalNumberPicker(
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun VerticalNumberPickerPreview() {
     MaterialTheme {

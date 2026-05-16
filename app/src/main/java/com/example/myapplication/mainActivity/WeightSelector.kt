@@ -73,7 +73,7 @@ fun WeightSelector(
             VerticalNumberPicker(
                 value = weight,
                 onValueChange = { weight = it },
-                modifier = Modifier.fillMaxWidth().height(160.dp),
+                modifier = Modifier.fillMaxWidth().height(120.dp),
             )
 
             Row(

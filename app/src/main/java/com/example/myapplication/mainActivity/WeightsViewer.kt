@@ -41,32 +41,30 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
     Column() {
         if (viewModel.viewToggles.graph) LineChart(
             modifier = Modifier
-                .height(300.dp)
+                .height(250.dp)
                 .padding(top = 24.dp),
             // Recomponer solo cuando se modifiquen los filtros, para eso es necesario
             // que sea una data class (sino habría que poner cada valor utilizado)
             data = remember(viewModel.filters) {
                 buildList {
-                    add(
-                        Line(
-                            values = viewModel.filters.weightsD,
-                            color = SolidColor(Color(0xFF23af92)),
-                            firstGradientFillColor = Color(0xFF2BC0A1).copy(alpha = .8f),
-                            secondGradientFillColor = Color(0xFF2BC0A1).copy(alpha = .3f),
-                            strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
-                            gradientAnimationDelay = 1000,
-                            drawStyle = DrawStyle.Stroke(width = 2.dp),
-                            curvedEdges = viewModel.filters.weights.size >= 32,
+                    add(Line(
+                        values = viewModel.filters.weightsD,
+                        color = SolidColor(Color(0xFF23af92)),
+                        firstGradientFillColor = Color(0xFF2BC0A1).copy(alpha = .8f),
+                        secondGradientFillColor = Color(0xFF2BC0A1).copy(alpha = .3f),
+                        strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
+                        gradientAnimationDelay = 1000,
+                        drawStyle = DrawStyle.Stroke(width = 2.dp),
+                        curvedEdges = viewModel.filters.weights.size >= 32,
 //                            popupProperties = PopupProperties(
 //                                enabled = false,
 //                            ),
-                            dotProperties = DotProperties(
-                                enabled = viewModel.filters.weights.size < 32,
-                                radius = 4.dp,
-                                color = SolidColor(Color(0xFF23af92))
-                            )
+                        dotProperties = DotProperties(
+                            enabled = viewModel.filters.weights.size < 32,
+                            radius = 4.dp,
+                            color = SolidColor(Color(0xFF23af92))
                         )
-                    )
+                    ))
                     viewModel.filters.goalWeight?.let { goal -> add(
                         Line(
                             values = viewModel.filters.weights.map { goal.toDouble() },
