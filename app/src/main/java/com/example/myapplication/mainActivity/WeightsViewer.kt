@@ -39,7 +39,7 @@ import ir.ehsannarmani.compose_charts.models.Line
 fun WeightsViewer(viewModel: MainActivityViewModel) {
     val isPreview = LocalInspectionMode.current
     Column() {
-        LineChart(
+        if (viewModel.viewToggles.graph) LineChart(
             modifier = Modifier
                 .height(300.dp)
                 .padding(top = 24.dp),
@@ -98,33 +98,35 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
             )
         )
 
-        HorizontalDivider(thickness = 3.dp, modifier = Modifier.padding(top = 32.dp))
-        LazyColumn {
-            val weightsList = viewModel.filters.weights
-            items(weightsList.size) { index ->
-                val reversedIndex = weightsList.lastIndex - index
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    Text(
-                        text = weightsList[reversedIndex].formatted(),
-                    )
-                    IconButton(
-                        onClick = { viewModel.removeWeight(reversedIndex) },
+        if (viewModel.viewToggles.list) {
+            HorizontalDivider(thickness = 3.dp, modifier = Modifier.padding(top = 32.dp))
+            LazyColumn {
+                val weightsList = viewModel.filters.weights
+                items(weightsList.size) { index ->
+                    val reversedIndex = weightsList.lastIndex - index
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxSize(),
                     ) {
-                        Icon(
-                            painter = painterResource(id = android.R.drawable.ic_delete),
-                            contentDescription = "Eliminar peso",
-                            tint = Color.Red,
+                        Text(
+                            text = weightsList[reversedIndex].formatted(),
                         )
+                        IconButton(
+                            onClick = { viewModel.removeWeight(reversedIndex) },
+                        ) {
+                            Icon(
+                                painter = painterResource(id = android.R.drawable.ic_delete),
+                                contentDescription = "Eliminar peso",
+                                tint = Color.Red,
+                            )
+                        }
                     }
+                    if (index != weightsList.size - 1) HorizontalDivider(thickness = 2.dp)
                 }
-                if (index != weightsList.size - 1) HorizontalDivider(thickness = 2.dp)
             }
+            HorizontalDivider(thickness = 3.dp)
         }
-        HorizontalDivider(thickness = 3.dp)
     }
 }
 

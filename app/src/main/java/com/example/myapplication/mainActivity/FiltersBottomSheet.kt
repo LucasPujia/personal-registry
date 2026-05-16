@@ -48,6 +48,8 @@ fun FiltersBottomSheet(
     var minVal by remember { mutableStateOf(viewModel.filters.minViewValue.toString()) }
     var maxVal by remember { mutableStateOf(viewModel.filters.maxViewValue.toString()) }
     var goal by remember { mutableStateOf(viewModel.filters.goalWeight?.toString() ?: "") }
+    var showGraph by remember { mutableStateOf(viewModel.viewToggles.graph) }
+    var showList by remember { mutableStateOf(viewModel.viewToggles.list) }
     val dateRangePickerState = rememberDateRangePickerState(
         initialSelectedStartDateMillis = viewModel.filters.dateRange?.first,
         initialSelectedEndDateMillis = viewModel.filters.dateRange?.second,
@@ -155,6 +157,23 @@ fun FiltersBottomSheet(
                 }
             }
 
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Mostrar gráfico")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Switch(checked = showGraph, onCheckedChange = { showGraph = it })
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Mostrar lista")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Switch(checked = showList, onCheckedChange = { showList = it })
+                }
+            }
+
 
             Button(
                 onClick = {
@@ -164,6 +183,7 @@ fun FiltersBottomSheet(
                         goalWeight = goal.toIntOrNull(),
                         dateRange = dateRangePickerState.selectedDateRange()
                     )
+                    viewModel.applyViewToggles(showGraph, showList)
                     onDismissRequest()
                 },
                 modifier = Modifier.fillMaxWidth()

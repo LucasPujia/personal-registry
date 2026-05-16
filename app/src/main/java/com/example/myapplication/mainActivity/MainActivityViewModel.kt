@@ -19,6 +19,7 @@ class MainActivityViewModel(
 
     private val weightsList = mutableStateListOf<Float>()
     var filters by mutableStateOf(ActiveFilters()); private set
+    var viewToggles by mutableStateOf(ViewToggles()); private set
     var filtersOpened by mutableStateOf(false)
 
     init {
@@ -85,6 +86,10 @@ class MainActivityViewModel(
         )
     }
 
+    fun applyViewToggles(showGraph: Boolean, showList: Boolean) {
+        viewToggles = ViewToggles(graph = showGraph, list = showList)
+    }
+
     private fun reapplyFilters() {
         applyFilters(
             minViewValue = filters.minViewValue,
@@ -137,6 +142,11 @@ data class ActiveFilters(
     val weightsD: List<Double>
         get() = weights.map { it.weight }
 }
+
+data class ViewToggles(
+    val graph: Boolean = true,
+    val list: Boolean = true,
+)
 
 class MainActivityViewModelFactory(
     private val mainActivityModel: MainActivityModel,
