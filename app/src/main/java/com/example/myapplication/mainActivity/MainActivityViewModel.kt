@@ -27,16 +27,14 @@ class MainActivityViewModel(
     var viewTogglesOpened by mutableStateOf(false)
 
     init {
-        viewModelScope.launch {
-            val initialWeights = withContext(Dispatchers.IO) { model.getWeights() }
-            syncWeights(initialWeights)
-            if (initialWeights.isNotEmpty()) {
-                val weightValues = initialWeights.map { it.weight }
-                applyFilters(
-                    minViewValue = weightValues.min().roundToInt() - 2,
-                    maxViewValue = weightValues.max().roundToInt() + 2,
-                )
-            }
+        val initialWeights = model.getWeights()
+        syncWeights(initialWeights)
+        if (initialWeights.isNotEmpty()) {
+            val weightValues = initialWeights.map { it.weight }
+            applyFilters(
+                minViewValue = weightValues.min().roundToInt() - 2,
+                maxViewValue = weightValues.max().roundToInt() + 2,
+            )
         }
     }
 
