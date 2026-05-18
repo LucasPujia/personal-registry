@@ -5,10 +5,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import com.example.myapplication.utils.fromDatePicker
 import com.example.myapplication.utils.lastMonthRange
 import com.example.myapplication.utils.localDateToDateKey
 import com.example.myapplication.utils.now
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 class MainActivityViewModel(
@@ -23,14 +27,16 @@ class MainActivityViewModel(
     var viewTogglesOpened by mutableStateOf(false)
 
     init {
-        val initialWeights = model.getWeights()
-        syncWeights(initialWeights)
-        if (initialWeights.isNotEmpty()) {
-            val weightValues = initialWeights.map { it.weight }
-            applyFilters(
-                minViewValue = weightValues.min().roundToInt() - 2,
-                maxViewValue = weightValues.max().roundToInt() + 2,
-            )
+        viewModelScope.launch {
+            val initialWeights = withContext(Dispatchers.IO) { model.getWeights() }
+            syncWeights(initialWeights)
+            if (initialWeights.isNotEmpty()) {
+                val weightValues = initialWeights.map { it.weight }
+                applyFilters(
+                    minViewValue = weightValues.min().roundToInt() - 2,
+                    maxViewValue = weightValues.max().roundToInt() + 2,
+                )
+            }
         }
     }
 
@@ -39,24 +45,28 @@ class MainActivityViewModel(
      * Se convierten a LocalDate y dateKey justo aquí; no viajan como Long al modelo.
      */
     fun addWeight(weight: Float, pickerMillis: Long?) {
-        val date = pickerMillis?.let { fromDatePicker(it) } ?: now()
-        val updatedWeights = model.addWeight(weight, date)
-        syncWeights(updatedWeights)
-        reapplyFilters()
+        viewModelScope.launch {
+            val date = pickerMillis?.let { fromDatePicker(it) } ?: now()
+            val updatedWeights = withContext(Dispatchers.IO) { model.addWeight(weight, date) }
+            syncWeights(updatedWeights)
+            reapplyFilters()
 
-        if (updatedWeights.size == 1) {
-            val firstWeight = updatedWeights.first().weight.roundToInt()
-            applyFilters(
-                minViewValue = firstWeight - 2,
-                maxViewValue = firstWeight + 2,
-            )
+            if (updatedWeights.size == 1) {
+                val firstWeight = updatedWeights.first().weight.roundToInt()
+                applyFilters(
+                    minViewValue = firstWeight - 2,
+                    maxViewValue = firstWeight + 2,
+                )
+            }
         }
     }
 
     fun removeWeight(weightItem: WeightItem) {
-        val updatedWeights = model.removeWeight(weightItem)
-        syncWeights(updatedWeights)
-        reapplyFilters()
+        viewModelScope.launch {
+            val updatedWeights = withContext(Dispatchers.IO) { model.removeWeight(weightItem) }
+            syncWeights(updatedWeights)
+            reapplyFilters()
+        }
     }
 
     /**
@@ -79,10 +89,13 @@ class MainActivityViewModel(
         dateRange: Pair<Long, Long>? = lastMonthRange(),
     ) {
         val newWeights = getWeightsFilteredByDate(dateRange)
-        if (newWeights.isEmpty()) return
+        
+        val calculatedMin = if (newWeights.isNotEmpty()) (newWeights.minOf { it.weight }).roundToInt() - 2 else filters.minViewValue
+        val calculatedMax = if (newWeights.isNotEmpty()) (newWeights.maxOf { it.weight }).roundToInt() + 2 else filters.maxViewValue
+
         filters = filters.copy(
-            minViewValue = (minViewValue ?: filters.minViewValue).coerceAtMost((newWeights.minOf { it.weight }).roundToInt() - 2),
-            maxViewValue = (maxViewValue ?: filters.maxViewValue).coerceAtLeast((newWeights.maxOf { it.weight }).roundToInt() + 2),
+            minViewValue = minViewValue ?: calculatedMin,
+            maxViewValue = maxViewValue ?: calculatedMax,
             dateRange = dateRange ?: filters.dateRange,
             goalWeight = goalWeight,
             weights = newWeights,

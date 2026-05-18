@@ -92,12 +92,15 @@ fun WeightsViewer(viewModel: MainActivityViewModel) {
                 )
             ),
             gridProperties = GridProperties(
-                yAxisProperties = GridProperties.AxisProperties(lineCount = viewModel.filters.dateLabels.size)
+                yAxisProperties = GridProperties.AxisProperties(lineCount = viewModel.filters.dateLabels.size.coerceAtLeast(2))
             )
         )
 
         if (viewModel.viewToggles.list) {
             HorizontalDivider(thickness = 3.dp, modifier = Modifier.padding(top = 32.dp))
+            val weightsList = remember(viewModel.filters.weights) {
+                viewModel.filters.weights.reversed()
+            }
             LazyColumn {
                 val weightsList = viewModel.filters.weights
                 items(weightsList.size) { index ->
