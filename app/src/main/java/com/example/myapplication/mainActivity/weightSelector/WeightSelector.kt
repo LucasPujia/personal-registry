@@ -51,6 +51,8 @@ import com.example.myapplication.mainActivity.MainActivityViewModel
 import com.example.myapplication.mainActivity.WEIGHT_DECIMAL_PRECISION
 import com.example.myapplication.mainActivity.WEIGHT_DEFAULT_VALUE
 import com.example.myapplication.utils.OUTER_PADDING
+import com.example.myapplication.utils.now
+import com.example.myapplication.utils.nowMillis
 import com.example.myapplication.utils.pressedInteractionSource
 import com.example.myapplication.utils.resolveDatePickerText
 import com.example.myapplication.utils.selectableDatesFromFunction
@@ -85,38 +87,50 @@ fun WeightSelector(
 
         Spacer(Modifier.height(8.dp))
 
-        VerticalNumberPicker(
-            value = weight,
-            onValueChange = { weight = it },
-            modifier = Modifier.fillMaxWidth().height(120.dp)
-        )
+        if (viewModel.isSelectableDate(datePickerState.selectedDateMillis ?: nowMillis())) {
+            VerticalNumberPicker(
+                value = weight,
+                onValueChange = { weight = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+            )
 
-        Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            FilledIconButton(
-                onClick = { weight -= weightStep },
-                interactionSource = pressedInteractionSource { weight -= weightStep }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Icon(Icons.Default.Remove, contentDescription = "Disminuir peso")
+                FilledIconButton(
+                    onClick = { weight -= weightStep },
+                    interactionSource = pressedInteractionSource { weight -= weightStep }
+                ) {
+                    Icon(Icons.Default.Remove, contentDescription = "Disminuir peso")
+                }
+                Button(
+                    onClick = { viewModel.addWeight(weight, datePickerState.selectedDateMillis) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
+                ) {
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.add_weight), style = MaterialTheme.typography.titleMedium)
+                }
+                FilledIconButton(
+                    onClick = { weight += weightStep },
+                    interactionSource = pressedInteractionSource { weight += weightStep }
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Aumentar peso")
+                }
             }
-            Button(
-                onClick = { viewModel.addWeight(weight, datePickerState.selectedDateMillis) },
-                modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
-            ) {
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.add_weight), style = MaterialTheme.typography.titleMedium)
-            }
-            FilledIconButton(
-                onClick = { weight += weightStep },
-                interactionSource = pressedInteractionSource { weight += weightStep }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Aumentar peso")
-            }
+        } else {
+            Text(
+                text = stringResource(R.string.date_already_registered),
+                color = Color.Gray,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
@@ -195,11 +209,11 @@ private fun FilterControls(
             dismissButton = {
                 TextButton(onClick = {
                     openedDatePicker = false
-                    datePickerState.setSelectedDate(null)
+                    datePickerState.setSelectedDate(now())
                 }) { Text(stringResource(R.string.clear)) }
             }
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(state = datePickerState, title = null)
         }
     }
 }
@@ -212,5 +226,18 @@ fun WeightSelectorPreview() {
         val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
         val viewModel = MainActivityViewModel(MainActivityModel(memoryStorage))
         WeightSelector(viewModel)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DatePickerPreview() {
+    MaterialTheme {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = todayForDatePicker(),
+            selectableDates = selectableDatesFromFunction { true },
+            yearRange = IntRange(LocalDate.now().year - 1, LocalDate.now().year),
+        )
+        DatePicker(state = datePickerState, title = null )
     }
 }

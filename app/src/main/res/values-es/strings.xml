@@ -23,4 +23,5 @@
     <string name="delete">Eliminar</string>
     <string name="cancel">Cancelar</string>
     <string name="history">Historial</string>
+    <string name="date_already_registered">La fecha seleccionada ya tiene un peso registrado</string>
 </resources>

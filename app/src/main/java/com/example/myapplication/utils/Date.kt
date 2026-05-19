@@ -9,6 +9,7 @@ import com.example.myapplication.extensionFunctions.capitalize
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
@@ -43,6 +44,8 @@ fun dateKeyToLocalDate(dateKey: String): LocalDate = LocalDate.parse(dateKey)
 fun todayForDatePicker(): Long = forDatePicker(now())
 
 fun now(): LocalDate = LocalDate.now()
+
+fun nowMillis(): Long = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
 fun selectableDatesFromFunction(isSelectableDate: (Long) -> Boolean): SelectableDates {
     return object : SelectableDates {

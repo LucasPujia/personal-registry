@@ -22,4 +22,5 @@
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
     <string name="history">History</string>
+    <string name="date_already_registered">The selected date already has a weight registered</string>
 </resources>
