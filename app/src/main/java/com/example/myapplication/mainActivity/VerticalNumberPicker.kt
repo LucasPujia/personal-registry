@@ -1,7 +1,6 @@
 package com.example.myapplication.mainActivity
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -20,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -79,8 +79,8 @@ fun VerticalNumberPicker(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
-            .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
+            .background(Color.White)
+//            .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
             .draggable(
                 state = draggableState,
                 orientation = Orientation.Vertical,
@@ -100,7 +100,7 @@ fun VerticalNumberPicker(
 //            style = MaterialTheme.typography.displayLarge,
             fontSize = MaterialTheme.typography.displayLarge.fontSize * 1.4f,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = Color(0xFF6750A4),
             onTextLayout = { valueTextWidthPx = it.size.width },
             modifier = Modifier.align(Alignment.Center),
         )
@@ -109,7 +109,7 @@ fun VerticalNumberPicker(
             text = "kg",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Normal,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            color = Color(0xFF6750A4).copy(alpha = 0.6f),
             modifier = Modifier
                 .align(Alignment.Center)
                 .offset(x = kgOffsetX, y = 16.dp),

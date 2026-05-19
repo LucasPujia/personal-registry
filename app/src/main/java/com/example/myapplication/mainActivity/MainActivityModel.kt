@@ -2,6 +2,7 @@ package com.example.myapplication.mainActivity
 
 import com.example.myapplication.database.weight.WeightRecord
 import com.example.myapplication.database.weight.WeightsStorage
+import com.example.myapplication.mainActivity.weightItem.WeightItem
 import com.example.myapplication.utils.forDatePicker
 import com.example.myapplication.utils.localDateToDateKey
 import java.time.LocalDate

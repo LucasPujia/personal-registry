@@ -6,6 +6,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.mainActivity.weightItem.WeightItem
+import com.example.myapplication.utils.forDatePicker
 import com.example.myapplication.utils.fromDatePicker
 import com.example.myapplication.utils.lastMonthRange
 import com.example.myapplication.utils.localDateToDateKey
@@ -15,6 +17,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
+enum class TimeRange(val label: String) {
+    DAYS_7("7D"), DAYS_15("15D"), MONTH_1("1M"), MONTH_3("3M"), MONTH_6("6M"), YEAR_1("1A")
+}
+
+data class ViewToggles(
+    val graph: Boolean = true,
+    val list: Boolean = true,
+)
+
 class MainActivityViewModel(
     private val model: MainActivityModel,
 ) : ViewModel() {
@@ -23,6 +34,7 @@ class MainActivityViewModel(
     private var registeredDateKeys: Set<String> = emptySet()
     var filters by mutableStateOf(ActiveFilters()); private set
     var viewToggles by mutableStateOf(ViewToggles()); private set
+    var currentTimeRange by mutableStateOf<TimeRange?>(TimeRange.MONTH_1); private set
     var filtersOpened by mutableStateOf(false)
     var viewTogglesOpened by mutableStateOf(false)
 
@@ -81,8 +93,8 @@ class MainActivityViewModel(
     }
 
     fun applyFilters(
-        minViewValue: Int?,
-        maxViewValue: Int?,
+        minViewValue: Int? = null,
+        maxViewValue: Int? = null,
         goalWeight: Int? = null,
         dateRange: Pair<Long, Long>? = lastMonthRange(),
     ) {
@@ -104,6 +116,24 @@ class MainActivityViewModel(
 
     fun applyViewToggles(showGraph: Boolean, showList: Boolean) {
         viewToggles = ViewToggles(graph = showGraph, list = showList)
+    }
+
+    fun updateTimeRange(range: TimeRange) {
+        currentTimeRange = range
+        val endDate = now()
+        val startDate = when (range) {
+            TimeRange.DAYS_7 -> endDate.minusDays(7)
+            TimeRange.DAYS_15 -> endDate.minusDays(15)
+            TimeRange.MONTH_1 -> endDate.minusMonths(1)
+            TimeRange.MONTH_3 -> endDate.minusMonths(3)
+            TimeRange.MONTH_6 -> endDate.minusMonths(6)
+            TimeRange.YEAR_1 -> endDate.minusYears(1)
+        }
+
+        applyFilters(
+            goalWeight = filters.goalWeight,
+            dateRange = Pair(forDatePicker(startDate), forDatePicker(endDate))
+        )
     }
 
     private fun reapplyFilters() {
@@ -154,11 +184,6 @@ data class ActiveFilters(
     val weightsF: List<Float> by lazy { weights.map { it.weight.toFloat() } }
     val weightsD: List<Double> by lazy { weights.map { it.weight } }
 }
-
-data class ViewToggles(
-    val graph: Boolean = true,
-    val list: Boolean = true,
-)
 
 class MainActivityViewModelFactory(
     private val mainActivityModel: MainActivityModel,

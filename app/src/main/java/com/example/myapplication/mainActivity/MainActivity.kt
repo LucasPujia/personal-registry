@@ -8,7 +8,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -16,12 +16,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.example.myapplication.database.AppDatabase
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.database.weight.RoomWeightsStorage
 import com.example.myapplication.mainActivity.bottomSheet.BottomSheetHandler
+import com.example.myapplication.utils.OUTER_PADDING
 
 
 @Preview(showBackground = true)
@@ -60,12 +60,11 @@ fun MyApplicationApp(viewModel: MainActivityViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color.White)
-            .statusBarsPadding()
-            .padding(16.dp),
+            .background(color = Color(0xFFF8F7FF))
+            .statusBarsPadding(),
     ) {
         WeightSelector(viewModel)
-        if (viewModel.filters.weights.isNotEmpty()) WeightsViewer(viewModel)
+        if (viewModel.filters.weights.isNotEmpty()) WeightsViewer(viewModel, Modifier.offset(y = -OUTER_PADDING))
     }
 
     BottomSheetHandler(viewModel)

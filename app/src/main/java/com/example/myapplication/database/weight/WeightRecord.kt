@@ -3,7 +3,7 @@ package com.example.myapplication.database.weight
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.myapplication.mainActivity.WeightItem
+import com.example.myapplication.mainActivity.weightItem.WeightItem
 import com.example.myapplication.utils.dateKeyToLocalDate
 import com.example.myapplication.utils.forDatePicker
 import com.example.myapplication.utils.localDateToDateKey
@@ -35,5 +35,9 @@ data class WeightRecord(
 
     fun formattedDate(): String = localDate().format(WEIGHT_DATE_FORMATTER)
 
-    fun toWeightItem(): WeightItem = WeightItem(weight.toDouble(), formattedDate(), dateKey)
+    fun toWeightItem(): WeightItem = WeightItem(
+        weight = weight.toDouble(),
+        date = formattedDate(),
+        dateKey = dateKey
+    )
 }
