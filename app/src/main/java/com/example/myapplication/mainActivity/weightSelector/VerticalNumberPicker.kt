@@ -1,5 +1,8 @@
 package com.example.myapplication.mainActivity.weightSelector
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -11,15 +14,18 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,17 +35,17 @@ import com.example.myapplication.mainActivity.WEIGHT_MAX_VALUE
 import com.example.myapplication.mainActivity.WEIGHT_MIN_VALUE
 import com.example.myapplication.mainActivity.WEIGHT_PIXELS_PER_UNIT
 import com.example.myapplication.mainActivity.WEIGHT_SCROLL_INVERTED
+import kotlinx.coroutines.launch
+import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
 /**
- * Selector de número vertical tipo drum-wheel.
+ * Selector de número vertical tipo drum-wheel con movimiento fluido.
  *
  * - Arrastrar verticalmente para cambiar el valor.
- * - El movimiento es estrictamente **lineal**: cada [pixelsPerUnit] píxeles
- *   de arrastre cambia el valor en exactamente 1.0 unidad, sin aceleración.
- * - Muestra **un único número** a la vez; el valor se actualiza en tiempo real
- *   mientras el usuario arrastra.
+ * - Muestra el valor central resaltado y previsualizaciones de los valores adyacentes.
+ * - El movimiento es fluido y los números cambian de tamaño y opacidad al alejarse del centro.
  *
  * @param value         Valor actual.
  * @param onValueChange Callback llamado con el nuevo valor durante el arrastre.
@@ -60,20 +66,37 @@ fun VerticalNumberPicker(
     minValue: Float = WEIGHT_MIN_VALUE,
     maxValue: Float = WEIGHT_MAX_VALUE,
 ) {
-    // Valor en el momento en que inicia el gesto (referencia absoluta)
-    var dragStartValue by remember { mutableFloatStateOf(value) }
-    // Desplazamiento total acumulado en píxeles desde el inicio del gesto
-    var dragAccumulator by remember { mutableFloatStateOf(0f) }
+    val step = remember(precision) { (10.0).pow(-precision).toFloat() }
+    val scope = rememberCoroutineScope()
+    
+    // Animatable para el valor continuo con soporte para snapping fluido
+    val continuousValue = remember { Animatable(value) }
+    var isDragging by remember { mutableStateOf(false) }
+
+    // Sincronizar con cambios externos (e.g. filtros/botones, así no salta sino que anima)
+    LaunchedEffect(value) {
+        if (!isDragging && abs(continuousValue.value - value) > 0.0001f) {
+            continuousValue.animateTo(
+                targetValue = value,
+                animationSpec = spring(stiffness = Spring.StiffnessLow)
+            )
+        }
+    }
 
     val draggableState = rememberDraggableState { delta ->
-        dragAccumulator += delta
         val directionMultiplier = if (isScrollInverted) 1f else -1f
-        val deltaUnits = directionMultiplier * dragAccumulator / pixelsPerUnit
-        val rawNew = dragStartValue + deltaUnits
-        // Ajustar al step más cercano (10^-precision) para evitar artefactos de punto flotante
+        val deltaUnits = directionMultiplier * delta / pixelsPerUnit
+        val newValue = (continuousValue.value + deltaUnits).coerceIn(minValue, maxValue)
+        
+        scope.launch {
+            continuousValue.snapTo(newValue)
+        }
+        
         val factor = (10.0).pow(precision)
-        val snapped = ((rawNew * factor).roundToInt() / factor).toFloat()
-        onValueChange(snapped.coerceIn(minValue, maxValue))
+        val snapped = ((newValue * factor).roundToInt() / factor).toFloat()
+        if (snapped != value) {
+            onValueChange(snapped)
+        }
     }
 
     // Ancho medido del valor para ubicar 'kg' a su derecha sin afectar el centrado.
@@ -85,30 +108,66 @@ fun VerticalNumberPicker(
         modifier = modifier
             .clip(MaterialTheme.shapes.medium)
             .background(Color.White)
-//            .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
             .draggable(
                 state = draggableState,
                 orientation = Orientation.Vertical,
-                onDragStarted = {
-                    dragStartValue = value
-                    dragAccumulator = 0f
-                },
-                onDragStopped = {
-                    dragAccumulator = 0f
-                },
+                onDragStarted = { isDragging = true },
+                onDragStopped = { 
+                    isDragging = false
+                    // Al soltar, animamos hacia el valor actual con rebote visual (bouncy)
+                    scope.launch {
+                        continuousValue.animateTo(
+                            targetValue = value,
+                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                        )
+                    }
+                }
             ),
     ) {
+        val itemHeight = 45.dp
         val kgOffsetX = (valueTextWidthPx / (2f * density.density)).dp + 16.dp
+        
+        // Calculamos el índice central y el rango de items a mostrar
+        // Mayor arriba, menor abajo. 
+        val centerValue = continuousValue.value
+        val centerIndex = centerValue / step
+        val startIndex = (centerIndex.roundToInt() - 3)
+        val endIndex = (centerIndex.roundToInt() + 3)
 
-        Text(
-            text = "%.${precision}f".format(value),
-//            style = MaterialTheme.typography.displayLarge,
-            fontSize = MaterialTheme.typography.displayLarge.fontSize * 1.4f,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF6750A4),
-            onTextLayout = { valueTextWidthPx = it.size.width },
-            modifier = Modifier.align(Alignment.Center),
-        )
+        for (i in startIndex..endIndex) {
+            val itemValue = i * step
+            if (itemValue < minValue - 0.0001f || itemValue > maxValue + 0.0001f) continue
+
+            // Para que el mayor esté ARRIBA, usamos (centerIndex - i)
+            val distanceFromCenter = (centerValue / step) - i 
+            val absDistance = abs(distanceFromCenter)
+
+            // Interpolación de estilos agresiva para que el central destaque mucho más
+            val scale = (1f - absDistance * 0.5f).coerceAtLeast(0.5f)
+            val alpha = (1f - (absDistance * 0.3f)).coerceIn(0f, 1f)
+            val yOffset = distanceFromCenter * itemHeight.value
+
+            Text(
+                text = "%.${precision}f".format(itemValue),
+                fontSize = MaterialTheme.typography.displayLarge.fontSize,
+                fontWeight = if (absDistance < 0.5f) FontWeight.Bold else FontWeight.SemiBold,
+                color = Color(0xFF6750A4),
+                onTextLayout = { 
+                    if (absDistance < 0.5f) {
+                        valueTextWidthPx = it.size.width 
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .graphicsLayer {
+                        this.scaleX = scale
+                        this.scaleY = scale
+                        this.alpha = alpha
+                        this.rotationX = -distanceFromCenter * 40f
+                        this.translationY = yOffset * density.density
+                    }
+            )
+        }
 
         Text(
             text = "kg",
@@ -117,7 +176,7 @@ fun VerticalNumberPicker(
             color = Color(0xFF6750A4).copy(alpha = 0.6f),
             modifier = Modifier
                 .align(Alignment.Center)
-                .offset(x = kgOffsetX, y = 16.dp),
+                .offset(x = kgOffsetX, y = 8.dp),
         )
     }
 }

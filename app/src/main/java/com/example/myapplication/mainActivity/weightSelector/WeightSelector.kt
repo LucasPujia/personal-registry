@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,6 +49,7 @@ import com.example.myapplication.mainActivity.MainActivityViewModel
 import com.example.myapplication.mainActivity.WEIGHT_DECIMAL_PRECISION
 import com.example.myapplication.mainActivity.WEIGHT_DEFAULT_VALUE
 import com.example.myapplication.utils.OUTER_PADDING
+import com.example.myapplication.utils.pressedInteractionSource
 import com.example.myapplication.utils.resolveDatePickerText
 import com.example.myapplication.utils.selectableDatesFromFunction
 import com.example.myapplication.utils.todayForDatePicker
@@ -90,15 +92,30 @@ fun WeightSelector(
 
         Spacer(Modifier.height(8.dp))
 
-        Button(
-            onClick = { viewModel.addWeight(weight, datePickerState.selectedDateMillis) },
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
         ) {
-            Icon(Icons.Default.Add, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Agregar peso", style = MaterialTheme.typography.titleMedium)
+            FilledIconButton(
+                onClick = { weight -= weightStep },
+                interactionSource = pressedInteractionSource { weight -= weightStep }
+            ) {
+                Icon(Icons.Default.Remove, contentDescription = "Disminuir peso")
+            }
+            Button(
+                onClick = { viewModel.addWeight(weight, datePickerState.selectedDateMillis) },
+                modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
+            ) {
+                Spacer(Modifier.width(8.dp))
+                Text("Añadir peso", style = MaterialTheme.typography.titleMedium)
+            }
+            FilledIconButton(
+                onClick = { weight += weightStep },
+                interactionSource = pressedInteractionSource { weight += weightStep }
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Aumentar peso")
+            }
         }
     }
 }
