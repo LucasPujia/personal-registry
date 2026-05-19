@@ -21,6 +21,8 @@ import com.example.myapplication.database.AppDatabase
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.database.weight.RoomWeightsStorage
 import com.example.myapplication.mainActivity.bottomSheet.BottomSheetHandler
+import com.example.myapplication.mainActivity.weightSelector.WeightSelector
+import com.example.myapplication.mainActivity.weightsViewer.WeightsViewer
 import com.example.myapplication.utils.OUTER_PADDING
 
 
@@ -64,7 +66,10 @@ fun MyApplicationApp(viewModel: MainActivityViewModel) {
             .statusBarsPadding(),
     ) {
         WeightSelector(viewModel)
-        if (viewModel.filters.weights.isNotEmpty()) WeightsViewer(viewModel, Modifier.offset(y = -OUTER_PADDING))
+        if (viewModel.filters.weights.isNotEmpty()) WeightsViewer(
+            viewModel,
+            Modifier.offset(y = -OUTER_PADDING)
+        )
     }
 
     BottomSheetHandler(viewModel)

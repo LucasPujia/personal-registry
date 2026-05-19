@@ -1,4 +1,4 @@
-package com.example.myapplication.mainActivity
+package com.example.myapplication.mainActivity.weightSelector
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
@@ -24,6 +24,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.mainActivity.WEIGHT_DECIMAL_PRECISION
+import com.example.myapplication.mainActivity.WEIGHT_MAX_VALUE
+import com.example.myapplication.mainActivity.WEIGHT_MIN_VALUE
+import com.example.myapplication.mainActivity.WEIGHT_PIXELS_PER_UNIT
+import com.example.myapplication.mainActivity.WEIGHT_SCROLL_INVERTED
 import kotlin.math.pow
 import kotlin.math.roundToInt
 

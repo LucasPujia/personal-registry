@@ -41,13 +41,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.mainActivity.MainActivityViewModel
-import com.example.myapplication.mainActivity.WeightDeletionState
+import com.example.myapplication.mainActivity.weightsViewer.WeightDeletionState
 import com.example.myapplication.utils.viewModelFromFloats
 
 enum class DragValue { Settled, Revealed }
 
 @Composable
-fun WeightListItem(
+fun WeightCard(
     item: WeightItem,
     previousWeight: Double?,
     viewModel: MainActivityViewModel,
@@ -200,14 +200,14 @@ private fun BoxScope.CloseButton(
 
 @Preview(showBackground = true)
 @Composable
-fun WeightListItemPreview() {
+fun WeightCardPreview() {
     val item = WeightItem(
         weight = 70.5,
         dateKey = "2024-06-15",
         date = "15/06"
     )
 
-    WeightListItem(
+    WeightCard(
         item = item,
         previousWeight = 71.0,
         viewModel = viewModelFromFloats(listOf(70.5f)),

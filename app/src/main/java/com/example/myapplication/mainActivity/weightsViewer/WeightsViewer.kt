@@ -1,4 +1,4 @@
-package com.example.myapplication.mainActivity
+package com.example.myapplication.mainActivity.weightsViewer
 
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
@@ -40,8 +40,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
+import com.example.myapplication.mainActivity.MainActivityModel
+import com.example.myapplication.mainActivity.MainActivityViewModel
+import com.example.myapplication.mainActivity.TimeRange
+import com.example.myapplication.mainActivity.weightItem.WeightCard
 import com.example.myapplication.mainActivity.weightItem.WeightItem
-import com.example.myapplication.mainActivity.weightItem.WeightListItem
 import com.example.myapplication.utils.OUTER_PADDING
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
@@ -156,7 +159,7 @@ fun WeightsViewer(
                     key = { _, item -> item.dateKey }
                 ) { index, item ->
                     val previousItem = if (index + 1 < weightsListReversed.size) weightsListReversed[index + 1] else null
-                    WeightListItem(item, previousItem?.weight, viewModel, deletionState)
+                    WeightCard(item, previousItem?.weight, viewModel, deletionState)
                 }
             }
         }

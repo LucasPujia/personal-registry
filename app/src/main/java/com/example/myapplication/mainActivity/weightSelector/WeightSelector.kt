@@ -1,4 +1,4 @@
-package com.example.myapplication.mainActivity
+package com.example.myapplication.mainActivity.weightSelector
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +43,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
+import com.example.myapplication.mainActivity.MainActivityModel
+import com.example.myapplication.mainActivity.MainActivityViewModel
+import com.example.myapplication.mainActivity.WEIGHT_DECIMAL_PRECISION
+import com.example.myapplication.mainActivity.WEIGHT_DEFAULT_VALUE
 import com.example.myapplication.utils.OUTER_PADDING
 import com.example.myapplication.utils.resolveDatePickerText
 import com.example.myapplication.utils.selectableDatesFromFunction
