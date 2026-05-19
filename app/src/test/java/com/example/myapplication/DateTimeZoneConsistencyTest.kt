@@ -50,7 +50,7 @@ class DateTimeZoneConsistencyTest {
             val pickerMillis = forDatePicker(selected)
 
             assertEquals(selected, fromDatePicker(pickerMillis))
-            assertEquals("15/01", resolveDatePickerText(pickerMillis))
+            assertEquals("15/01", resolveDatePickerText(null, pickerMillis))
         }
     }
 
@@ -62,7 +62,7 @@ class DateTimeZoneConsistencyTest {
             val expected = selected.format(DateTimeFormatter.ofPattern("MMMM, yyyy"))
                 .replaceFirstChar { it.uppercase() }
 
-            assertEquals(expected, resolveDatePickerMonthYearText(pickerMillis))
+            assertEquals(expected, resolveDatePickerMonthYearText(null, pickerMillis))
         }
     }
 
@@ -169,9 +169,8 @@ class DateTimeZoneConsistencyTest {
             val storage = InMemoryWeightsStorage(
                 listOf(WeightRecord(weight = 68f, dateKey = localDateToDateKey(today.minusDays(1))))
             )
-            val viewModel = MainActivityViewModel(MainActivityModel(storage))
-
-            viewModel.addWeight(69f, null)
+            val model = MainActivityModel(storage)
+            model.addWeight(69f, today)
 
             val storedKey = storage.readWeights().last().dateKey
             assertEquals(localDateToDateKey(today), storedKey)

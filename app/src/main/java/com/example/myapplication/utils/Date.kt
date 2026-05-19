@@ -1,6 +1,10 @@
 package com.example.myapplication.utils
 
+import android.content.Context
 import androidx.compose.material3.SelectableDates
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import com.example.myapplication.R
 import com.example.myapplication.extensionFunctions.capitalize
 import java.time.Instant
 import java.time.LocalDate
@@ -48,32 +52,44 @@ fun selectableDatesFromFunction(isSelectableDate: (Long) -> Boolean): Selectable
     }
 }
 
-fun resolveDateText(date: LocalDate?, today: LocalDate = now()): String {
-    date ?: return "Hoy"
+// --- RESOLVE DATE TEXT ---
+
+@Composable
+fun resolveDatePickerText(selectedDateMillisUTC: Long?): String {
+    return resolveDatePickerText(LocalContext.current, selectedDateMillisUTC)
+}
+
+fun resolveDatePickerText(context: Context?, selectedDateMillisUTC: Long?): String {
+    return resolveDateText(context, selectedDateMillisUTC?.let(::fromDatePicker))
+}
+
+fun resolveDateText(context: Context?, date: LocalDate?, today: LocalDate = now()): String {
+    if (context == null || date == null) return date?.format(UTC_DATE_FORMATTER) ?: ""
 
     return when (date) {
-        today -> "Hoy"
-        today.minusDays(1) -> "Ayer"
+        today -> context.getString(R.string.today)
+        today.minusDays(1) -> context.getString(R.string.yesterday)
         else -> date.format(UTC_DATE_FORMATTER)
     }
 }
 
-fun resolveMonthYearText(selectedDate: LocalDate?, currentMonth: YearMonth = YearMonth.now()): String {
-    selectedDate ?: return "Este mes"
+// --- RESOLVE MONTH YEAR TEXT ---
+
+fun resolveDatePickerMonthYearText(context: Context?, selectedDateMillisUTC: Long?): String {
+    return resolveMonthYearText(context, selectedDateMillisUTC?.let(::fromDatePicker))
+}
+
+fun resolveMonthYearText(context: Context?, selectedDate: LocalDate?, currentMonth: YearMonth = YearMonth.now()): String {
+    if (context == null || selectedDate == null) {
+        return selectedDate?.format(UTC_MONTH_FORMATTER)?.replaceFirstChar { it.uppercase() } ?: ""
+    }
+
     val selectedMonth = YearMonth.from(selectedDate)
     val selectedMonthFormated = selectedDate.format(UTC_MONTH_FORMATTER).capitalize()
 
     return when (selectedMonth) {
-        currentMonth -> "Este mes ($selectedMonthFormated)"
-        currentMonth.minusMonths(1) -> "Mes pasado ($selectedMonthFormated)"
+        currentMonth -> context.getString(R.string.this_month) + " ($selectedMonthFormated)"
+        currentMonth.minusMonths(1) -> context.getString(R.string.last_month) + " ($selectedMonthFormated)"
         else -> selectedMonthFormated
     }
-}
-
-fun resolveDatePickerText(selectedDateMillisUTC: Long?): String {
-    return resolveDateText(selectedDateMillisUTC?.let(::fromDatePicker))
-}
-
-fun resolveDatePickerMonthYearText(selectedDateMillisUTC: Long?): String {
-    return resolveMonthYearText(selectedDateMillisUTC?.let(::fromDatePicker))
 }

@@ -36,9 +36,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.R
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.mainActivity.MainActivityModel
 import com.example.myapplication.mainActivity.MainActivityViewModel
@@ -204,7 +206,7 @@ private fun HistorialHeader() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            "Historial",
+            stringResource(R.string.history),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -234,16 +236,16 @@ private fun ConfirmDeletionDialog(
     if (deletionState.weightToDelete == null) return
     AlertDialog(
         onDismissRequest = { deletionState.dismiss() },
-        title = { Text("Confirmar eliminación") },
+        title = { Text(stringResource(R.string.confirm_deletion)) },
         text = {
             Column {
-                Text("¿Estás seguro de que deseas borrar este registro?")
+                Text(stringResource(R.string.confirm_deletion_question))
                 if (deletionState.deletionCount >= 2) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(top = 16.dp)
                     ) {
-                        Text("¿No volver a preguntar?", modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.dont_ask_again), modifier = Modifier.weight(1f))
                         Switch(
                             checked = deletionState.dontAskAgainChecked,
                             onCheckedChange = { deletionState.dontAskAgainChecked = it }
@@ -254,12 +256,12 @@ private fun ConfirmDeletionDialog(
         },
         confirmButton = {
             TextButton(onClick = { deletionState.confirmDeletion(viewModel) }) {
-                Text("Eliminar")
+                Text(stringResource(R.string.delete))
             }
         },
         dismissButton = {
             TextButton(onClick = { deletionState.dismiss() }) {
-                Text("Cancelar")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

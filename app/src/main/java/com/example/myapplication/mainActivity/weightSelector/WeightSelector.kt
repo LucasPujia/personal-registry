@@ -40,9 +40,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.R
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.mainActivity.MainActivityModel
 import com.example.myapplication.mainActivity.MainActivityViewModel
@@ -67,7 +69,6 @@ fun WeightSelector(
         mutableFloatStateOf(latestStoredWeight ?: WEIGHT_DEFAULT_VALUE)
     }
 
-    // TODO: definir qué valores son válidos y cuáles no
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = todayForDatePicker(),
         selectableDates = selectableDatesFromFunction { viewModel.isSelectableDate(it) },
@@ -108,7 +109,7 @@ fun WeightSelector(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
             ) {
                 Spacer(Modifier.width(8.dp))
-                Text("Añadir peso", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.add_weight), style = MaterialTheme.typography.titleMedium)
             }
             FilledIconButton(
                 onClick = { weight += weightStep },
@@ -189,13 +190,13 @@ private fun FilterControls(
         if (openedDatePicker) DatePickerDialog(
             onDismissRequest = { openedDatePicker = false },
             confirmButton = {
-                TextButton(onClick = { openedDatePicker = false }) { Text("Aceptar") }
+                TextButton(onClick = { openedDatePicker = false }) { Text(stringResource(R.string.accept)) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     openedDatePicker = false
                     datePickerState.setSelectedDate(null)
-                }) { Text("Limpiar") }
+                }) { Text(stringResource(R.string.clear)) }
             }
         ) {
             DatePicker(state = datePickerState)
