@@ -99,6 +99,7 @@ class MainActivityViewModel(
         goalWeight: Int? = null,
         dateRange: Pair<Long, Long>? = lastMonthRange(),
     ): Int? {
+        if (allWeights.isEmpty()) filters = filters.copy(weights = emptyList(), dateLabels = emptyList())
         val newWeights = getWeightsFilteredByDate(dateRange)
 
         if (newWeights.isEmpty()) return R.string.no_registry_error
