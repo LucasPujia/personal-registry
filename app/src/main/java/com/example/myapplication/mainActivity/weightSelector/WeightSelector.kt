@@ -218,7 +218,7 @@ private fun FilterControls(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, backgroundColor = 0xFFF8F7FF)
 @Composable
 fun WeightSelectorPreview() {
     MaterialTheme {
@@ -229,7 +229,7 @@ fun WeightSelectorPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, widthDp = 400, heightDp = 600)
 @Composable
 fun DatePickerPreview() {
     MaterialTheme {
@@ -238,6 +238,16 @@ fun DatePickerPreview() {
             selectableDates = selectableDatesFromFunction { true },
             yearRange = IntRange(LocalDate.now().year - 1, LocalDate.now().year),
         )
-        DatePicker(state = datePickerState, title = null )
+        DatePickerDialog(
+            onDismissRequest = { },
+            confirmButton = {
+                TextButton(onClick = { }) { Text(stringResource(R.string.accept)) }
+            },
+            dismissButton = {
+                TextButton(onClick = {}) { Text(stringResource(R.string.clear)) }
+            }
+        ) {
+            DatePicker(state = datePickerState, title = null)
+        }
     }
 }
