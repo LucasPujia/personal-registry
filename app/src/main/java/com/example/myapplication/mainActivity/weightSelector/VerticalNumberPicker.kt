@@ -125,7 +125,7 @@ fun VerticalNumberPicker(
             ),
     ) {
         val itemHeight = 45.dp
-        val kgOffsetX = (valueTextWidthPx / (2f * density.density)).dp + 16.dp
+        val kgOffsetX = remember(valueTextWidthPx, density) { (valueTextWidthPx / (2f * density.density)).dp + 16.dp }
         
         // Calculamos el índice central y el rango de items a mostrar
         // Mayor arriba, menor abajo. 
@@ -153,7 +153,7 @@ fun VerticalNumberPicker(
                 fontWeight = if (absDistance < 0.5f) FontWeight.Bold else FontWeight.SemiBold,
                 color = Color(0xFF6750A4),
                 onTextLayout = { 
-                    if (absDistance < 0.5f) {
+                    if (absDistance < 0.5f && valueTextWidthPx != it.size.width) {
                         valueTextWidthPx = it.size.width 
                     }
                 },
