@@ -23,4 +23,7 @@
     <string name="cancel">Cancel</string>
     <string name="history">History</string>
     <string name="date_already_registered">The selected date already has a weight registered</string>
+    <string name="warning">Warning</string>
+    <string name="no_registry_error">There are no registries in the selected range.</string>
+    <string name="no_range_selected">No range selected</string>
 </resources>

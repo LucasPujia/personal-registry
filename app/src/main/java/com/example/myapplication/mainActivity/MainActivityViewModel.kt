@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.R
 import com.example.myapplication.mainActivity.weightItem.WeightItem
 import com.example.myapplication.utils.forDatePicker
 import com.example.myapplication.utils.fromDatePicker
@@ -97,21 +98,33 @@ class MainActivityViewModel(
         maxViewValue: Int? = null,
         goalWeight: Int? = null,
         dateRange: Pair<Long, Long>? = lastMonthRange(),
-    ) {
+    ): Int? {
         val newWeights = getWeightsFilteredByDate(dateRange)
-        
-        val calculatedMin = if (newWeights.isNotEmpty()) (newWeights.minOf { it.weight }).roundToInt() - 2 else filters.minViewValue
-        val calculatedMax = if (newWeights.isNotEmpty()) (newWeights.maxOf { it.weight }).roundToInt() + 2 else filters.maxViewValue
+
+        if (newWeights.isEmpty()) return R.string.no_registry_error
+
+        val max = listOfNotNull(
+            newWeights.maxOf { it.weight }.toInt() + 2,
+            goalWeight?.plus(2),
+            maxViewValue
+        ).maxOrNull() ?: filters.maxViewValue
+
+        val min = listOfNotNull(
+            newWeights.minOf { it.weight }.toInt() - 2,
+            goalWeight?.minus(2),
+            minViewValue
+        ).minOrNull() ?: filters.minViewValue
 
         filters = filters.copy(
-            minViewValue = minViewValue ?: calculatedMin,
-            maxViewValue = maxViewValue ?: calculatedMax,
+            minViewValue = min,
+            maxViewValue = max,
             dateRange = dateRange ?: filters.dateRange,
             goalWeight = goalWeight,
             weights = newWeights,
             shouldAnimate = dateRange != filters.dateRange || goalWeight != filters.goalWeight,
             dateLabels = resolveDateLabels(newWeights),
         )
+        return null
     }
 
     fun applyViewToggles(showGraph: Boolean, showList: Boolean) {
