@@ -62,7 +62,7 @@ fun FiltersContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Filtros",
+            text = stringResource(R.string.filters),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
@@ -70,7 +70,7 @@ fun FiltersContent(
         OutlinedTextField(
             value = minVal,
             onValueChange = { minVal = it },
-            label = { Text("Mínimo (Gráfico)") },
+            label = { Text("${stringResource(R.string.minimum)} (${stringResource(R.string.graph)})") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
@@ -78,7 +78,7 @@ fun FiltersContent(
         OutlinedTextField(
             value = maxVal,
             onValueChange = { maxVal = it },
-            label = { Text("Máximo (Gráfico)") },
+            label = { Text("${stringResource(R.string.maximum)} (${stringResource(R.string.graph)})") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
@@ -86,7 +86,7 @@ fun FiltersContent(
         OutlinedTextField(
             value = goal,
             onValueChange = { goal = it },
-            label = { Text("Peso Objetivo") },
+            label = { Text(stringResource(R.string.weight_goal)) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
@@ -99,7 +99,7 @@ fun FiltersContent(
             Column {
                 val dateRangeText = dateRangePickerState.selectedDateRange()?.let { (start, end) ->
                     "${resolveDatePickerText(start)} - ${resolveDatePickerText(end)}"
-                } ?: "Sin rango seleccionado"
+                } ?: stringResource(R.string.no_range_selected)
                 Text(
                     text = "Rango de fechas",
                     style = MaterialTheme.typography.labelLarge,
@@ -135,13 +135,13 @@ fun FiltersContent(
                         dateRangePickerState.setSelection(previousStartDateMillis, previousEndDateMillis)
                     },
                     confirmButton = {
-                        Button(onClick = { datePickerOpened = false }) { Text("Aceptar") }
+                        Button(onClick = { datePickerOpened = false }) { Text(stringResource(R.string.accept)) }
                     },
                     dismissButton = {
                         Button(onClick = {
                             datePickerOpened = false
                             dateRangePickerState.setSelection(null, null)
-                        }) { Text("Limpiar") }
+                        }) { Text(stringResource(R.string.clear)) }
                     }
                 ) {
                     DateRangePicker(
