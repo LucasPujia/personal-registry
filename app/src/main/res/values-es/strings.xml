@@ -27,4 +27,6 @@
     <string name="warning">Advertencia</string>
     <string name="no_registry_error">No hay registros en el rango seleccionado.</string>
     <string name="no_range_selected">Sin rango seleccionado</string>
+    <string name="weight">Peso</string>
+    <string name="invalid_weight">Peso inválido</string>
 </resources>

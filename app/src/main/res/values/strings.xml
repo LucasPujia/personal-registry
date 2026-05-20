@@ -26,4 +26,6 @@
     <string name="warning">Warning</string>
     <string name="no_registry_error">There are no registries in the selected range.</string>
     <string name="no_range_selected">No range selected</string>
+    <string name="weight">Weight</string>
+    <string name="invalid_weight">Invalid Weight</string>
 </resources>

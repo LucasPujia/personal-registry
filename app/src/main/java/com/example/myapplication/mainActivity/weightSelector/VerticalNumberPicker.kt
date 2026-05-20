@@ -4,17 +4,30 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -27,9 +40,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.R
+import com.example.myapplication.extensionFunctions.isFloat
 import com.example.myapplication.mainActivity.WEIGHT_DECIMAL_PRECISION
 import com.example.myapplication.mainActivity.WEIGHT_MAX_VALUE
 import com.example.myapplication.mainActivity.WEIGHT_MIN_VALUE
@@ -112,48 +130,52 @@ fun VerticalNumberPicker(
                 state = draggableState,
                 orientation = Orientation.Vertical,
                 onDragStarted = { isDragging = true },
-                onDragStopped = { 
+                onDragStopped = {
                     isDragging = false
                     // Al soltar, animamos hacia el valor actual con rebote visual (bouncy)
                     scope.launch {
                         continuousValue.animateTo(
                             targetValue = value,
-                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
                         )
                     }
                 }
             ),
     ) {
-        val itemHeight = 45.dp
+        val mainWeightHeight = 45.dp
         val kgOffsetX = remember(valueTextWidthPx, density) { (valueTextWidthPx / (2f * density.density)).dp + 16.dp }
-        
+
         // Calculamos el índice central y el rango de items a mostrar
-        // Mayor arriba, menor abajo. 
-        val centerValue = continuousValue.value
-        val centerIndex = centerValue / step
-        val startIndex = (centerIndex.roundToInt() - 3)
-        val endIndex = (centerIndex.roundToInt() + 3)
+        // Mayor arriba, menor abajo.
+        val centerIndexFloat = continuousValue.value / step
+        val centerIndexInt = centerIndexFloat.roundToInt()
+        val startIndex = centerIndexInt - 2
+        val endIndex = centerIndexInt + 2
 
         for (i in startIndex..endIndex) {
             val itemValue = i * step
             if (itemValue < minValue - 0.0001f || itemValue > maxValue + 0.0001f) continue
 
             // Para que el mayor esté ARRIBA, usamos (centerIndex - i)
-            val distanceFromCenter = (centerValue / step) - i 
+            val distanceFromCenter = centerIndexFloat - i
             val absDistance = abs(distanceFromCenter)
+            val isMainWeight = i == centerIndexInt
 
             // Interpolación de estilos agresiva para que el central destaque mucho más
             val scale = (1f - absDistance * 0.5f).coerceAtLeast(0.5f)
             val alpha = (1f - (absDistance * 0.3f)).coerceIn(0f, 1f)
-            val yOffset = distanceFromCenter * itemHeight.value
+            val yOffset = distanceFromCenter * mainWeightHeight.value
 
             Text(
                 text = "%.${precision}f".format(itemValue),
                 fontSize = MaterialTheme.typography.displayLarge.fontSize,
-                fontWeight = if (absDistance < 0.5f) FontWeight.Bold else FontWeight.SemiBold,
+                fontWeight = if (isMainWeight) FontWeight.Bold else FontWeight.SemiBold,
                 color = Color(0xFF6750A4),
                 onTextLayout = { 
-                    if (absDistance < 0.5f && valueTextWidthPx != it.size.width) {
+                    if (isMainWeight && valueTextWidthPx != it.size.width) {
                         valueTextWidthPx = it.size.width 
                     }
                 },
@@ -178,6 +200,96 @@ fun VerticalNumberPicker(
                 .align(Alignment.Center)
                 .offset(x = kgOffsetX, y = 8.dp),
         )
+
+        val showDialog = remember { mutableStateOf(false) }
+
+        // Capa para detectar clic en el centro y abrir el modal
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .height(mainWeightHeight + 16.dp)
+                .width(kgOffsetX + 64.dp)
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) {
+                    showDialog.value = true
+                }
+        )
+
+        WeightInputModal(showDialog, value.toString(), onValueChange, minValue, maxValue)
+    }
+}
+
+@Composable
+private fun WeightInputModal(
+    showDialog: MutableState<Boolean>,
+    initialValue: String,
+    onValueChange: (Float) -> Unit,
+    minValue: Float,
+    maxValue: Float
+) {
+    if (showDialog.value) {
+        var editValue by remember { mutableStateOf(initialValue) }
+        var successfulEdit by remember { mutableStateOf(initialValue.isFloat()) }
+
+        val closeDialog = { showDialog.value = false }
+        val onConfirm = {
+            // No lo puede parsear con coma, debe ser con punto
+            val parsed = editValue.replace(',', '.').toFloatOrNull()
+            if (parsed != null) {
+                onValueChange(parsed.coerceIn(minValue, maxValue))
+                closeDialog()
+            } else {
+                successfulEdit = false
+            }
+        }
+
+        AlertDialog(
+            onDismissRequest = closeDialog,
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = editValue,
+                        onValueChange = { if (it.isFloat()) {
+                            editValue = it
+                            successfulEdit = true
+                        } },
+                        label = { Text(stringResource(R.string.weight) + " (kg)") },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(onDone = { onConfirm() }),
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.headlineLarge,
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = !successfulEdit,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            errorBorderColor = MaterialTheme.colorScheme.error,
+                        )
+                    )
+                    if (!successfulEdit) {
+                        Text(
+                            text = stringResource(R.string.invalid_weight),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = onConfirm) {
+                    Text(stringResource(R.string.accept))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = closeDialog) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 }
 
@@ -191,6 +303,21 @@ fun VerticalNumberPickerPreview() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp),
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 300)
+@Composable
+fun WeightInputModalPreview() {
+    MaterialTheme {
+        val showDialog = remember { mutableStateOf(true) }
+        WeightInputModal(
+            showDialog = showDialog,
+            initialValue = "70.0",
+            onValueChange = {},
+            minValue = WEIGHT_MIN_VALUE,
+            maxValue = WEIGHT_MAX_VALUE
         )
     }
 }
