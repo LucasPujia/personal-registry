@@ -114,7 +114,7 @@ fun WeightSelector(
                         .weight(1f)
                         .padding(horizontal = 16.dp),
                     shape = RoundedCornerShape(28.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6750A4))
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.add_weight), style = MaterialTheme.typography.titleMedium)
@@ -158,7 +158,7 @@ private fun FilterControls(
         Surface(
             onClick = { openedDatePicker = true },
             shape = RoundedCornerShape(8.dp),
-            color = Color.White,
+            color = MaterialTheme.colorScheme.surface,
             modifier = Modifier.size(32.dp),
             shadowElevation = 1.dp
         ) {
@@ -166,7 +166,7 @@ private fun FilterControls(
                 Icon(
                     imageVector = Icons.Default.CalendarMonth,
                     contentDescription = "Seleccionar fecha",
-                    tint = Color(0xFF6750A4),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -177,7 +177,10 @@ private fun FilterControls(
         FilledIconButton(
             onClick = { viewModel.viewTogglesOpened = true },
             shape = RoundedCornerShape(12.dp),
-            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White, contentColor = Color(0xFF6750A4)),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary
+            ),
             modifier = Modifier.size(40.dp)
         ) {
             Icon(
@@ -192,7 +195,10 @@ private fun FilterControls(
         FilledIconButton(
             onClick = { viewModel.filtersOpened = true },
             shape = RoundedCornerShape(12.dp),
-            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White, contentColor = Color(0xFF6750A4)),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary
+            ),
             modifier = Modifier.size(40.dp)
         ) {
             Icon(
@@ -222,7 +228,10 @@ private fun FilterControls(
         FilledIconButton(
             onClick = { viewModel.settingsOpened = true },
             shape = RoundedCornerShape(12.dp),
-            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White, contentColor = Color(0xFF6750A4)),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary
+            ),
             modifier = Modifier.size(40.dp)
         ) {
             Icon(
@@ -234,10 +243,10 @@ private fun FilterControls(
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF8F7FF)
+@Preview(showBackground = true)
 @Composable
 fun WeightSelectorPreview() {
-    MaterialTheme {
+    com.example.myapplication.ui.theme.MyApplicationTheme {
         val initialValues: List<Float> = listOf()
         val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
         val viewModel = MainActivityViewModel(MainActivityModel(memoryStorage))

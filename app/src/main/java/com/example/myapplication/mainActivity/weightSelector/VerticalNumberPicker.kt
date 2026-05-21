@@ -37,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -125,7 +124,7 @@ fun VerticalNumberPicker(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .clip(MaterialTheme.shapes.medium)
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.surface)
             .draggable(
                 state = draggableState,
                 orientation = Orientation.Vertical,
@@ -173,7 +172,7 @@ fun VerticalNumberPicker(
                 text = "%.${precision}f".format(itemValue),
                 fontSize = MaterialTheme.typography.displayLarge.fontSize,
                 fontWeight = if (isMainWeight) FontWeight.Bold else FontWeight.SemiBold,
-                color = Color(0xFF6750A4),
+                color = MaterialTheme.colorScheme.primary,
                 onTextLayout = { 
                     if (isMainWeight && valueTextWidthPx != it.size.width) {
                         valueTextWidthPx = it.size.width 
@@ -195,7 +194,7 @@ fun VerticalNumberPicker(
             text = "kg",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Normal,
-            color = Color(0xFF6750A4).copy(alpha = 0.6f),
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
             modifier = Modifier
                 .align(Alignment.Center)
                 .offset(x = kgOffsetX, y = 8.dp),
@@ -296,7 +295,7 @@ private fun WeightInputModal(
 @Preview(showBackground = true)
 @Composable
 fun VerticalNumberPickerPreview() {
-    MaterialTheme {
+    com.example.myapplication.ui.theme.MyApplicationTheme {
         VerticalNumberPicker(
             value = 75.5f,
             onValueChange = {},
@@ -310,7 +309,7 @@ fun VerticalNumberPickerPreview() {
 @Preview(showBackground = true, widthDp = 400, heightDp = 300)
 @Composable
 fun WeightInputModalPreview() {
-    MaterialTheme {
+    com.example.myapplication.ui.theme.MyApplicationTheme {
         val showDialog = remember { mutableStateOf(true) }
         WeightInputModal(
             showDialog = showDialog,

@@ -71,12 +71,12 @@ fun WeightsViewer(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFF8F7FF))
+            .background(MaterialTheme.colorScheme.background)
     ) {
         if (viewModel.viewToggles.graph) {
             Surface(
                 shape = RoundedCornerShape(OUTER_PADDING),
-                color = Color.White,
+                color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier.padding(OUTER_PADDING)
             ) {
                 Column(modifier = Modifier.padding(8.dp).padding(bottom = 16.dp)) {
@@ -90,16 +90,18 @@ fun WeightsViewer(
                             onRangeSelected = { viewModel.updateTimeRange(it) }
                         )
                     }
+                    val primaryColor = MaterialTheme.colorScheme.primary
+                    val secondaryColor = MaterialTheme.colorScheme.secondary
                     LineChart(
                         modifier = Modifier
                             .height(200.dp),
-                        data = remember(viewModel.filters) {
+                        data = remember(viewModel.filters, primaryColor, secondaryColor) {
                             buildList {
                                 add(Line(
                                     values = viewModel.filters.weightsD,
-                                    color = SolidColor(Color(0xFF6750A4)),
-                                    firstGradientFillColor = Color(0xFF6750A4).copy(alpha = .3f),
-                                    secondGradientFillColor = Color(0xFF6750A4).copy(alpha = .0f),
+                                    color = SolidColor(primaryColor),
+                                    firstGradientFillColor = primaryColor.copy(alpha = .3f),
+                                    secondGradientFillColor = primaryColor.copy(alpha = .0f),
                                     strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
                                     gradientAnimationDelay = 1000,
                                     drawStyle = DrawStyle.Stroke(width = 2.dp),
@@ -107,13 +109,13 @@ fun WeightsViewer(
                                     dotProperties = DotProperties(
                                         enabled = viewModel.filters.weights.size < 32,
                                         radius = 4.dp,
-                                        color = SolidColor(Color(0xFF6750A4))
+                                        color = SolidColor(primaryColor)
                                     )
                                 ))
                                 viewModel.filters.goalWeight?.let { goal ->
                                     add(Line(
                                         values = viewModel.filters.weights.map { goal.toDouble() },
-                                        color = SolidColor(Color(0xFFf57c00)),
+                                        color = SolidColor(secondaryColor),
                                         strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
                                         drawStyle = DrawStyle.Stroke(width = 2.dp),
                                     ))
@@ -182,8 +184,8 @@ private fun QuickFilters(
             Surface(
                 onClick = { onRangeSelected(range) },
                 shape = RoundedCornerShape(16.dp),
-                color = if (isSelected) Color(0xFF6750A4) else Color.Transparent,
-                contentColor = if (isSelected) Color.White else Color.Gray,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color.Gray,
             ) {
                 Text(
                     text = range.label,

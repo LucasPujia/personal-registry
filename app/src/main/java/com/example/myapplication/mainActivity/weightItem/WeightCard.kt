@@ -42,6 +42,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.mainActivity.MainActivityViewModel
 import com.example.myapplication.mainActivity.weightsViewer.WeightDeletionState
+import com.example.myapplication.ui.theme.TrendDecrease
+import com.example.myapplication.ui.theme.TrendIncrease
+import com.example.myapplication.ui.theme.TrendNeutral
 import com.example.myapplication.utils.viewModelFromFloats
 
 enum class DragValue { Settled, Revealed }
@@ -87,8 +90,8 @@ fun WeightCard(
 
         // Contenido de la fila (frente)
         Surface(
-            color = Color.White,
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(12.dp),
             shadowElevation = 1.dp,
             modifier = Modifier
                 .fillMaxWidth()
@@ -113,14 +116,14 @@ fun WeightCard(
                 modifier = Modifier.fillMaxWidth().padding(12.dp),
             ) {
                 Surface(
-                    color = Color(0xFFF3E5F5),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.tertiary,
+                    shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.CalendarToday,
                         contentDescription = null,
-                        tint = Color(0xFF6750A4),
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(8.dp)
                     )
                 }
@@ -157,9 +160,9 @@ fun WeightCard(
                         Text(
                             text = diff,
                             color = when {
-                                diff.startsWith("+") -> Color(0xFFD32F2F)
-                                diff.startsWith("-") -> Color(0xFF388E3C)
-                                else -> Color(0xFFFBC02D)
+                                diff.startsWith("+") -> TrendIncrease
+                                diff.startsWith("-") -> TrendDecrease
+                                else -> TrendNeutral
                             },
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
@@ -184,7 +187,7 @@ private fun BoxScope.CloseButton(
     ) {
         Button(
             onClick = { deletionState.askForDeletion(item, viewModel) },
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
             shape = RoundedCornerShape(8.dp),
             contentPadding = PaddingValues(0.dp),
             modifier = Modifier.size(48.dp)
@@ -192,7 +195,7 @@ private fun BoxScope.CloseButton(
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Eliminar",
-                tint = Color.White
+                tint = MaterialTheme.colorScheme.onError
             )
         }
     }

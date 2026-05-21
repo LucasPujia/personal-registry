@@ -18,7 +18,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
 import com.example.myapplication.database.AppDatabase
@@ -28,13 +27,14 @@ import com.example.myapplication.mainActivity.bottomSheet.BottomSheetHandler
 import com.example.myapplication.mainActivity.settings.SettingsScreen
 import com.example.myapplication.mainActivity.weightSelector.WeightSelector
 import com.example.myapplication.mainActivity.weightsViewer.WeightsViewer
+import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.utils.OUTER_PADDING
 
 
 @Preview(showBackground = true)
 @Composable
 fun MyApplicationAppPreview() {
-    MaterialTheme {
+    MyApplicationTheme {
         val initialValues = listOf(61f, 60f, 58f, 62f)
         val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
         val mainActivityModel = MainActivityModel(memoryStorage)
@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            MaterialTheme {
+            MyApplicationTheme {
                 MyApplicationApp(viewModel)
             }
         }
@@ -68,7 +68,7 @@ fun MyApplicationApp(viewModel: MainActivityViewModel) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(color = Color(0xFFF8F7FF))
+                .background(color = MaterialTheme.colorScheme.background)
                 .statusBarsPadding(),
         ) {
             WeightSelector(viewModel)
