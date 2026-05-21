@@ -32,6 +32,10 @@ android {
             )
         }
 
+        debug {
+            isMinifyEnabled = false
+        }
+
         create("debugExport") {
             initWith(getByName("debug"))
             isMinifyEnabled = true
