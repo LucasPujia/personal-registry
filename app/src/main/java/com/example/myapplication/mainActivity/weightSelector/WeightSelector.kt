@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RemoveRedEye
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
@@ -214,6 +215,21 @@ private fun FilterControls(
             }
         ) {
             DatePicker(state = datePickerState, title = null)
+        }
+
+        Spacer(Modifier.width(12.dp))
+
+        FilledIconButton(
+            onClick = { viewModel.settingsOpened = true },
+            shape = RoundedCornerShape(12.dp),
+            colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White, contentColor = Color(0xFF6750A4)),
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Abrir Configuración",
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }

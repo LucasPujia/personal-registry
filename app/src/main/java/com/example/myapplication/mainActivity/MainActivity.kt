@@ -5,7 +5,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -21,6 +25,7 @@ import com.example.myapplication.database.AppDatabase
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.database.weight.RoomWeightsStorage
 import com.example.myapplication.mainActivity.bottomSheet.BottomSheetHandler
+import com.example.myapplication.mainActivity.settings.SettingsScreen
 import com.example.myapplication.mainActivity.weightSelector.WeightSelector
 import com.example.myapplication.mainActivity.weightsViewer.WeightsViewer
 import com.example.myapplication.utils.OUTER_PADDING
@@ -59,20 +64,30 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApplicationApp(viewModel: MainActivityViewModel) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = Color(0xFFF8F7FF))
-            .statusBarsPadding(),
-    ) {
-        WeightSelector(viewModel)
-        if (viewModel.filters.weights.isNotEmpty()) WeightsViewer(
-            viewModel,
-            Modifier.offset(y = -OUTER_PADDING)
-        )
-    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = Color(0xFFF8F7FF))
+                .statusBarsPadding(),
+        ) {
+            WeightSelector(viewModel)
+            if (viewModel.filters.weights.isNotEmpty()) WeightsViewer(
+                viewModel,
+                Modifier.offset(y = -OUTER_PADDING)
+            )
+        }
 
-    BottomSheetHandler(viewModel)
+        BottomSheetHandler(viewModel)
+
+        AnimatedVisibility(
+            visible = viewModel.settingsOpened,
+            enter = slideInHorizontally(initialOffsetX = { it }),
+            exit = slideOutHorizontally(targetOffsetX = { it })
+        ) {
+            SettingsScreen(viewModel)
+        }
+    }
 }
 
 

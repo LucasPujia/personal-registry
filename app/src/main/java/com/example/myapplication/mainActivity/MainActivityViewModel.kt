@@ -38,6 +38,7 @@ class MainActivityViewModel(
     var currentTimeRange by mutableStateOf<TimeRange?>(TimeRange.MONTH_1); private set
     var filtersOpened by mutableStateOf(false)
     var viewTogglesOpened by mutableStateOf(false)
+    var settingsOpened by mutableStateOf(false)
 
     init {
         val initialWeights = model.getWeights()
