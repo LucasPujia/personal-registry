@@ -37,7 +37,8 @@ fun MyApplicationAppPreview() {
     MyApplicationTheme {
         val initialValues = listOf(61f, 60f, 58f, 62f)
         val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
-        val mainActivityModel = MainActivityModel(memoryStorage)
+        val settingsRepository = SettingsRepository(context)
+        val mainActivityModel = MainActivityModel(memoryStorage, settingsRepository)
         MyApplicationApp(MainActivityViewModel(mainActivityModel))
     }
 }
@@ -46,7 +47,9 @@ class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainActivityViewModel> {
         val database = AppDatabase.getInstance(applicationContext)
         val storage = RoomWeightsStorage(database.weightRecordDao())
-        MainActivityViewModelFactory(MainActivityModel(storage))
+        val settingsRepository = SettingsRepository(applicationContext)
+        val model = MainActivityModel(storage, settingsRepository)
+        MainActivityViewModelFactory(model)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

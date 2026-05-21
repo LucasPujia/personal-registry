@@ -9,7 +9,14 @@ import java.time.LocalDate
 
 class MainActivityModel(
     private val storage: WeightsStorage,
+    private val settingsRepository: SettingsRepository,
 ) {
+    val themeModeFlow: Flow<ThemeMode> = settingsRepository.themeModeFlow
+
+    suspend fun updateThemeMode(mode: ThemeMode) {
+        settingsRepository.updateThemeMode(mode)
+    }
+
     fun getWeights(): List<WeightItem> {
         return storage.readWeights().map { it.toWeightItem() }
     }

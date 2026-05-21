@@ -41,6 +41,11 @@ class MainActivityViewModel(
     var settingsOpened by mutableStateOf(false)
 
     init {
+        viewModelScope.launch {
+            model.themeModeFlow.collect {
+                themeMode = it
+            }
+        }
         val initialWeights = model.getWeights()
         syncWeights(initialWeights)
         if (initialWeights.isNotEmpty()) {
@@ -49,6 +54,12 @@ class MainActivityViewModel(
                 minViewValue = weightValues.min().roundToInt() - 2,
                 maxViewValue = weightValues.max().roundToInt() + 2,
             )
+        }
+    }
+
+    fun setTheme(mode: ThemeMode) {
+        viewModelScope.launch {
+            model.updateThemeMode(mode)
         }
     }
 

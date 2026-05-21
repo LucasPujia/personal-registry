@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.mainActivity.MainActivityModel
 import com.example.myapplication.mainActivity.MainActivityViewModel
+import com.example.myapplication.mainActivity.settings.SettingsRepository
+import com.example.myapplication.ui.theme.MyApplicationTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,9 +69,13 @@ fun ViewTogglesContent(
 @Preview(showBackground = true)
 @Composable
 fun ViewTogglesContentPreview() {
-    MaterialTheme {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    MyApplicationTheme {
+        val settingsRepository = SettingsRepository(context)
         ViewTogglesContent(
-            viewModel = MainActivityViewModel(MainActivityModel(InMemoryWeightsStorage())),
+            viewModel = MainActivityViewModel(
+                MainActivityModel(InMemoryWeightsStorage(), settingsRepository)
+            ),
             onDismissRequest = {}
         )
     }

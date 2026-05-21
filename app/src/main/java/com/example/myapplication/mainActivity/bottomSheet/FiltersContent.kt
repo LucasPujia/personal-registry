@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,6 +39,8 @@ import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.extensionFunctions.selectedDateRange
 import com.example.myapplication.mainActivity.MainActivityModel
 import com.example.myapplication.mainActivity.MainActivityViewModel
+import com.example.myapplication.mainActivity.settings.SettingsRepository
+import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.utils.defaultDatePickerFormatter
 import com.example.myapplication.utils.resolveDatePickerText
 import com.example.myapplication.utils.selectableDatesFromFunction
@@ -214,10 +217,14 @@ private fun AcceptButton(
 @Preview(showBackground = true)
 @Composable
 fun FiltersContentPreview() {
-    MaterialTheme {
+    val context = LocalContext.current
+    MyApplicationTheme {
         val initialValues: List<Float> = listOf()
         val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
-        val viewModel = MainActivityViewModel(MainActivityModel(memoryStorage))
+        val settingsRepository = SettingsRepository(context)
+        val viewModel = MainActivityViewModel(
+            MainActivityModel(memoryStorage, settingsRepository)
+        )
         FiltersContent(viewModel = viewModel, onDismissRequest = {})
     }
 }

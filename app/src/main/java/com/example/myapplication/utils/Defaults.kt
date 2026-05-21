@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.mainActivity.MainActivityModel
 import com.example.myapplication.mainActivity.MainActivityViewModel
+import com.example.myapplication.mainActivity.settings.SettingsRepository
 
 fun lastMonthRange() = Pair(forDatePicker(now().minusMonths(1)), todayForDatePicker())
 
@@ -29,10 +30,15 @@ fun defaultDatePickerFormatter(): DatePickerFormatter {
     }
 }
 
+@Composable
 fun viewModelFromFloats(weights: List<Float>): MainActivityViewModel {
+    val context = LocalContext.current
     val initialValues: List<Float> = weights
     val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
-    return MainActivityViewModel(MainActivityModel(memoryStorage))
+    val settingsRepository = SettingsRepository(context)
+    return MainActivityViewModel(
+        MainActivityModel(memoryStorage, settingsRepository)
+    )
 }
 
 val OUTER_PADDING = 16.dp

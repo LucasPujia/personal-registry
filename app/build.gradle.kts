@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.datastore.preferences)
     implementation (libs.compose.charts)
     implementation(libs.androidx.compose.material.icons.extended)
     ksp(libs.androidx.room.compiler)
