@@ -18,6 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import com.example.myapplication.database.AppDatabase
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
@@ -86,7 +87,7 @@ fun MyApplicationApp(viewModel: MainActivityViewModel) {
 @DarkPreviewWithSystemUI
 @Composable
 fun MyApplicationAppPreview() {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     MyApplicationTheme(themeMode = ThemeMode.SYSTEM) {
         val initialValues = listOf(61f, 60f, 58f, 62f)
         val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)

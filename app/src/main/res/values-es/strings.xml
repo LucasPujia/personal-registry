@@ -29,4 +29,18 @@
     <string name="no_range_selected">Sin rango seleccionado</string>
     <string name="weight">Peso</string>
     <string name="invalid_weight">Peso inválido</string>
+    <string name="close">Cerrar</string>
+    <string name="theme_system">Predeterminado del sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="theme">Tema</string>
+    <string name="notifications">Notificaciones</string>
+    <string name="daily_reminder">Recordatorio diario</string>
+    <string name="measure_unit">Unidad de medida</string>
+    <string name="settings">Ajustes</string>
+    <string name="select_theme">Seleccionar tema</string>
+    <string name="about">Acerca de</string>
+    <string name="version">Versión</string>
+    <string name="metric_kg_cm">Métrica (kg, cm)</string>
+    <string name="imperial_lb_in">Imperial (lb, in)</string>
 </resources>

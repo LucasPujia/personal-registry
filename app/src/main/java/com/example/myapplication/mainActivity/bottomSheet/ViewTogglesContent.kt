@@ -18,7 +18,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.R
 import com.example.myapplication.mainActivity.MainActivityViewModel
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.ui.theme.ThemePreviews
@@ -59,8 +61,7 @@ fun ViewTogglesContent(
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            // TODO: Textos
-            Text("Aplicar")
+            Text(stringResource(R.string.apply))
         }
     }
 }

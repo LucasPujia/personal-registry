@@ -22,7 +22,9 @@ enum class TimeRange(val label: String) {
     DAYS_7("7D"), DAYS_15("15D"), MONTH_1("1M"), MONTH_3("3M"), MONTH_6("6M"), YEAR_1("1A")
 }
 
-enum class ThemeMode { SYSTEM, LIGHT, DARK }
+enum class ThemeMode(val messageId: Int) {
+    SYSTEM(R.string.theme_system), LIGHT(R.string.theme_light), DARK(R.string.theme_dark)
+}
 
 data class ViewToggles(
     val graph: Boolean = true,
