@@ -3,9 +3,7 @@ package com.example.myapplication.mainActivity.weightsViewer
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,22 +35,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.mainActivity.MainActivityModel
 import com.example.myapplication.mainActivity.MainActivityViewModel
 import com.example.myapplication.mainActivity.TimeRange
+import com.example.myapplication.mainActivity.settings.SettingsRepository
 import com.example.myapplication.mainActivity.weightItem.WeightCard
 import com.example.myapplication.mainActivity.weightItem.WeightItem
+import com.example.myapplication.ui.theme.MyApplicationTheme
+import com.example.myapplication.ui.theme.ThemePreviews
 import com.example.myapplication.utils.OUTER_PADDING
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DotProperties
 import ir.ehsannarmani.compose_charts.models.DrawStyle
 import ir.ehsannarmani.compose_charts.models.GridProperties
+import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
 import ir.ehsannarmani.compose_charts.models.LabelHelperProperties
 import ir.ehsannarmani.compose_charts.models.LabelProperties
 import ir.ehsannarmani.compose_charts.models.Line
@@ -69,9 +71,7 @@ fun WeightsViewer(
     ConfirmDeletionDialog(deletionState, viewModel)
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+        modifier = modifier.fillMaxSize()
     ) {
         if (viewModel.viewToggles.graph) {
             Surface(
@@ -92,6 +92,7 @@ fun WeightsViewer(
                     }
                     val primaryColor = MaterialTheme.colorScheme.primary
                     val secondaryColor = MaterialTheme.colorScheme.secondary
+                    val textColor = MaterialTheme.colorScheme.onSurface
                     LineChart(
                         modifier = Modifier
                             .height(200.dp),
@@ -128,13 +129,12 @@ fun WeightsViewer(
                         labelHelperProperties = LabelHelperProperties(
                             enabled = true,
                             labelCountPerLine = 5,
-                            textStyle = MaterialTheme.typography.bodySmall
                         ),
                         minValue = viewModel.filters.minViewValue.toDouble(),
                         maxValue = viewModel.filters.maxViewValue.toDouble(),
                         labelProperties = LabelProperties(
                             enabled = true,
-                            textStyle = MaterialTheme.typography.labelSmall,
+                            textStyle = MaterialTheme.typography.labelSmall.copy(color = textColor),
                             labels = viewModel.filters.dateLabels,
                             padding = 0.dp,
                             rotation = LabelProperties.Rotation(
@@ -142,8 +142,17 @@ fun WeightsViewer(
                                 mode = LabelProperties.Rotation.Mode.Force
                             )
                         ),
+                        indicatorProperties = HorizontalIndicatorProperties(
+                            textStyle = TextStyle.Default.copy(color = textColor),
+                            padding = 16.dp
+                        ),
                         gridProperties = GridProperties(
-                            yAxisProperties = GridProperties.AxisProperties(lineCount = viewModel.filters.dateLabels.size.coerceAtLeast(2))
+                            enabled = true,
+                            xAxisProperties = GridProperties.AxisProperties(color = SolidColor(textColor)),
+                            yAxisProperties = GridProperties.AxisProperties(
+                                lineCount = viewModel.filters.dateLabels.size.coerceAtLeast(2),
+                                color = SolidColor(textColor)
+                            )
                         )
                     )
                 }
@@ -185,7 +194,7 @@ private fun QuickFilters(
                 onClick = { onRangeSelected(range) },
                 shape = RoundedCornerShape(16.dp),
                 color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color.Gray,
+                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
             ) {
                 Text(
                     text = range.label,
@@ -209,7 +218,7 @@ private fun HistorialHeader() {
     ) {
         Text(
             stringResource(R.string.history),
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface),
             fontWeight = FontWeight.Bold
         )
 //        TextButton(onClick = { /* TODO */ }) {
@@ -320,12 +329,14 @@ class WeightDeletionState(
 @Preview(showBackground = true)
 @Composable
 fun WeightsViewerPreview() {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val initialValues = listOf(25f, 30f, 35.5f, 32f, 28f, 29f)
     val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
-    val mainActivityModel = MainActivityModel(memoryStorage)
-    MaterialTheme {
-        Box(modifier = Modifier.padding(32.dp)) {
-            WeightsViewer(MainActivityViewModel(mainActivityModel))
-        }
+    val settingsRepository = SettingsRepository(context)
+    val mainActivityModel = MainActivityModel(memoryStorage, settingsRepository)
+    MyApplicationTheme {
+        WeightsViewer(
+            MainActivityViewModel(mainActivityModel)
+        )
     }
 }

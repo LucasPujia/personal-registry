@@ -32,10 +32,9 @@ fun defaultDatePickerFormatter(): DatePickerFormatter {
 
 @Composable
 fun viewModelFromFloats(weights: List<Float>): MainActivityViewModel {
-    val context = LocalContext.current
     val initialValues: List<Float> = weights
     val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
-    val settingsRepository = SettingsRepository(context)
+    val settingsRepository = SettingsRepository(LocalContext.current)
     return MainActivityViewModel(
         MainActivityModel(memoryStorage, settingsRepository)
     )

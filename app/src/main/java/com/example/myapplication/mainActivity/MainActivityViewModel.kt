@@ -22,6 +22,8 @@ enum class TimeRange(val label: String) {
     DAYS_7("7D"), DAYS_15("15D"), MONTH_1("1M"), MONTH_3("3M"), MONTH_6("6M"), YEAR_1("1A")
 }
 
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
 data class ViewToggles(
     val graph: Boolean = true,
     val list: Boolean = true,
@@ -39,6 +41,7 @@ class MainActivityViewModel(
     var filtersOpened by mutableStateOf(false)
     var viewTogglesOpened by mutableStateOf(false)
     var settingsOpened by mutableStateOf(false)
+    var themeMode by mutableStateOf(ThemeMode.SYSTEM)
 
     init {
         viewModelScope.launch {

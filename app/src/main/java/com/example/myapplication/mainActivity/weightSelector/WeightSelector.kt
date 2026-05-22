@@ -129,7 +129,7 @@ fun WeightSelector(
         } else {
             Text(
                 text = stringResource(R.string.date_already_registered),
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -150,7 +150,7 @@ private fun FilterControls(
         
         Text(
             text = resolveDatePickerText(datePickerState.selectedDateMillis),
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface),
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(end = 4.dp)
         )
@@ -246,11 +246,8 @@ private fun FilterControls(
 @Preview(showBackground = true)
 @Composable
 fun WeightSelectorPreview() {
-    com.example.myapplication.ui.theme.MyApplicationTheme {
-        val initialValues: List<Float> = listOf()
-        val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
-        val viewModel = MainActivityViewModel(MainActivityModel(memoryStorage))
-        WeightSelector(viewModel)
+    MyApplicationTheme {
+        WeightSelector(viewModelFromFloats(listOf()))
     }
 }
 

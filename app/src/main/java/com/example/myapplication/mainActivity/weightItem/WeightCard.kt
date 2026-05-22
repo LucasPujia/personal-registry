@@ -34,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,8 +42,11 @@ import androidx.compose.ui.unit.dp
 import com.example.myapplication.mainActivity.MainActivityViewModel
 import com.example.myapplication.mainActivity.weightsViewer.WeightDeletionState
 import com.example.myapplication.ui.theme.TrendDecrease
+import com.example.myapplication.ui.theme.TrendDecreaseDark
 import com.example.myapplication.ui.theme.TrendIncrease
+import com.example.myapplication.ui.theme.TrendIncreaseDark
 import com.example.myapplication.ui.theme.TrendNeutral
+import com.example.myapplication.ui.theme.TrendNeutralDark
 import com.example.myapplication.utils.viewModelFromFloats
 
 enum class DragValue { Settled, Revealed }
@@ -54,7 +56,7 @@ fun WeightCard(
     item: WeightItem,
     previousWeight: Double?,
     viewModel: MainActivityViewModel,
-    deletionState: WeightDeletionState
+    deletionState: WeightDeletionState,
 ) {
     val receiver = LocalDensity.current
     val state = remember {
@@ -72,7 +74,7 @@ fun WeightCard(
             .collect { target ->
                 if (target == DragValue.Revealed) {
                     deletionState.openedItemKey = item.dateKey
-                } else if (deletionState.openedItemKey == item.dateKey && target == DragValue.Settled) {
+                } else if ((deletionState.openedItemKey == item.dateKey) && (target == DragValue.Settled)) {
                     deletionState.openedItemKey = null
                 }
             }
@@ -137,7 +139,7 @@ fun WeightCard(
                     Text(
                         item.getDayOfWeekText(),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Column(horizontalAlignment = Alignment.End) {
@@ -151,18 +153,23 @@ fun WeightCard(
                         Text(
                             "kg",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 2.dp)
                         )
                     }
                     val diff = item.getDifferenceString(previousWeight)
                     if (diff.isNotEmpty()) {
+ // TODO: Simplificar isDark y utilizar colores directo del theme
+                        val isDark = MaterialTheme.colorScheme.background.let { 
+                            // Estimación simple si el fondo es oscuro
+                            it.red + it.green + it.blue < 1.0f 
+                        }
                         Text(
                             text = diff,
                             color = when {
-                                diff.startsWith("+") -> TrendIncrease
-                                diff.startsWith("-") -> TrendDecrease
-                                else -> TrendNeutral
+                                diff.startsWith("+") -> if (isDark) TrendIncreaseDark else TrendIncrease
+                                diff.startsWith("-") -> if (isDark) TrendDecreaseDark else TrendDecrease
+                                else -> if (isDark) TrendNeutralDark else TrendNeutral
                             },
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
