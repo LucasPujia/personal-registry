@@ -36,11 +36,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.mainActivity.MainActivityViewModel
 import com.example.myapplication.mainActivity.weightsViewer.WeightDeletionState
+import com.example.myapplication.ui.theme.ThemePreviews
 import com.example.myapplication.ui.theme.TrendDecrease
 import com.example.myapplication.ui.theme.TrendDecreaseDark
 import com.example.myapplication.ui.theme.TrendIncrease
@@ -208,7 +208,8 @@ private fun BoxScope.CloseButton(
     }
 }
 
-@Preview(showBackground = true)
+// TODO: Se ve raro
+@ThemePreviews
 @Composable
 fun WeightCardPreview() {
     val item = WeightItem(

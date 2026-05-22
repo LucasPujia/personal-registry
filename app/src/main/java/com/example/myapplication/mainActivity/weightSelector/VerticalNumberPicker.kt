@@ -1,5 +1,6 @@
 package com.example.myapplication.mainActivity.weightSelector
 
+import android.content.res.Configuration
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -52,6 +53,7 @@ import com.example.myapplication.mainActivity.WEIGHT_MAX_VALUE
 import com.example.myapplication.mainActivity.WEIGHT_MIN_VALUE
 import com.example.myapplication.mainActivity.WEIGHT_PIXELS_PER_UNIT
 import com.example.myapplication.mainActivity.WEIGHT_SCROLL_INVERTED
+import com.example.myapplication.ui.theme.ThemePreviews
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.pow
@@ -292,7 +294,7 @@ private fun WeightInputModal(
     }
 }
 
-@Preview(showBackground = true)
+@ThemePreviews
 @Composable
 fun VerticalNumberPickerPreview() {
     com.example.myapplication.ui.theme.MyApplicationTheme {
@@ -307,6 +309,7 @@ fun VerticalNumberPickerPreview() {
 }
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 300)
+@Preview(showBackground = true, widthDp = 400, heightDp = 300, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun WeightInputModalPreview() {
     com.example.myapplication.ui.theme.MyApplicationTheme {

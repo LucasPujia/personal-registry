@@ -326,7 +326,7 @@ class WeightDeletionState(
     }
 }
 
-@Preview(showBackground = true)
+@ThemePreviews
 @Composable
 fun WeightsViewerPreview() {
     val context = androidx.compose.ui.platform.LocalContext.current

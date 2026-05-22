@@ -18,7 +18,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
 import com.example.myapplication.database.AppDatabase
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
@@ -28,6 +27,8 @@ import com.example.myapplication.mainActivity.settings.SettingsRepository
 import com.example.myapplication.mainActivity.settings.SettingsScreen
 import com.example.myapplication.mainActivity.weightSelector.WeightSelector
 import com.example.myapplication.mainActivity.weightsViewer.WeightsViewer
+import com.example.myapplication.ui.theme.DarkPreviewWithSystemUI
+import com.example.myapplication.ui.theme.LightPreviewWithSystemUI
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.utils.OUTER_PADDING
 
@@ -81,8 +82,8 @@ fun MyApplicationApp(viewModel: MainActivityViewModel) {
     }
 }
 
-
-@Preview(showSystemUi = true)
+@LightPreviewWithSystemUI
+@DarkPreviewWithSystemUI
 @Composable
 fun MyApplicationAppPreview() {
     val context = androidx.compose.ui.platform.LocalContext.current

@@ -32,7 +32,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
 import com.example.myapplication.database.weight.InMemoryWeightsStorage
@@ -41,6 +40,7 @@ import com.example.myapplication.mainActivity.MainActivityModel
 import com.example.myapplication.mainActivity.MainActivityViewModel
 import com.example.myapplication.mainActivity.settings.SettingsRepository
 import com.example.myapplication.ui.theme.MyApplicationTheme
+import com.example.myapplication.ui.theme.ThemePreviews
 import com.example.myapplication.utils.defaultDatePickerFormatter
 import com.example.myapplication.utils.resolveDatePickerText
 import com.example.myapplication.utils.selectableDatesFromFunction
@@ -214,7 +214,8 @@ private fun AcceptButton(
     }
 }
 
-@Preview(showBackground = true)
+// TODO: Se ve raro
+@ThemePreviews
 @Composable
 fun FiltersContentPreview() {
     val context = LocalContext.current

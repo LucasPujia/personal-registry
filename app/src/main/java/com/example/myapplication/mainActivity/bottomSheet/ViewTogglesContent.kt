@@ -18,13 +18,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.myapplication.database.weight.InMemoryWeightsStorage
-import com.example.myapplication.mainActivity.MainActivityModel
 import com.example.myapplication.mainActivity.MainActivityViewModel
-import com.example.myapplication.mainActivity.settings.SettingsRepository
 import com.example.myapplication.ui.theme.MyApplicationTheme
+import com.example.myapplication.ui.theme.ThemePreviews
+import com.example.myapplication.utils.viewModelFromFloats
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,21 +59,19 @@ fun ViewTogglesContent(
             },
             modifier = Modifier.fillMaxWidth()
         ) {
+            // TODO: Textos
             Text("Aplicar")
         }
     }
 }
 
-@Preview(showBackground = true)
+// TODO: Se ve raro
+@ThemePreviews
 @Composable
 fun ViewTogglesContentPreview() {
-    val context = androidx.compose.ui.platform.LocalContext.current
     MyApplicationTheme {
-        val settingsRepository = SettingsRepository(context)
         ViewTogglesContent(
-            viewModel = MainActivityViewModel(
-                MainActivityModel(InMemoryWeightsStorage(), settingsRepository)
-            ),
+            viewModel = viewModelFromFloats(listOf()),
             onDismissRequest = {}
         )
     }
