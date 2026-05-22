@@ -36,7 +36,7 @@ android {
             isMinifyEnabled = false
         }
 
-        create("debugExport") {
+        create("beta") {
             initWith(getByName("debug"))
             isMinifyEnabled = true
             isShrinkResources = true

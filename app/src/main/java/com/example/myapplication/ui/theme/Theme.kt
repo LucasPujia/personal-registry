@@ -6,7 +6,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -40,8 +44,41 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = CardBackgroundDark,
     outlineVariant = Color.Gray.copy(alpha = 0.3f),
     error = Color(0xFFF2B8B5),
-    onError = Color(0xFF601410)
+    onError = Color(0xFF601410),
 )
+
+@Immutable
+data class ExtendedColors(
+    val trendIncrease: Color,
+    val trendDecrease: Color,
+    val trendNeutral: Color
+)
+
+val lightExtendedColors = ExtendedColors(
+    trendIncrease = TrendIncrease,
+    trendDecrease = TrendDecrease,
+    trendNeutral = TrendNeutral
+)
+
+val darkExtendedColors = ExtendedColors(
+    trendIncrease = TrendIncreaseDark,
+    trendDecrease = TrendDecreaseDark,
+    trendNeutral = TrendNeutralDark
+)
+
+val LocalExtendedColors = staticCompositionLocalOf {
+    ExtendedColors(
+        trendIncrease = Color.Unspecified,
+        trendDecrease = Color.Unspecified,
+        trendNeutral = Color.Unspecified
+    )
+}
+
+@Suppress("UnusedReceiverParameter")
+val MaterialTheme.extendedColors: ExtendedColors
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalExtendedColors.current
 
 @Composable
 fun MyApplicationTheme(
@@ -55,6 +92,7 @@ fun MyApplicationTheme(
     }
 
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val extendedColors = if (darkTheme) darkExtendedColors else lightExtendedColors
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -69,8 +107,10 @@ fun MyApplicationTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        content = content
-    )
+    CompositionLocalProvider(LocalExtendedColors provides extendedColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            content = content
+        )
+    }
 }

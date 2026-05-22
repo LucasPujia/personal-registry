@@ -42,4 +42,5 @@
     <string name="version">Version</string>
     <string name="metric_kg_cm">Metric (kg, cm)</string>
     <string name="imperial_lb_in">Imperial (lb, in)</string>
+    <string name="warning_filters">Please, check the selected filters</string>
 </resources>

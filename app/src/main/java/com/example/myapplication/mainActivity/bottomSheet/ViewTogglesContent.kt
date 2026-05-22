@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,13 +44,13 @@ fun ViewTogglesContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Ver gráfico")
+            Text(stringResource(R.string.view_graph), color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.width(8.dp))
             Switch(checked = showGraph, onCheckedChange = { showGraph = it })
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Ver lista")
+            Text(stringResource(R.string.view_list), color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.width(8.dp))
             Switch(checked = showList, onCheckedChange = { showList = it })
         }
@@ -66,7 +67,6 @@ fun ViewTogglesContent(
     }
 }
 
-// TODO: Se ve raro
 @ThemePreviews
 @Composable
 fun ViewTogglesContentPreview() {

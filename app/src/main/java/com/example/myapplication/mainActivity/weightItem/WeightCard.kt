@@ -40,13 +40,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.mainActivity.MainActivityViewModel
 import com.example.myapplication.mainActivity.weightsViewer.WeightDeletionState
+import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.ui.theme.ThemePreviews
-import com.example.myapplication.ui.theme.TrendDecrease
-import com.example.myapplication.ui.theme.TrendDecreaseDark
-import com.example.myapplication.ui.theme.TrendIncrease
-import com.example.myapplication.ui.theme.TrendIncreaseDark
-import com.example.myapplication.ui.theme.TrendNeutral
-import com.example.myapplication.ui.theme.TrendNeutralDark
+import com.example.myapplication.ui.theme.extendedColors
 import com.example.myapplication.utils.viewModelFromFloats
 
 enum class DragValue { Settled, Revealed }
@@ -159,17 +155,12 @@ fun WeightCard(
                     }
                     val diff = item.getDifferenceString(previousWeight)
                     if (diff.isNotEmpty()) {
- // TODO: Simplificar isDark y utilizar colores directo del theme
-                        val isDark = MaterialTheme.colorScheme.background.let { 
-                            // Estimación simple si el fondo es oscuro
-                            it.red + it.green + it.blue < 1.0f 
-                        }
                         Text(
                             text = diff,
                             color = when {
-                                diff.startsWith("+") -> if (isDark) TrendIncreaseDark else TrendIncrease
-                                diff.startsWith("-") -> if (isDark) TrendDecreaseDark else TrendDecrease
-                                else -> if (isDark) TrendNeutralDark else TrendNeutral
+                                diff.startsWith("+") -> MaterialTheme.extendedColors.trendIncrease
+                                diff.startsWith("-") -> MaterialTheme.extendedColors.trendDecrease
+                                else -> MaterialTheme.extendedColors.trendNeutral
                             },
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
@@ -208,20 +199,21 @@ private fun BoxScope.CloseButton(
     }
 }
 
-// TODO: Se ve raro
 @ThemePreviews
 @Composable
 fun WeightCardPreview() {
-    val item = WeightItem(
-        weight = 70.5,
-        dateKey = "2024-06-15",
-        date = "15/06"
-    )
+    MyApplicationTheme {
+        val item = WeightItem(
+            weight = 70.5,
+            dateKey = "2024-06-15",
+            date = "15/06"
+        )
 
-    WeightCard(
-        item = item,
-        previousWeight = 71.0,
-        viewModel = viewModelFromFloats(listOf(70.5f)),
-        deletionState = WeightDeletionState()
-    )
+        WeightCard(
+            item = item,
+            previousWeight = 71.0,
+            viewModel = viewModelFromFloats(listOf(70.5f)),
+            deletionState = WeightDeletionState()
+        )
+    }
 }

@@ -71,6 +71,7 @@ fun FiltersContent(
         Text(
             text = stringResource(R.string.filters),
             style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Bold
         )
 
@@ -108,13 +109,14 @@ fun FiltersContent(
                     "${resolveDatePickerText(start)} - ${resolveDatePickerText(end)}"
                 } ?: stringResource(R.string.no_range_selected)
                 Text(
-                    text = "Rango de fechas",
+                    text = stringResource(R.string.date_range),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = dateRangeText,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
 
@@ -190,7 +192,7 @@ private fun AcceptButton(
         },
         modifier = Modifier.fillMaxWidth()
     ) {
-        Text("Aplicar")
+        Text(stringResource(R.string.apply))
     }
 
     responseMessage.value?.let { messageID ->
@@ -207,19 +209,18 @@ private fun AcceptButton(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(messageID))
-                    Text("Por favor, revisa los filtros seleccionados.")
+                    Text(stringResource(R.string.warning_filters))
                 }
             }
         )
     }
 }
 
-// TODO: Se ve raro
 @ThemePreviews
 @Composable
 fun FiltersContentPreview() {
-    val context = LocalContext.current
     MyApplicationTheme {
+        val context = LocalContext.current
         val initialValues: List<Float> = listOf()
         val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
         val settingsRepository = SettingsRepository(context)
