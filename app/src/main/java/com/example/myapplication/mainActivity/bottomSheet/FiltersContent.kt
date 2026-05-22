@@ -28,23 +28,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
-import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.extensionFunctions.selectedDateRange
-import com.example.myapplication.mainActivity.MainActivityModel
 import com.example.myapplication.mainActivity.MainActivityViewModel
-import com.example.myapplication.mainActivity.settings.SettingsRepository
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.ui.theme.ThemePreviews
 import com.example.myapplication.utils.defaultDatePickerFormatter
 import com.example.myapplication.utils.resolveDatePickerText
 import com.example.myapplication.utils.selectableDatesFromFunction
 import com.example.myapplication.utils.todayForDatePicker
+import com.example.myapplication.utils.viewModelFromFloats
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -220,13 +217,7 @@ private fun AcceptButton(
 @Composable
 fun FiltersContentPreview() {
     MyApplicationTheme {
-        val context = LocalContext.current
-        val initialValues: List<Float> = listOf()
-        val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
-        val settingsRepository = SettingsRepository(context)
-        val viewModel = MainActivityViewModel(
-            MainActivityModel(memoryStorage, settingsRepository)
-        )
+        val viewModel = viewModelFromFloats(listOf())
         FiltersContent(viewModel = viewModel, onDismissRequest = {})
     }
 }

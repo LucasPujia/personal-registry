@@ -39,16 +39,14 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
-import com.example.myapplication.database.weight.InMemoryWeightsStorage
-import com.example.myapplication.mainActivity.MainActivityModel
 import com.example.myapplication.mainActivity.MainActivityViewModel
 import com.example.myapplication.mainActivity.TimeRange
-import com.example.myapplication.mainActivity.settings.SettingsRepository
 import com.example.myapplication.mainActivity.weightItem.WeightCard
 import com.example.myapplication.mainActivity.weightItem.WeightItem
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.ui.theme.ThemePreviews
 import com.example.myapplication.utils.OUTER_PADDING
+import com.example.myapplication.utils.viewModelFromFloats
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DotProperties
@@ -329,14 +327,9 @@ class WeightDeletionState(
 @ThemePreviews
 @Composable
 fun WeightsViewerPreview() {
-    val context = androidx.compose.ui.platform.LocalContext.current
     val initialValues = listOf(25f, 30f, 35.5f, 32f, 28f, 29f)
-    val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
-    val settingsRepository = SettingsRepository(context)
-    val mainActivityModel = MainActivityModel(memoryStorage, settingsRepository)
+    val viewModel = viewModelFromFloats(initialValues)
     MyApplicationTheme {
-        WeightsViewer(
-            MainActivityViewModel(mainActivityModel)
-        )
+        WeightsViewer(viewModel)
     }
 }

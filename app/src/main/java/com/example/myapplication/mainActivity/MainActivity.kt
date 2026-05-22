@@ -18,10 +18,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import com.example.myapplication.database.AppDatabase
-import com.example.myapplication.database.weight.InMemoryWeightsStorage
 import com.example.myapplication.database.weight.RoomWeightsStorage
 import com.example.myapplication.mainActivity.bottomSheet.BottomSheetHandler
 import com.example.myapplication.mainActivity.settings.SettingsRepository
@@ -32,6 +30,7 @@ import com.example.myapplication.ui.theme.DarkPreviewWithSystemUI
 import com.example.myapplication.ui.theme.LightPreviewWithSystemUI
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.utils.OUTER_PADDING
+import com.example.myapplication.utils.viewModelFromFloats
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainActivityViewModel> {
@@ -87,13 +86,9 @@ fun MyApplicationApp(viewModel: MainActivityViewModel) {
 @DarkPreviewWithSystemUI
 @Composable
 fun MyApplicationAppPreview() {
-    val context = LocalContext.current
-    MyApplicationTheme(themeMode = ThemeMode.SYSTEM) {
-        val initialValues = listOf(61f, 60f, 58f, 62f)
-        val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
-        val settingsRepository = SettingsRepository(context)
-        val mainActivityModel = MainActivityModel(memoryStorage, settingsRepository)
-        MyApplicationApp(MainActivityViewModel(mainActivityModel))
+    MyApplicationTheme {
+        val viewModel = viewModelFromFloats(listOf(61f, 60f, 58f, 62f))
+        MyApplicationApp(viewModel)
     }
 }
 
