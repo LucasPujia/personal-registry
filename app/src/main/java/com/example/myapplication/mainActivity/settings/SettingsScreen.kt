@@ -4,45 +4,35 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Scale
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
 import com.example.myapplication.mainActivity.MainActivityViewModel
-import com.example.myapplication.mainActivity.ThemeMode
 
 enum class SettingsOption(val messageId: Int) {
     MEASURE_UNIT(R.string.measure_unit),
@@ -67,13 +57,13 @@ fun SettingsScreen(
         viewModel.settingsOpened = false
     }
 
-    val showThemeDialog = remember { mutableStateOf(false) }
-
-    if (showThemeDialog.value) {
-        ThemeSelectionDialog(
-            viewModel = viewModel,
-            showThemeDialog = showThemeDialog,
-        )
+    val showSettingDialog: MutableState<SettingsOption?> = remember { mutableStateOf(null) }
+    when (showSettingDialog.value) {
+        SettingsOption.MEASURE_UNIT -> {}
+        SettingsOption.NOTIFICATIONS -> NotificationsDialog(viewModel = viewModel, showSettingDialog = showSettingDialog)
+        SettingsOption.THEME -> ThemeSelectionDialog(viewModel = viewModel, showSettingDialog = showSettingDialog)
+        SettingsOption.ABOUT ->{ }
+        else -> {}
     }
 
     Scaffold(
@@ -123,11 +113,13 @@ fun SettingsScreen(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
             item {
+                val notificationsEnabled = remember { mutableStateOf(true) }
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.notifications)) },
                     supportingContent = { Text(stringResource(R.string.daily_reminder)) },
                     leadingContent = { Icon(Icons.Default.Notifications, contentDescription = null) },
-                    trailingContent = { Switch(checked = true, onCheckedChange = {}) }
+                    trailingContent = { Switch(checked = notificationsEnabled.value, onCheckedChange = { notificationsEnabled.value = it }) },
+                    modifier = Modifier.clickable { showSettingDialog.value = SettingsOption.NOTIFICATIONS },
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
@@ -136,7 +128,7 @@ fun SettingsScreen(
                     headlineContent = {  Text(stringResource(R.string.theme)) },
                     supportingContent = { Text(stringResource(viewModel.themeMode.messageId)) },
                     leadingContent = { Icon(Icons.Default.Palette, contentDescription = null) },
-                    modifier = Modifier.clickable { showThemeDialog.value = true }
+                    modifier = Modifier.clickable { showSettingDialog.value = SettingsOption.THEME }
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
@@ -154,50 +146,3 @@ fun SettingsScreen(
         }
     }
 }
-
-@Composable
-fun ThemeSelectionDialog(
-    viewModel: MainActivityViewModel,
-    showThemeDialog: MutableState<Boolean>
-) {
-    val onDismiss = { showThemeDialog.value = false }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.select_theme)) },
-        text = {
-            Column {
-                ThemeMode.entries.forEach { mode ->
-                    val isSelected = mode == viewModel.themeMode
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = isSelected,
-                                onClick = {
-                                    viewModel.setTheme(mode)
-                                    onDismiss()
-                                }
-                            )
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = isSelected,
-                            onClick = null // El click lo maneja el Row
-                        )
-                        Text(
-                            text = stringResource(mode.messageId),
-                            modifier = Modifier.padding(start = 16.dp)
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.close))
-            }
-        }
-    )
-}
-

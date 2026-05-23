@@ -44,4 +44,8 @@
     <string name="metric_kg_cm">Métrica (kg, cm)</string>
     <string name="imperial_lb_in">Imperial (lb, in)</string>
     <string name="warning_filters">Por favor, revisa los filtros seleccionados</string>
+    <string name="notifications_off">Apagadas</string>
+    <string name="notifications_1d">Recordatorio diario</string>
+    <string name="notifications_3d">Recordatorio cada 3 días</string>
+    <string name="notifications_7d">Recordatorio semanal</string>
 </resources>
