@@ -18,13 +18,6 @@ import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
 import com.example.myapplication.mainActivity.MainActivityViewModel
 
-enum class NotificationFrequency(override val messageId: Int) : Setting {
-    OFF(R.string.notifications_off),
-    DAYS_1(R.string.notifications_1d),
-    DAYS_3(R.string.notifications_3d),
-    DAYS_7(R.string.notifications_7d);
-}
-
 @Composable
 fun NotificationsDialog(
     viewModel: MainActivityViewModel,

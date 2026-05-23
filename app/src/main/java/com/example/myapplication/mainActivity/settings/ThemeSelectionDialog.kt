@@ -17,7 +17,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
 import com.example.myapplication.mainActivity.MainActivityViewModel
-import com.example.myapplication.mainActivity.ThemeMode
 
 @Composable
 fun ThemeSelectionDialog(

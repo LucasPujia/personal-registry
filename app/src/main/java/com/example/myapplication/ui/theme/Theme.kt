@@ -14,7 +14,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import com.example.myapplication.mainActivity.ThemeMode
+import com.example.myapplication.mainActivity.settings.ThemeMode
 
 private val LightColorScheme = lightColorScheme(
     primary = PurplePrimary,

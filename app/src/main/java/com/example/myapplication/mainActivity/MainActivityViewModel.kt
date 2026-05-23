@@ -7,6 +7,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.R
+import com.example.myapplication.mainActivity.settings.NotificationFrequency
+import com.example.myapplication.mainActivity.settings.Setting
+import com.example.myapplication.mainActivity.settings.SettingOption
+import com.example.myapplication.mainActivity.settings.SettingsRepository
+import com.example.myapplication.mainActivity.settings.ThemeMode
 import com.example.myapplication.mainActivity.weightItem.WeightItem
 import com.example.myapplication.utils.forDatePicker
 import com.example.myapplication.utils.fromDatePicker
@@ -14,16 +19,14 @@ import com.example.myapplication.utils.lastMonthRange
 import com.example.myapplication.utils.localDateToDateKey
 import com.example.myapplication.utils.now
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 enum class TimeRange(val label: String) {
     DAYS_7("7D"), DAYS_15("15D"), MONTH_1("1M"), MONTH_3("3M"), MONTH_6("6M"), YEAR_1("1A")
-}
-
-enum class ThemeMode(val messageId: Int) {
-    SYSTEM(R.string.theme_system), LIGHT(R.string.theme_light), DARK(R.string.theme_dark)
 }
 
 data class ViewToggles(
@@ -33,24 +36,35 @@ data class ViewToggles(
 
 class MainActivityViewModel(
     private val model: MainActivityModel,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private var allWeights: List<WeightItem> = emptyList()
     private var registeredDateKeys: Set<String> = emptySet()
+
+    // Data filters
     var filters by mutableStateOf(ActiveFilters()); private set
     var viewToggles by mutableStateOf(ViewToggles()); private set
     var currentTimeRange by mutableStateOf<TimeRange?>(TimeRange.MONTH_1); private set
+
+    // UI State
     var filtersOpened by mutableStateOf(false)
     var viewTogglesOpened by mutableStateOf(false)
     var settingsOpened by mutableStateOf(false)
+
+    // Settings
     var themeMode by mutableStateOf(ThemeMode.SYSTEM)
+    var notificationFrequency by mutableStateOf(NotificationFrequency.OFF)
 
     init {
-        viewModelScope.launch {
-            model.themeModeFlow.collect {
-                themeMode = it
-            }
-        }
+        settingsRepository.themeModeFlow
+            .onEach { themeMode = it }
+            .launchIn(viewModelScope)
+
+        settingsRepository.notificationFrequencyFlow
+            .onEach { notificationFrequency = it }
+            .launchIn(viewModelScope)
+
         val initialWeights = model.getWeights()
         syncWeights(initialWeights)
         if (initialWeights.isNotEmpty()) {
@@ -62,9 +76,9 @@ class MainActivityViewModel(
         }
     }
 
-    fun setTheme(mode: ThemeMode) {
+    fun updateSetting(settingOption: SettingOption, value: Setting) {
         viewModelScope.launch {
-            model.updateThemeMode(mode)
+            settingsRepository.updateSetting(settingOption, value)
         }
     }
 
@@ -218,12 +232,13 @@ data class ActiveFilters(
 
 class MainActivityViewModelFactory(
     private val mainActivityModel: MainActivityModel,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainActivityViewModel::class.java)) {
-            return MainActivityViewModel(mainActivityModel) as T
+            return MainActivityViewModel(mainActivityModel, settingsRepository) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

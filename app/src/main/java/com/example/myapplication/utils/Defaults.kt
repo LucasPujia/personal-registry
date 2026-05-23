@@ -36,7 +36,8 @@ fun viewModelFromFloats(weights: List<Float>): MainActivityViewModel {
     val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
     val settingsRepository = SettingsRepository(LocalContext.current)
     return MainActivityViewModel(
-        MainActivityModel(memoryStorage, settingsRepository)
+        model = MainActivityModel(memoryStorage),
+        settingsRepository = settingsRepository
     )
 }
 

@@ -116,7 +116,7 @@ fun SettingsScreen(
                 val notificationsEnabled = remember { mutableStateOf(true) }
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.notifications)) },
-                    supportingContent = { Text(stringResource(R.string.daily_reminder)) },
+                    supportingContent = { Text(stringResource(viewModel.notificationFrequency.messageId)) },
                     leadingContent = { Icon(Icons.Default.Notifications, contentDescription = null) },
                     trailingContent = { Switch(checked = notificationsEnabled.value, onCheckedChange = { notificationsEnabled.value = it }) },
                     modifier = Modifier.clickable { showSettingDialog.value = SettingsOption.NOTIFICATIONS },

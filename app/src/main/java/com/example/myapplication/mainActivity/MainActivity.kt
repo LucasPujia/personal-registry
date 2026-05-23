@@ -36,9 +36,9 @@ class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainActivityViewModel> {
         val database = AppDatabase.getInstance(applicationContext)
         val storage = RoomWeightsStorage(database.weightRecordDao())
+        val model = MainActivityModel(storage)
         val settingsRepository = SettingsRepository(applicationContext)
-        val model = MainActivityModel(storage, settingsRepository)
-        MainActivityViewModelFactory(model)
+        MainActivityViewModelFactory(model, settingsRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

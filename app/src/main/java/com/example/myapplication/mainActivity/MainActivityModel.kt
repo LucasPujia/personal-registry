@@ -2,22 +2,14 @@ package com.example.myapplication.mainActivity
 
 import com.example.myapplication.database.weight.WeightRecord
 import com.example.myapplication.database.weight.WeightsStorage
-import com.example.myapplication.mainActivity.settings.SettingsRepository
 import com.example.myapplication.mainActivity.weightItem.WeightItem
 import com.example.myapplication.utils.forDatePicker
 import com.example.myapplication.utils.localDateToDateKey
-import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
 class MainActivityModel(
     private val storage: WeightsStorage,
-    private val settingsRepository: SettingsRepository,
 ) {
-    val themeModeFlow: Flow<ThemeMode> = settingsRepository.themeModeFlow
-
-    suspend fun updateThemeMode(mode: ThemeMode) {
-        settingsRepository.updateThemeMode(mode)
-    }
 
     fun getWeights(): List<WeightItem> {
         return storage.readWeights().map { it.toWeightItem() }
