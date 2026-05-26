@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Weight Registry</string>
+    <string name="app_name">Personal Registry</string>
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
     <string name="add_weight">Add weight</string>
@@ -40,6 +40,7 @@
     <string name="select_theme">Select theme</string>
     <string name="about">About</string>
     <string name="version">Version</string>
+    <string name="app_version">1.0.0</string>
     <string name="metric_kg_cm">Metric (kg, cm)</string>
     <string name="imperial_lb_in">Imperial (lb, in)</string>
     <string name="warning_filters">Please, check the selected filters</string>

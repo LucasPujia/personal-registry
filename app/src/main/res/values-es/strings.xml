@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Registro de Peso</string>
+    <string name="app_name">Registro Personal</string>
     <string name="today">Hoy</string>
     <string name="yesterday">Ayer</string>
     <string name="add_weight">Añadir peso</string>
@@ -41,6 +41,7 @@
     <string name="select_theme">Seleccionar tema</string>
     <string name="about">Acerca de</string>
     <string name="version">Versión</string>
+    <string name="app_version">1.0.0</string>
     <string name="metric_kg_cm">Métrica (kg, cm)</string>
     <string name="imperial_lb_in">Imperial (lb, in)</string>
     <string name="warning_filters">Por favor, revisa los filtros seleccionados</string>
