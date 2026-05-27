@@ -52,4 +52,6 @@
     <string name="mit_license">Desarrollado bajo licencia MIT.</string>
     <string name="export_import">Exportar / Importar</string>
     <string name="export_import_content">Aprovecha al máximo tus registros</string>
+    <string name="general">General</string>
+    <string name="data">Datos</string>
 </resources>

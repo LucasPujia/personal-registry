@@ -51,4 +51,6 @@
     <string name="mit_license">Developed under MIT license.</string>
     <string name="export_import">Export / Import</string>
     <string name="export_import_content">Get the most out of your registry</string>
+    <string name="general">General</string>
+    <string name="data">Data</string>
 </resources>
