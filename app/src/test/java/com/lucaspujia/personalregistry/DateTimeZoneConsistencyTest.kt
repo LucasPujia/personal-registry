@@ -10,15 +10,35 @@ import com.lucaspujia.personalregistry.utils.fromDatePicker
 import com.lucaspujia.personalregistry.utils.localDateToDateKey
 import com.lucaspujia.personalregistry.utils.resolveDatePickerMonthYearText
 import com.lucaspujia.personalregistry.utils.resolveDatePickerText
+import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.TimeZone
 
 class DateTimeZoneConsistencyTest {
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Before
+    fun setup() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     // ─── dateKey es inmune a cambios de zona horaria ──────────────────────────
 
@@ -88,9 +108,9 @@ class DateTimeZoneConsistencyTest {
         withTimeZone("America/Los_Angeles") {
             val date = LocalDate.of(2030, 1, 15)
             val storage = InMemoryWeightsStorage(
-                listOf(WeightRecord(weight = 71f, dateKey = "2030-01-15"))
+                listOf(WeightRecord(weight = 71f, dateKey = "2030-01-15")),
             )
-            val viewModel = MainActivityViewModel(MainActivityModel(storage))
+            val viewModel = MainActivityViewModel(MainActivityModel(storage), mockk(relaxed = true))
 
             assertFalse(viewModel.isSelectableDate(forDatePicker(date)))
         }
@@ -108,7 +128,7 @@ class DateTimeZoneConsistencyTest {
         )
 
         withTimeZone("Asia/Tokyo") {
-            val viewModel = MainActivityViewModel(MainActivityModel(storage))
+            val viewModel = MainActivityViewModel(MainActivityModel(storage), mockk(relaxed = true))
 
             // ayer sigue ocupado — no importa la zona
             assertFalse(viewModel.isSelectableDate(forDatePicker(yesterday)))
@@ -128,7 +148,7 @@ class DateTimeZoneConsistencyTest {
                 WeightRecord(weight = 72f, dateKey = "2030-01-16"),
             )
         )
-        val viewModel = MainActivityViewModel(MainActivityModel(storage))
+        val viewModel = MainActivityViewModel(MainActivityModel(storage), mockk(relaxed = true))
 
         viewModel.applyFilters(
             minViewValue = 0,
@@ -153,7 +173,7 @@ class DateTimeZoneConsistencyTest {
 
         listOf("America/Los_Angeles", "Asia/Tokyo", "UTC").forEach { tz ->
             withTimeZone(tz) {
-                val viewModel = MainActivityViewModel(MainActivityModel(storage))
+                val viewModel = MainActivityViewModel(MainActivityModel(storage), mockk(relaxed = true))
                 viewModel.applyFilters(minViewValue = 0, maxViewValue = 100, dateRange = range)
                 assertEquals("Fallo en zona $tz", listOf(71.0), viewModel.filters.weightsD)
             }
@@ -167,7 +187,7 @@ class DateTimeZoneConsistencyTest {
         withTimeZone("Asia/Tokyo") {
             val today = nowTZ()
             val storage = InMemoryWeightsStorage(
-                listOf(WeightRecord(weight = 68f, dateKey = localDateToDateKey(today.minusDays(1))))
+                listOf(WeightRecord(weight = 68f, dateKey = localDateToDateKey(today.minusDays(1)))),
             )
             val model = MainActivityModel(storage)
             model.addWeight(69f, today)
