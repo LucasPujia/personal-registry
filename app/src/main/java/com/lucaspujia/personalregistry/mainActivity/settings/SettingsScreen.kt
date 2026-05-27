@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ImportExport
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
@@ -22,7 +23,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -42,11 +42,32 @@ import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.viewModelFromFloats
 
-enum class SettingsOption(val messageId: Int) {
-    MEASURE_UNIT(R.string.measure_unit),
-    NOTIFICATIONS(R.string.notifications),
-    THEME(R.string.theme),
-    ABOUT(R.string.about)
+enum class SettingsOption(
+    val icon: ImageVector,
+    val titleId: Int,
+    val content: @Composable (viewModel: MainActivityViewModel) -> String
+) {
+    MEASURE_UNIT(
+        Icons.Default.Scale,
+        R.string.measure_unit,
+        { stringResource(MeasureUnit.METRIC.messageId) }),
+    NOTIFICATIONS(
+        Icons.Default.Notifications,
+        R.string.notifications,
+        { viewModel -> stringResource(viewModel.notificationFrequency.messageId) }),
+    THEME(
+        Icons.Default.Palette,
+        R.string.theme,
+        { viewModel -> stringResource(viewModel.themeMode.messageId) }),
+    EXPORT_IMPORT(
+        Icons.Default.ImportExport,
+        R.string.export_import,
+        { stringResource(R.string.export_import_content) }
+    ),
+    ABOUT(
+        Icons.Default.Info,
+        R.string.about,
+        { "${stringResource(R.string.version)} ${stringResource(R.string.app_version)}" })
 }
 
 enum class MeasureUnit(val messageId: Int) {
@@ -61,9 +82,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     // Manejo del botón atrás del sistema
-    BackHandler {
-        viewModel.settingsOpened = false
-    }
+    BackHandler { viewModel.settingsOpened = false }
 
     val showSettingDialog: MutableState<SettingsOption?> = remember { mutableStateOf(null) }
     val dismissDialog = { showSettingDialog.value = null }
@@ -95,41 +114,16 @@ fun SettingsScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            item {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.measure_unit)) },
-                    supportingContent = { Text(stringResource(MeasureUnit.METRIC.messageId)) },
-                    leadingContent = { Icon(Icons.Default.Scale, contentDescription = null) }
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            }
-            item {
-                val notificationsEnabled = remember { mutableStateOf(true) }
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.notifications)) },
-                    supportingContent = { Text(stringResource(viewModel.notificationFrequency.messageId)) },
-                    leadingContent = { Icon(Icons.Default.Notifications, contentDescription = null) },
-                    trailingContent = { Switch(checked = notificationsEnabled.value, onCheckedChange = { notificationsEnabled.value = it }) },
-                    modifier = Modifier.clickable { showSettingDialog.value = SettingsOption.NOTIFICATIONS },
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            }
-            item {
-                ListItem(
-                    headlineContent = {  Text(stringResource(R.string.theme)) },
-                    supportingContent = { Text(stringResource(viewModel.themeMode.messageId)) },
-                    leadingContent = { Icon(Icons.Default.Palette, contentDescription = null) },
-                    modifier = Modifier.clickable { showSettingDialog.value = SettingsOption.THEME }
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            }
-            item {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.about)) },
-                    supportingContent = { Text("${stringResource(R.string.version)} ${stringResource(R.string.app_version)}") },
-                    leadingContent = { Icon(Icons.Default.Info, contentDescription = null) },
-                    modifier = Modifier.clickable { showSettingDialog.value = SettingsOption.ABOUT }
-                )
+            for (option in SettingsOption.entries) {
+                item {
+                    ListItem(
+                        headlineContent = { Text(stringResource(option.titleId)) },
+                        supportingContent = { Text(option.content(viewModel)) },
+                        leadingContent = { Icon(option.icon, contentDescription = null) },
+                        modifier = Modifier.clickable { showSettingDialog.value = option }
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
             }
         }
     }
@@ -155,10 +149,8 @@ private fun AboutDialog(dismissDialog: () -> Unit) {
 }
 
 @Composable
-private fun Modifier.closeOnLeftSlide(
-    viewModel: MainActivityViewModel
-): Modifier = this
-    .pointerInput(Unit) {
+private fun Modifier.closeOnLeftSlide(viewModel: MainActivityViewModel): Modifier {
+    return this.pointerInput(Unit) {
         var offsetX = 0f
         detectHorizontalDragGestures(
             onDragEnd = { offsetX = 0f },
@@ -171,6 +163,7 @@ private fun Modifier.closeOnLeftSlide(
             }
         )
     }
+}
 
 @ThemePreviews
 @Composable

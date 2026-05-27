@@ -49,4 +49,6 @@
     <string name="notifications_3d">Reminder every 3 days</string>
     <string name="notifications_7d">Weekly Reminder</string>
     <string name="mit_license">Developed under MIT license.</string>
+    <string name="export_import">Export / Import</string>
+    <string name="export_import_content">Get the most out of your registry</string>
 </resources>

@@ -53,6 +53,7 @@ import com.lucaspujia.personalregistry.mainActivity.WEIGHT_MAX_VALUE
 import com.lucaspujia.personalregistry.mainActivity.WEIGHT_MIN_VALUE
 import com.lucaspujia.personalregistry.mainActivity.WEIGHT_PIXELS_PER_UNIT
 import com.lucaspujia.personalregistry.mainActivity.WEIGHT_SCROLL_INVERTED
+import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -297,7 +298,7 @@ private fun WeightInputModal(
 @ThemePreviews
 @Composable
 fun VerticalNumberPickerPreview() {
-    com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme {
+    PersonalRegistryTheme {
         VerticalNumberPicker(
             value = 75.5f,
             onValueChange = {},
@@ -312,7 +313,7 @@ fun VerticalNumberPickerPreview() {
 @Preview(showBackground = true, widthDp = 400, heightDp = 300, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun WeightInputModalPreview() {
-    com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme {
+    PersonalRegistryTheme {
         val showDialog = remember { mutableStateOf(true) }
         WeightInputModal(
             showDialog = showDialog,
