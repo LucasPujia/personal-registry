@@ -70,34 +70,16 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
-                    Text(stringResource(R.string.settings))
-                },
+                title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.settingsOpened = false }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retroceder")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        modifier = modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                var offsetX = 0f
-                detectHorizontalDragGestures(
-                    onDragEnd = { offsetX = 0f },
-                    onDragCancel = { offsetX = 0f },
-                    onHorizontalDrag = { _, dragAmount ->
-                        offsetX += dragAmount
-                        if (offsetX > 200) { // Umbral para detectar el slide de salida
-                            viewModel.settingsOpened = false
-                        }
-                    }
-                )
-            }
+        modifier = modifier.closeOnLeftSlide(viewModel).fillMaxSize()
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -145,5 +127,23 @@ fun SettingsScreen(
                 )
             }
         }
+
+@Composable
+private fun Modifier.closeOnLeftSlide(
+    viewModel: MainActivityViewModel
+): Modifier = this
+    .pointerInput(Unit) {
+        var offsetX = 0f
+        detectHorizontalDragGestures(
+            onDragEnd = { offsetX = 0f },
+            onDragCancel = { offsetX = 0f },
+            onHorizontalDrag = { _, dragAmount ->
+                offsetX += dragAmount
+                if (offsetX > 200) { // Umbral para detectar el slide de salida
+                    viewModel.settingsOpened = false
+                }
+            }
+        )
+    }
     }
 }
