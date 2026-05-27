@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Scale
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -22,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -29,10 +32,15 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
-import com.example.myapplication.R
-import com.example.myapplication.mainActivity.MainActivityViewModel
+import androidx.compose.ui.tooling.preview.Preview
+import com.lucaspujia.personalregistry.R
+import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
+import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
+import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
+import com.lucaspujia.personalregistry.utils.viewModelFromFloats
 
 enum class SettingsOption(val messageId: Int) {
     MEASURE_UNIT(R.string.measure_unit),
@@ -117,16 +125,34 @@ fun SettingsScreen(
             }
             item {
                 ListItem(
-                    headlineContent = { 
-                        Text(stringResource(R.string.about))
-                    },
-                    supportingContent = { 
-                        Text(stringResource(R.string.version) + " 1.0.0")
-                    },
-                    leadingContent = { Icon(Icons.Default.Info, contentDescription = null) }
+                    headlineContent = { Text(stringResource(R.string.about)) },
+                    supportingContent = { Text("${stringResource(R.string.version)} ${stringResource(R.string.app_version)}") },
+                    leadingContent = { Icon(Icons.Default.Info, contentDescription = null) },
+                    modifier = Modifier.clickable { showSettingDialog.value = SettingsOption.ABOUT }
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun AboutDialog(dismissDialog: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = dismissDialog,
+        title = { Text(stringResource(R.string.about)) },
+        text = {
+            Column {
+                Text("${stringResource(R.string.app_name)} ${stringResource(R.string.version)} ${stringResource(R.string.app_version)}")
+                Text(stringResource(R.string.mit_license))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = dismissDialog) {
+                Text(stringResource(R.string.accept))
+            }
+        }
+    )
+}
 
 @Composable
 private fun Modifier.closeOnLeftSlide(
@@ -145,5 +171,20 @@ private fun Modifier.closeOnLeftSlide(
             }
         )
     }
+
+@ThemePreviews
+@Composable
+fun SettingsScreenPreview() {
+    PersonalRegistryTheme {
+        SettingsScreen(viewModel = viewModelFromFloats(listOf()))
+    }
+}
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 300)
+@Composable
+fun AboutDialogPreview() {
+    val showSettingDialog = remember<MutableState<SettingsOption?>> { mutableStateOf(SettingsOption.ABOUT) }
+    PersonalRegistryTheme {
+        AboutDialog(dismissDialog = {showSettingDialog.value = null})
     }
 }

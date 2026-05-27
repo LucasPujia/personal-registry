@@ -49,4 +49,5 @@
     <string name="notifications_1d">Recordatorio diario</string>
     <string name="notifications_3d">Recordatorio cada 3 días</string>
     <string name="notifications_7d">Recordatorio semanal</string>
+    <string name="mit_license">Desarrollado bajo licencia MIT.</string>
 </resources>
