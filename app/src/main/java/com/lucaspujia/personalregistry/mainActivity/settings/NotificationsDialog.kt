@@ -10,7 +10,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -21,11 +20,10 @@ import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
 @Composable
 fun NotificationsDialog(
     viewModel: MainActivityViewModel,
-    showSettingDialog: MutableState<SettingsOption?>
+    dismissDialog: () -> Unit,
 ) {
-    val onDismiss = { showSettingDialog.value = null }
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = dismissDialog,
         title = { Text(stringResource(R.string.select_theme)) },
         text = {
             Column {
@@ -38,7 +36,7 @@ fun NotificationsDialog(
                                 selected = isSelected,
                                 onClick = {
                                     viewModel.updateSetting(SettingOption.NOTIFICATION_FREQUENCY, frequency)
-                                    onDismiss()
+                                    dismissDialog()
                                 }
                             )
                             .padding(vertical = 8.dp),
@@ -57,7 +55,7 @@ fun NotificationsDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = dismissDialog) {
                 Text(stringResource(R.string.close))
             }
         }

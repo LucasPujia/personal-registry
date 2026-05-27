@@ -58,11 +58,12 @@ fun SettingsScreen(
     }
 
     val showSettingDialog: MutableState<SettingsOption?> = remember { mutableStateOf(null) }
+    val dismissDialog = { showSettingDialog.value = null }
     when (showSettingDialog.value) {
         SettingsOption.MEASURE_UNIT -> {}
-        SettingsOption.NOTIFICATIONS -> NotificationsDialog(viewModel = viewModel, showSettingDialog = showSettingDialog)
-        SettingsOption.THEME -> ThemeSelectionDialog(viewModel = viewModel, showSettingDialog = showSettingDialog)
-        SettingsOption.ABOUT ->{ }
+        SettingsOption.NOTIFICATIONS -> NotificationsDialog(viewModel = viewModel, dismissDialog = dismissDialog)
+        SettingsOption.THEME -> ThemeSelectionDialog(viewModel = viewModel, dismissDialog = dismissDialog)
+        SettingsOption.ABOUT -> AboutDialog(dismissDialog)
         else -> {}
     }
 
