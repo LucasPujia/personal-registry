@@ -26,8 +26,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
-enum class TimeRange(val label: String) {
-    DAYS_7("7D"), DAYS_15("15D"), MONTH_1("1M"), MONTH_3("3M"), MONTH_6("6M"), YEAR_1("1A")
+enum class TimeRange(val label: String, val apply: (LocalDate) -> LocalDate) {
+    DAYS_7("7D", { it.minusDays(7) }),
+    DAYS_15("15D", { it.minusDays(15) }),
+    MONTH_1("1M", { it.minusMonths(1) }),
+    MONTH_3("3M", { it.minusMonths(3) }),
+    MONTH_6("6M", { it.minusMonths(6) }),
+    YEAR_1("1A", { it.minusYears(1) })
 }
 
 data class ViewToggles(
@@ -220,14 +225,7 @@ class MainActivityViewModel @Inject constructor(
     fun updateTimeRange(range: TimeRange) {
         currentTimeRange = range
         val endDate = now()
-        val startDate = when (range) {
-            TimeRange.DAYS_7 -> endDate.minusDays(7)
-            TimeRange.DAYS_15 -> endDate.minusDays(15)
-            TimeRange.MONTH_1 -> endDate.minusMonths(1)
-            TimeRange.MONTH_3 -> endDate.minusMonths(3)
-            TimeRange.MONTH_6 -> endDate.minusMonths(6)
-            TimeRange.YEAR_1 -> endDate.minusYears(1)
-        }
+        val startDate = range.apply(endDate)
 
         applyFilters(
             goalWeight = filters.goalWeight,
