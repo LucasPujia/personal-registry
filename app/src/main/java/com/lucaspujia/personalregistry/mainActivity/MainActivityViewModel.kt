@@ -42,7 +42,8 @@ data class ImportExportState(
     val pendingRecords: List<WeightRecord> = emptyList()
 )
 
-class MainActivityViewModel(
+@HiltViewModel
+class MainActivityViewModel @Inject constructor(
     private val model: MainActivityModel,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
@@ -281,19 +282,4 @@ data class ActiveFilters(
 ) {
     val weightsF: List<Float> by lazy { weights.map { it.weight.toFloat() } }
     val weightsD: List<Double> by lazy { weights.map { it.weight } }
-}
-
-class MainActivityViewModelFactory(
-    private val mainActivityModel: MainActivityModel,
-    private val settingsRepository: SettingsRepository,
-) : ViewModelProvider.Factory {
-
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(MainActivityViewModel::class.java)) {
-            return MainActivityViewModel(mainActivityModel, settingsRepository) as T
-        }
-
-        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
-    }
 }

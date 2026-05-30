@@ -19,10 +19,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
-import com.lucaspujia.personalregistry.database.AppDatabase
-import com.lucaspujia.personalregistry.database.weight.RoomWeightsStorage
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.mainActivity.bottomSheet.BottomSheetHandler
-import com.lucaspujia.personalregistry.mainActivity.settings.SettingsRepository
 import com.lucaspujia.personalregistry.mainActivity.settings.SettingsScreen
 import com.lucaspujia.personalregistry.mainActivity.weightSelector.WeightSelector
 import com.lucaspujia.personalregistry.mainActivity.weightsViewer.WeightsViewer
@@ -31,15 +29,11 @@ import com.lucaspujia.personalregistry.ui.theme.LightPreviewWithSystemUI
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
 import com.lucaspujia.personalregistry.utils.viewModelFromFloats
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val viewModel by viewModels<MainActivityViewModel> {
-        val database = AppDatabase.getInstance(applicationContext)
-        val storage = RoomWeightsStorage(database.weightRecordDao())
-        val model = MainActivityModel(storage)
-        val settingsRepository = SettingsRepository(applicationContext)
-        MainActivityViewModelFactory(model, settingsRepository)
-    }
+    private val viewModel by viewModels<MainActivityViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -47,7 +41,7 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             PersonalRegistryTheme(themeMode = viewModel.themeMode) {
-                PersonalRegistryApp(viewModel)
+                PersonalRegistryApp()
             }
         }
     }
@@ -55,7 +49,9 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PersonalRegistryApp(viewModel: MainActivityViewModel) {
+fun PersonalRegistryApp(
+    viewModel: MainActivityViewModel = hiltViewModel()
+) {
     Box(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
         Column(
             modifier = Modifier
@@ -63,21 +59,20 @@ fun PersonalRegistryApp(viewModel: MainActivityViewModel) {
                 .background(color = MaterialTheme.colorScheme.background)
                 .statusBarsPadding(),
         ) {
-            WeightSelector(viewModel)
+            WeightSelector()
             if (viewModel.filters.weights.isNotEmpty()) WeightsViewer(
-                viewModel,
-                Modifier.offset(y = -OUTER_PADDING)
+                modifier = Modifier.offset(y = -OUTER_PADDING)
             )
         }
 
-        BottomSheetHandler(viewModel)
+        BottomSheetHandler()
 
         AnimatedVisibility(
             visible = viewModel.settingsOpened,
             enter = slideInHorizontally { it },
             exit = slideOutHorizontally { it },
         ) {
-            SettingsScreen(viewModel)
+            SettingsScreen()
         }
     }
 }

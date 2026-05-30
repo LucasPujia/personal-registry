@@ -44,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
 import com.lucaspujia.personalregistry.mainActivity.WEIGHT_DECIMAL_PRECISION
@@ -63,8 +64,8 @@ import kotlin.math.pow
 
 @Composable
 fun WeightSelector(
-    viewModel: MainActivityViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: MainActivityViewModel = hiltViewModel()
 ) {
     val latestStoredWeight = viewModel.filters.weightsF.lastOrNull()
     val weightStep = remember { (10.0).pow(-WEIGHT_DECIMAL_PRECISION).toFloat() }
@@ -84,7 +85,7 @@ fun WeightSelector(
             .fillMaxWidth()
             .padding(OUTER_PADDING),
     ) {
-        FilterControls(datePickerState, viewModel)
+        FilterControls(datePickerState)
 
         Spacer(Modifier.height(8.dp))
 
@@ -140,7 +141,7 @@ fun WeightSelector(
 @Composable
 private fun FilterControls(
     datePickerState: DatePickerState,
-    viewModel: MainActivityViewModel
+    viewModel: MainActivityViewModel = hiltViewModel()
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -247,7 +248,7 @@ private fun FilterControls(
 @Composable
 fun WeightSelectorPreview() {
     PersonalRegistryTheme {
-        WeightSelector(viewModelFromFloats(listOf()))
+        WeightSelector(viewModel = viewModelFromFloats(listOf()))
     }
 }
 

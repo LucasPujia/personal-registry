@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
 import com.lucaspujia.personalregistry.mainActivity.weightsViewer.WeightDeletionState
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
@@ -51,8 +52,8 @@ enum class DragValue { Settled, Revealed }
 fun WeightCard(
     item: WeightItem,
     previousWeight: Double?,
-    viewModel: MainActivityViewModel,
     deletionState: WeightDeletionState,
+    viewModel: MainActivityViewModel = hiltViewModel(),
 ) {
     val receiver = LocalDensity.current
     val state = remember {
@@ -176,7 +177,7 @@ fun WeightCard(
 private fun BoxScope.CloseButton(
     deletionState: WeightDeletionState,
     item: WeightItem,
-    viewModel: MainActivityViewModel
+    viewModel: MainActivityViewModel = hiltViewModel()
 ) {
     Box(
         modifier = Modifier

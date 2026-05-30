@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
@@ -30,8 +31,8 @@ import com.lucaspujia.personalregistry.utils.viewModelFromFloats
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewTogglesContent(
-    viewModel: MainActivityViewModel,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
+    viewModel: MainActivityViewModel = hiltViewModel(),
 ) {
     var showGraph by remember { mutableStateOf(viewModel.viewToggles.graph) }
     var showList by remember { mutableStateOf(viewModel.viewToggles.list) }

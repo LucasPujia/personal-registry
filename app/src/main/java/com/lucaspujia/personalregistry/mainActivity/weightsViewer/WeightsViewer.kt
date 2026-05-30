@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
 import com.lucaspujia.personalregistry.mainActivity.TimeRange
@@ -60,13 +61,13 @@ import ir.ehsannarmani.compose_charts.models.Line
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WeightsViewer(
-    viewModel: MainActivityViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: MainActivityViewModel = hiltViewModel()
 ) {
     val isPreview = LocalInspectionMode.current
     val deletionState = rememberWeightDeletionState()
 
-    ConfirmDeletionDialog(deletionState, viewModel)
+    ConfirmDeletionDialog(deletionState)
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -170,7 +171,7 @@ fun WeightsViewer(
                     key = { _, item -> item.dateKey }
                 ) { index, item ->
                     val previousItem = if (index + 1 < weightsListReversed.size) weightsListReversed[index + 1] else null
-                    WeightCard(item, previousItem?.weight, viewModel, deletionState)
+                    WeightCard(item, previousItem?.weight, deletionState)
                 }
             }
         }
@@ -240,7 +241,7 @@ private fun HistorialHeader() {
 @Composable
 private fun ConfirmDeletionDialog(
     deletionState: WeightDeletionState,
-    viewModel: MainActivityViewModel
+    viewModel: MainActivityViewModel = hiltViewModel()
 ) {
     if (deletionState.weightToDelete == null) return
     AlertDialog(
@@ -330,6 +331,6 @@ fun WeightsViewerPreview() {
     val initialValues = listOf(25f, 30f, 35.5f, 32f, 28f, 29f)
     val viewModel = viewModelFromFloats(initialValues)
     PersonalRegistryTheme {
-        WeightsViewer(viewModel)
+        WeightsViewer(viewModel = viewModel)
     }
 }

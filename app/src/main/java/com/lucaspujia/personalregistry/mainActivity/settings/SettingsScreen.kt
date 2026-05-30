@@ -50,6 +50,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
@@ -66,7 +67,7 @@ enum class SettingsOption(
     val icon: ImageVector,
     val titleId: Int,
     val category: SettingsCategory,
-    val content: @Composable (viewModel: MainActivityViewModel) -> String
+    val content: @Composable (viewModel: SettingsViewModel) -> String
 ) {
     MEASURE_UNIT(
         Icons.Default.Scale,
@@ -104,11 +105,12 @@ enum class MeasureUnit(val messageId: Int) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: MainActivityViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    mainViewModel: MainActivityViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     // Manejo del botón atrás del sistema
-    BackHandler { viewModel.settingsOpened = false }
+    BackHandler { mainViewModel.settingsOpened = false }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -116,23 +118,23 @@ fun SettingsScreen(
     val dismissDialog = { showSettingDialog.value = null }
     when (showSettingDialog.value) {
         SettingsOption.MEASURE_UNIT -> {}
-        SettingsOption.NOTIFICATIONS -> NotificationsDialog(viewModel = viewModel, dismissDialog = dismissDialog)
-        SettingsOption.THEME -> ThemeSelectionDialog(viewModel = viewModel, dismissDialog = dismissDialog)
-        SettingsOption.EXPORT_IMPORT -> ExportImportDialog(viewModel = viewModel, dismissDialog = dismissDialog)
+        SettingsOption.NOTIFICATIONS -> NotificationsDialog(viewModel = settingsViewModel, dismissDialog = dismissDialog)
+        SettingsOption.THEME -> ThemeSelectionDialog(viewModel = settingsViewModel, dismissDialog = dismissDialog)
+        SettingsOption.EXPORT_IMPORT -> ExportImportDialog(viewModel = settingsViewModel, dismissDialog = dismissDialog)
         SettingsOption.ABOUT -> AboutDialog(dismissDialog)
         else -> {}
     }
 
-    ImportErrorDialog(viewModel = viewModel)
-    ImportConfirmationDialog(viewModel = viewModel)
-    SuccessDialog(viewModel = viewModel)
+    ImportErrorDialog(viewModel = settingsViewModel)
+    ImportConfirmationDialog(viewModel = settingsViewModel)
+    SuccessDialog(viewModel = settingsViewModel)
 
     Scaffold(
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
-                    IconButton(onClick = { viewModel.settingsOpened = false }) {
+                    IconButton(onClick = { mainViewModel.settingsOpened = false }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retroceder")
                     }
                 },
@@ -145,7 +147,7 @@ fun SettingsScreen(
         },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier
-            .closeOnLeftSlide(viewModel)
+            .closeOnLeftSlide(mainViewModel)
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
@@ -185,7 +187,7 @@ fun SettingsScreen(
                             optionsInCategory.forEachIndexed { index, option ->
                                 ListItem(
                                     headlineContent = { Text(stringResource(option.titleId)) },
-                                    supportingContent = { Text(option.content(viewModel)) },
+                                    supportingContent = { Text(option.content(settingsViewModel)) },
                                     leadingContent = {
                                         Box(
                                             modifier = Modifier
@@ -268,7 +270,7 @@ private fun Modifier.closeOnLeftSlide(viewModel: MainActivityViewModel): Modifie
 @Composable
 fun SettingsScreenPreview() {
     PersonalRegistryTheme {
-        SettingsScreen(viewModel = viewModelFromFloats(listOf()))
+        SettingsScreen(mainViewModel = viewModelFromFloats(listOf()))
     }
 }
 

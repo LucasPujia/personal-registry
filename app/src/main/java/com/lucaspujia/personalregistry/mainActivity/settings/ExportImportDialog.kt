@@ -8,13 +8,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.R
-import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 
 @Composable
-fun ExportImportDialog(viewModel: MainActivityViewModel, dismissDialog: () -> Unit) {
+fun ExportImportDialog(dismissDialog: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     val context = LocalContext.current
     val contentResolver = context.contentResolver
 
@@ -58,7 +58,7 @@ fun ExportImportDialog(viewModel: MainActivityViewModel, dismissDialog: () -> Un
 }
 
 @Composable
-fun ImportErrorDialog(viewModel: MainActivityViewModel) {
+fun ImportErrorDialog(viewModel: SettingsViewModel = hiltViewModel()) {
     if (viewModel.importExportState.showError) {
         AlertDialog(
             onDismissRequest = { viewModel.dismissImportError() },
@@ -74,7 +74,7 @@ fun ImportErrorDialog(viewModel: MainActivityViewModel) {
 }
 
 @Composable
-fun ImportConfirmationDialog(viewModel: MainActivityViewModel) {
+fun ImportConfirmationDialog(viewModel: SettingsViewModel = hiltViewModel()) {
     if (viewModel.importExportState.showConfirmation) {
         AlertDialog(
             onDismissRequest = { viewModel.dismissImportConfirmation() },
@@ -95,7 +95,7 @@ fun ImportConfirmationDialog(viewModel: MainActivityViewModel) {
 }
 
 @Composable
-fun SuccessDialog(viewModel: MainActivityViewModel) {
+fun SuccessDialog(viewModel: SettingsViewModel = hiltViewModel()) {
     viewModel.importExportState.successMessageRes?.let { messageRes ->
         AlertDialog(
             onDismissRequest = { viewModel.dismissSuccessMessage() },

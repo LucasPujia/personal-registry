@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.extensionFunctions.selectedDateRange
 import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
@@ -46,8 +47,8 @@ import com.lucaspujia.personalregistry.utils.viewModelFromFloats
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FiltersContent(
-    viewModel: MainActivityViewModel,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
+    viewModel: MainActivityViewModel = hiltViewModel(),
 ) {
     var minVal by remember { mutableStateOf(viewModel.filters.minViewValue.toString()) }
     var maxVal by remember { mutableStateOf(viewModel.filters.maxViewValue.toString()) }
@@ -159,18 +160,18 @@ fun FiltersContent(
             }
         }
 
-        AcceptButton(viewModel, minVal, maxVal, goal, dateRangePickerState, onDismissRequest)
+        AcceptButton(minVal, maxVal, goal, dateRangePickerState, onDismissRequest)
     }
 }
 
 @Composable
 private fun AcceptButton(
-    viewModel: MainActivityViewModel,
     minVal: String,
     maxVal: String,
     goal: String,
     dateRangePickerState: DateRangePickerState,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
+    viewModel: MainActivityViewModel = hiltViewModel()
 ) {
     val responseMessage = remember { mutableStateOf<Int?>(null) }
     Button(
