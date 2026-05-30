@@ -4,26 +4,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.lucaspujia.personalregistry.R
-import com.lucaspujia.personalregistry.database.weight.WeightRecord
-import com.lucaspujia.personalregistry.mainActivity.settings.NotificationFrequency
-import com.lucaspujia.personalregistry.mainActivity.settings.Setting
-import com.lucaspujia.personalregistry.mainActivity.settings.SettingOption
-import com.lucaspujia.personalregistry.mainActivity.settings.SettingsRepository
-import com.lucaspujia.personalregistry.mainActivity.settings.ThemeMode
 import com.lucaspujia.personalregistry.mainActivity.weightItem.WeightItem
 import com.lucaspujia.personalregistry.utils.forDatePicker
 import com.lucaspujia.personalregistry.utils.fromDatePicker
 import com.lucaspujia.personalregistry.utils.lastMonthRange
 import com.lucaspujia.personalregistry.utils.localDateToDateKey
 import com.lucaspujia.personalregistry.utils.now
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import javax.inject.Inject
 import kotlin.math.roundToInt
 
 enum class TimeRange(val label: String, val apply: (LocalDate) -> LocalDate) {
@@ -40,17 +36,9 @@ data class ViewToggles(
     val list: Boolean = true,
 )
 
-data class ImportExportState(
-    val showError: Boolean = false,
-    val showConfirmation: Boolean = false,
-    val successMessageRes: Int? = null,
-    val pendingRecords: List<WeightRecord> = emptyList()
-)
-
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
     private val model: MainActivityModel,
-    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private var allWeights: List<WeightItem> = emptyList()
@@ -66,22 +54,7 @@ class MainActivityViewModel @Inject constructor(
     var viewTogglesOpened by mutableStateOf(false)
     var settingsOpened by mutableStateOf(false)
 
-    // Settings
-    var themeMode by mutableStateOf(ThemeMode.SYSTEM)
-    var notificationFrequency by mutableStateOf(NotificationFrequency.OFF)
-
-    // Import/Export state
-    var importExportState by mutableStateOf(ImportExportState()); private set
-
     init {
-        settingsRepository.themeModeFlow
-            .onEach { themeMode = it }
-            .launchIn(viewModelScope)
-
-        settingsRepository.notificationFrequencyFlow
-            .onEach { notificationFrequency = it }
-            .launchIn(viewModelScope)
-
         model.weightsFlow
             .onEach { updatedWeights ->
                 syncWeights(updatedWeights)

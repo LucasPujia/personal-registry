@@ -1,5 +1,6 @@
 package com.lucaspujia.personalregistry.utils
 
+import android.annotation.SuppressLint
 import androidx.compose.material3.CalendarLocale
 import androidx.compose.material3.DatePickerFormatter
 import androidx.compose.runtime.Composable
@@ -9,7 +10,6 @@ import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.database.weight.InMemoryWeightsStorage
 import com.lucaspujia.personalregistry.mainActivity.MainActivityModel
 import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
-import com.lucaspujia.personalregistry.mainActivity.settings.SettingsRepository
 
 fun lastMonthRange() = Pair(forDatePicker(now().minusMonths(1)), todayForDatePicker())
 
@@ -30,14 +30,13 @@ fun defaultDatePickerFormatter(): DatePickerFormatter {
     }
 }
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Composable
 fun viewModelFromFloats(weights: List<Float>): MainActivityViewModel {
     val initialValues: List<Float> = weights
     val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
-    val settingsRepository = SettingsRepository(LocalContext.current)
     return MainActivityViewModel(
-        model = MainActivityModel(memoryStorage),
-        settingsRepository = settingsRepository
+        model = MainActivityModel(memoryStorage)
     )
 }
 

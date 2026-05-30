@@ -22,6 +22,7 @@ import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.mainActivity.bottomSheet.BottomSheetHandler
 import com.lucaspujia.personalregistry.mainActivity.settings.SettingsScreen
+import com.lucaspujia.personalregistry.mainActivity.settings.SettingsViewModel
 import com.lucaspujia.personalregistry.mainActivity.weightSelector.WeightSelector
 import com.lucaspujia.personalregistry.mainActivity.weightsViewer.WeightsViewer
 import com.lucaspujia.personalregistry.ui.theme.DarkPreviewWithSystemUI
@@ -33,14 +34,14 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val viewModel by viewModels<MainActivityViewModel>()
+    private val settingsViewModel by viewModels<SettingsViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            PersonalRegistryTheme(themeMode = viewModel.themeMode) {
+            PersonalRegistryTheme(themeMode = settingsViewModel.themeMode) {
                 PersonalRegistryApp()
             }
         }

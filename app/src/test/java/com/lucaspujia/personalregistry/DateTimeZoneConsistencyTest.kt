@@ -10,7 +10,6 @@ import com.lucaspujia.personalregistry.utils.fromDatePicker
 import com.lucaspujia.personalregistry.utils.localDateToDateKey
 import com.lucaspujia.personalregistry.utils.resolveDatePickerMonthYearText
 import com.lucaspujia.personalregistry.utils.resolveDatePickerText
-import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -110,7 +109,7 @@ class DateTimeZoneConsistencyTest {
             val storage = InMemoryWeightsStorage(
                 listOf(WeightRecord(weight = 71f, dateKey = "2030-01-15")),
             )
-            val viewModel = MainActivityViewModel(MainActivityModel(storage), mockk(relaxed = true))
+            val viewModel = MainActivityViewModel(MainActivityModel(storage))
 
             assertFalse(viewModel.isSelectableDate(forDatePicker(date)))
         }
@@ -128,7 +127,7 @@ class DateTimeZoneConsistencyTest {
         )
 
         withTimeZone("Asia/Tokyo") {
-            val viewModel = MainActivityViewModel(MainActivityModel(storage), mockk(relaxed = true))
+            val viewModel = MainActivityViewModel(MainActivityModel(storage))
 
             // ayer sigue ocupado — no importa la zona
             assertFalse(viewModel.isSelectableDate(forDatePicker(yesterday)))
@@ -148,7 +147,7 @@ class DateTimeZoneConsistencyTest {
                 WeightRecord(weight = 72f, dateKey = "2030-01-16"),
             )
         )
-        val viewModel = MainActivityViewModel(MainActivityModel(storage), mockk(relaxed = true))
+        val viewModel = MainActivityViewModel(MainActivityModel(storage))
 
         viewModel.applyFilters(
             minViewValue = 0,
@@ -173,7 +172,7 @@ class DateTimeZoneConsistencyTest {
 
         listOf("America/Los_Angeles", "Asia/Tokyo", "UTC").forEach { tz ->
             withTimeZone(tz) {
-                val viewModel = MainActivityViewModel(MainActivityModel(storage), mockk(relaxed = true))
+                val viewModel = MainActivityViewModel(MainActivityModel(storage))
                 viewModel.applyFilters(minViewValue = 0, maxViewValue = 100, dateRange = range)
                 assertEquals("Fallo en zona $tz", listOf(71.0), viewModel.filters.weightsD)
             }
