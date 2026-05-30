@@ -54,4 +54,13 @@
     <string name="export_import_content">Aprovecha al máximo tus registros</string>
     <string name="general">General</string>
     <string name="data">Datos</string>
+    <string name="export">Exportar</string>
+    <string name="import_data">Importar</string>
+    <string name="import_error_title">Formato Inválido</string>
+    <string name="import_error_message">El JSON es inválido o está mal formado. Debe ser un array de objetos con las propiedades \"weight\" (número) y \"date\" (yyyy-MM-dd).</string>
+    <string name="import_confirmation_title">¿Sobrescribir datos?</string>
+    <string name="import_confirmation_message">Tus datos actuales se perderán y serán sobrescritos por los registros importados. ¿Deseas continuar?</string>
+    <string name="export_success">Datos exportados con éxito</string>
+    <string name="import_success">Datos importados con éxito</string>
+    <string name="success">Éxito</string>
 </resources>

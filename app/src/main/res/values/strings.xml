@@ -53,4 +53,13 @@
     <string name="export_import_content">Get the most out of your registry</string>
     <string name="general">General</string>
     <string name="data">Data</string>
+    <string name="export">Export</string>
+    <string name="import_data">Import</string>
+    <string name="import_error_title">Invalid Format</string>
+    <string name="import_error_message">The JSON is invalid or malformed. It must be an array of objects with \"weight\" (number) and \"date\" (yyyy-MM-dd) properties.</string>
+    <string name="import_confirmation_title">Overwrite Data?</string>
+    <string name="import_confirmation_message">Your current data will be lost and overwritten by the imported records. Do you want to continue?</string>
+    <string name="export_success">Data exported successfully</string>
+    <string name="import_success">Data imported successfully</string>
+    <string name="success">Success</string>
 </resources>

@@ -10,6 +10,7 @@ interface WeightsStorage {
     fun writeWeights(weights: List<WeightRecord>)
     fun addWeight(weight: WeightRecord)
     fun deleteWeight(weight: WeightRecord)
+    fun replaceAllWeights(weights: List<WeightRecord>)
 }
 
 class RoomWeightsStorage(
@@ -30,6 +31,13 @@ class RoomWeightsStorage(
     override fun deleteWeight(weight: WeightRecord) {
         runBlocking { dao.deleteWeight(weight) }
     }
+
+    override fun replaceAllWeights(weights: List<WeightRecord>) {
+        runBlocking {
+            dao.deleteAllWeights()
+            dao.upsertWeights(weights)
+        }
+    }
 }
 
 class InMemoryWeightsStorage(
@@ -41,8 +49,14 @@ class InMemoryWeightsStorage(
     override fun readWeights(): List<WeightRecord> = weights.toList()
 
     override fun writeWeights(weights: List<WeightRecord>) {
-        this.weights.clear()
-        this.weights.addAll(weights)
+        weights.forEach { newRecord ->
+            val index = this.weights.indexOfFirst { it.dateKey == newRecord.dateKey }
+            if (index != -1) {
+                this.weights[index] = newRecord
+            } else {
+                this.weights.add(newRecord)
+            }
+        }
     }
 
     override fun addWeight(weight: WeightRecord) {
@@ -51,6 +65,11 @@ class InMemoryWeightsStorage(
 
     override fun deleteWeight(weight: WeightRecord) {
         this.weights.remove(weight)
+    }
+
+    override fun replaceAllWeights(weights: List<WeightRecord>) {
+        this.weights.clear()
+        this.weights.addAll(weights)
     }
 
     companion object {

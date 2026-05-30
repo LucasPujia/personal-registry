@@ -5,7 +5,11 @@ import com.lucaspujia.personalregistry.database.weight.WeightsStorage
 import com.lucaspujia.personalregistry.mainActivity.weightItem.WeightItem
 import com.lucaspujia.personalregistry.utils.forDatePicker
 import com.lucaspujia.personalregistry.utils.localDateToDateKey
+import org.json.JSONArray
+import org.json.JSONObject
 import java.time.LocalDate
+import kotlin.math.pow
+import kotlin.math.round
 
 class MainActivityModel(
     private val storage: WeightsStorage,
@@ -32,5 +36,46 @@ class MainActivityModel(
             storage.deleteWeight(recordToRemove)
         }
         return getWeights()
+    }
+
+    fun replaceWeights(records: List<WeightRecord>): List<WeightItem> {
+        storage.replaceAllWeights(records)
+        return getWeights()
+    }
+
+    fun getRecordsAsJSON(): String {
+        val jsonArray = JSONArray()
+        this.storage.readWeights().forEach { record ->
+            val jsonObject = JSONObject()
+            val factor = 10.0.pow(WEIGHT_DECIMAL_PRECISION)
+            val truncatedWeight = round(record.weight * factor) / factor
+            jsonObject.put("weight", truncatedWeight)
+            jsonObject.put("date", record.dateKey)
+            jsonArray.put(jsonObject)
+        }
+        return jsonArray.toString(4)
+    }
+
+    fun fromRawJson(json: String): List<WeightRecord>? {
+        return try {
+            val jsonArray = JSONArray(json)
+            val newRecords = mutableListOf<WeightRecord>()
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                val weight = obj.getDouble("weight").toFloat()
+                val dateStr = obj.getString("date")
+                val date = LocalDate.parse(dateStr)
+                newRecords.add(
+                    WeightRecord(
+                        weight = weight,
+                        dateKey = dateStr,
+                        createdAt = forDatePicker(date),
+                    )
+                )
+            }
+            newRecords
+        } catch (_: Exception) {
+            null
+        }
     }
 }

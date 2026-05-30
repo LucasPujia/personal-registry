@@ -118,9 +118,14 @@ fun SettingsScreen(
         SettingsOption.MEASURE_UNIT -> {}
         SettingsOption.NOTIFICATIONS -> NotificationsDialog(viewModel = viewModel, dismissDialog = dismissDialog)
         SettingsOption.THEME -> ThemeSelectionDialog(viewModel = viewModel, dismissDialog = dismissDialog)
+        SettingsOption.EXPORT_IMPORT -> ExportImportDialog(viewModel = viewModel, dismissDialog = dismissDialog)
         SettingsOption.ABOUT -> AboutDialog(dismissDialog)
         else -> {}
     }
+
+    ImportErrorDialog(viewModel = viewModel)
+    ImportConfirmationDialog(viewModel = viewModel)
+    SuccessDialog(viewModel = viewModel)
 
     Scaffold(
         topBar = {

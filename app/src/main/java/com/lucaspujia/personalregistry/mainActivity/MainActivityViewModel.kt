@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.lucaspujia.personalregistry.R
+import com.lucaspujia.personalregistry.database.weight.WeightRecord
 import com.lucaspujia.personalregistry.mainActivity.settings.NotificationFrequency
 import com.lucaspujia.personalregistry.mainActivity.settings.Setting
 import com.lucaspujia.personalregistry.mainActivity.settings.SettingOption
@@ -34,6 +35,13 @@ data class ViewToggles(
     val list: Boolean = true,
 )
 
+data class ImportExportState(
+    val showError: Boolean = false,
+    val showConfirmation: Boolean = false,
+    val successMessageRes: Int? = null,
+    val pendingRecords: List<WeightRecord> = emptyList()
+)
+
 class MainActivityViewModel(
     private val model: MainActivityModel,
     private val settingsRepository: SettingsRepository,
@@ -55,6 +63,9 @@ class MainActivityViewModel(
     // Settings
     var themeMode by mutableStateOf(ThemeMode.SYSTEM)
     var notificationFrequency by mutableStateOf(NotificationFrequency.OFF)
+
+    // Import/Export state
+    var importExportState by mutableStateOf(ImportExportState()); private set
 
     init {
         settingsRepository.themeModeFlow
@@ -109,6 +120,48 @@ class MainActivityViewModel(
             syncWeights(updatedWeights)
             reapplyFilters()
         }
+    }
+
+    fun exportWeights(): String {
+        val json = model.getRecordsAsJSON()
+        importExportState = importExportState.copy(successMessageRes = R.string.export_success)
+        return json
+    }
+
+    fun importWeights(json: String) {
+        val records = model.fromRawJson(json)
+        importExportState = if (records == null) {
+            importExportState.copy(showError = true)
+        } else {
+            importExportState.copy(pendingRecords = records, showConfirmation = true)
+        }
+    }
+
+    fun confirmImport() {
+        viewModelScope.launch {
+            val updatedWeights = withContext(Dispatchers.IO) {
+                model.replaceWeights(importExportState.pendingRecords)
+            }
+            syncWeights(updatedWeights)
+            reapplyFilters()
+            importExportState = importExportState.copy(
+                showConfirmation = false,
+                pendingRecords = emptyList(),
+                successMessageRes = R.string.import_success
+            )
+        }
+    }
+
+    fun dismissImportError() {
+        importExportState = importExportState.copy(showError = false)
+    }
+
+    fun dismissImportConfirmation() {
+        importExportState = importExportState.copy(showConfirmation = false, pendingRecords = emptyList())
+    }
+
+    fun dismissSuccessMessage() {
+        importExportState = importExportState.copy(successMessageRes = null)
     }
 
     /**
