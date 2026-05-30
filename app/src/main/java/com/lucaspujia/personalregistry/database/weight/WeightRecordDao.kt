@@ -6,8 +6,13 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Upsert
 
+import kotlinx.coroutines.flow.Flow
+
 @Dao
 interface WeightRecordDao {
+    @Query("SELECT * FROM weight_records ORDER BY createdAt ASC")
+    fun getAllWeightsFlow(): Flow<List<WeightRecord>>
+
     @Query("SELECT * FROM weight_records ORDER BY createdAt ASC")
     suspend fun getAllWeights(): List<WeightRecord>
 

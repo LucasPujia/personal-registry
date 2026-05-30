@@ -5,6 +5,8 @@ import com.lucaspujia.personalregistry.database.weight.WeightsStorage
 import com.lucaspujia.personalregistry.mainActivity.weightItem.WeightItem
 import com.lucaspujia.personalregistry.utils.forDatePicker
 import com.lucaspujia.personalregistry.utils.localDateToDateKey
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
@@ -14,6 +16,10 @@ import kotlin.math.round
 class MainActivityModel(
     private val storage: WeightsStorage,
 ) {
+
+    val weightsFlow: Flow<List<WeightItem>> = storage.readWeightsFlow().map { records ->
+        records.map { it.toWeightItem() }
+    }
 
     fun getWeights(): List<WeightItem> {
         return storage.readWeights().map { it.toWeightItem() }

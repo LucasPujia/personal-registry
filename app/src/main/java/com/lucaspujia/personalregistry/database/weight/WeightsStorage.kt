@@ -3,9 +3,14 @@ package com.lucaspujia.personalregistry.database.weight
 import com.lucaspujia.personalregistry.utils.forDatePicker
 import com.lucaspujia.personalregistry.utils.localDateToDateKey
 import com.lucaspujia.personalregistry.utils.now
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 
 interface WeightsStorage {
+    fun readWeightsFlow(): Flow<List<WeightRecord>>
     fun readWeights(): List<WeightRecord>
     fun writeWeights(weights: List<WeightRecord>)
     fun addWeight(weight: WeightRecord)
@@ -16,6 +21,8 @@ interface WeightsStorage {
 class RoomWeightsStorage(
     private val dao: WeightRecordDao,
 ) : WeightsStorage {
+    override fun readWeightsFlow(): Flow<List<WeightRecord>> = dao.getAllWeightsFlow()
+
     override fun readWeights(): List<WeightRecord> {
         return runBlocking { dao.getAllWeights() }
     }
@@ -44,32 +51,37 @@ class InMemoryWeightsStorage(
     initialWeights: List<WeightRecord> = emptyList(),
 ) : WeightsStorage {
 
-    private val weights = initialWeights.toMutableList()
+    private val weightsFlow = MutableStateFlow(initialWeights)
 
-    override fun readWeights(): List<WeightRecord> = weights.toList()
+    override fun readWeightsFlow(): Flow<List<WeightRecord>> = weightsFlow.asStateFlow()
+
+    override fun readWeights(): List<WeightRecord> = weightsFlow.value
 
     override fun writeWeights(weights: List<WeightRecord>) {
-        weights.forEach { newRecord ->
-            val index = this.weights.indexOfFirst { it.dateKey == newRecord.dateKey }
-            if (index != -1) {
-                this.weights[index] = newRecord
-            } else {
-                this.weights.add(newRecord)
+        weightsFlow.update { current ->
+            val updated = current.toMutableList()
+            weights.forEach { newRecord ->
+                val index = updated.indexOfFirst { it.dateKey == newRecord.dateKey }
+                if (index != -1) {
+                    updated[index] = newRecord
+                } else {
+                    updated.add(newRecord)
+                }
             }
+            updated
         }
     }
 
     override fun addWeight(weight: WeightRecord) {
-        this.weights.add(weight)
+        weightsFlow.update { it + weight }
     }
 
     override fun deleteWeight(weight: WeightRecord) {
-        this.weights.remove(weight)
+        weightsFlow.update { current -> current.filter { it.dateKey != weight.dateKey } }
     }
 
     override fun replaceAllWeights(weights: List<WeightRecord>) {
-        this.weights.clear()
-        this.weights.addAll(weights)
+        weightsFlow.value = weights
     }
 
     companion object {

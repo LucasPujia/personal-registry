@@ -82,21 +82,21 @@ class MainActivityViewModel @Inject constructor(
             .onEach { notificationFrequency = it }
             .launchIn(viewModelScope)
 
-        val initialWeights = model.getWeights()
-        syncWeights(initialWeights)
-        if (initialWeights.isNotEmpty()) {
-            val weightValues = initialWeights.map { it.weight }
-            applyFilters(
-                minViewValue = weightValues.min().roundToInt() - 2,
-                maxViewValue = weightValues.max().roundToInt() + 2,
-            )
-        }
-    }
+        model.weightsFlow
+            .onEach { updatedWeights ->
+                syncWeights(updatedWeights)
 
-    fun updateSetting(settingOption: SettingOption, value: Setting) {
-        viewModelScope.launch {
-            settingsRepository.updateSetting(settingOption, value)
-        }
+                if (updatedWeights.isNotEmpty() && filters.weights.isEmpty()) {
+                    val weightValues = updatedWeights.map { it.weight }
+                    applyFilters(
+                        minViewValue = weightValues.min().roundToInt() - 2,
+                        maxViewValue = weightValues.max().roundToInt() + 2,
+                    )
+                } else {
+                    reapplyFilters()
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     /**
@@ -106,68 +106,14 @@ class MainActivityViewModel @Inject constructor(
     fun addWeight(weight: Float, pickerMillis: Long?) {
         viewModelScope.launch {
             val date = pickerMillis?.let { fromDatePicker(it) } ?: now()
-            val updatedWeights = withContext(Dispatchers.IO) { model.addWeight(weight, date) }
-            syncWeights(updatedWeights)
-            reapplyFilters()
-
-            if (updatedWeights.size == 1) {
-                val firstWeight = updatedWeights.first().weight.roundToInt()
-                applyFilters(
-                    minViewValue = firstWeight - 2,
-                    maxViewValue = firstWeight + 2,
-                )
-            }
+            withContext(Dispatchers.IO) { model.addWeight(weight, date) }
         }
     }
 
     fun removeWeight(weightItem: WeightItem) {
         viewModelScope.launch {
-            val updatedWeights = withContext(Dispatchers.IO) { model.removeWeight(weightItem) }
-            syncWeights(updatedWeights)
-            reapplyFilters()
+            withContext(Dispatchers.IO) { model.removeWeight(weightItem) }
         }
-    }
-
-    fun exportWeights(): String {
-        val json = model.getRecordsAsJSON()
-        importExportState = importExportState.copy(successMessageRes = R.string.export_success)
-        return json
-    }
-
-    fun importWeights(json: String) {
-        val records = model.fromRawJson(json)
-        importExportState = if (records == null) {
-            importExportState.copy(showError = true)
-        } else {
-            importExportState.copy(pendingRecords = records, showConfirmation = true)
-        }
-    }
-
-    fun confirmImport() {
-        viewModelScope.launch {
-            val updatedWeights = withContext(Dispatchers.IO) {
-                model.replaceWeights(importExportState.pendingRecords)
-            }
-            syncWeights(updatedWeights)
-            reapplyFilters()
-            importExportState = importExportState.copy(
-                showConfirmation = false,
-                pendingRecords = emptyList(),
-                successMessageRes = R.string.import_success
-            )
-        }
-    }
-
-    fun dismissImportError() {
-        importExportState = importExportState.copy(showError = false)
-    }
-
-    fun dismissImportConfirmation() {
-        importExportState = importExportState.copy(showConfirmation = false, pendingRecords = emptyList())
-    }
-
-    fun dismissSuccessMessage() {
-        importExportState = importExportState.copy(successMessageRes = null)
     }
 
     /**
