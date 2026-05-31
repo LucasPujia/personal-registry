@@ -63,4 +63,8 @@
     <string name="export_success">Datos exportados con éxito</string>
     <string name="import_success">Datos importados con éxito</string>
     <string name="success">Éxito</string>
+    <string name="notification_channel_name">Recordatorios</string>
+    <string name="notification_channel_description">Notificaciones para recordarte registrar tu peso</string>
+    <string name="notification_title">¡Hora de registrar tu peso!</string>
+    <string name="notification_text">Sigue tu progreso registrando tu peso hoy.</string>
 </resources>

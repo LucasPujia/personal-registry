@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.database.weight.WeightRecord
 import com.lucaspujia.personalregistry.mainActivity.MainActivityModel
+import com.lucaspujia.personalregistry.notifications.NotificationScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
@@ -27,6 +28,7 @@ data class ImportExportState(
 class SettingsViewModel @Inject constructor(
     private val model: MainActivityModel,
     private val settingsRepository: SettingsRepository,
+    private val notificationScheduler: NotificationScheduler,
 ) : ViewModel() {
 
     var themeMode by mutableStateOf(ThemeMode.SYSTEM); private set
@@ -39,7 +41,10 @@ class SettingsViewModel @Inject constructor(
             .launchIn(viewModelScope)
 
         settingsRepository.notificationFrequencyFlow
-            .onEach { notificationFrequency = it }
+            .onEach {
+                notificationFrequency = it
+                notificationScheduler.scheduleNotification(it)
+            }
             .launchIn(viewModelScope)
     }
 

@@ -62,4 +62,8 @@
     <string name="export_success">Data exported successfully</string>
     <string name="import_success">Data imported successfully</string>
     <string name="success">Success</string>
+    <string name="notification_channel_name">Reminders</string>
+    <string name="notification_channel_description">Notifications to remind you to record your weight</string>
+    <string name="notification_title">Time to record your weight!</string>
+    <string name="notification_text">Keep track of your progress by recording your weight today.</string>
 </resources>
