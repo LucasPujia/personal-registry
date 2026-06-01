@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PromptTemplates">
+    <option name="builtInPromptOverrides">
+      <list>
+        <BuiltInPromptOverride>
+          <option name="groupId" value="rules" />
+          <option name="promptId" value="project" />
+          <option name="text" value="* Read at least twice the user prompt before starting. When in doubt, ask the user.&#10;&#10;* Do not make any changes beyond what was explicitly requested.&#10;&#10;* Never apply unsolicited improvements, refactors, cleanups, renaming, formatting, architectural changes, or behavioral changes.&#10;&#10;* If you notice bugs, possible improvements, or refactoring opportunities, do not implement them. Instead, list them at the end of the response under a `Suggestions` section as bullet points.&#10;&#10;* Preserve the existing structure, style, and logic unless the request explicitly requires changing them.&#10;&#10;* Do not use complete paths, prefer importing&#10;    * Avoid: androidx.compose.ui.platform.LocalContext.current&#10;    * Prefer: LocalContext.current&#10;&#10;* After completing all requested changes, verify that the project compiles successfully.&#10;&#10;* Do not run compilation, builds, or heavy validation steps multiple times during the process unless explicitly necessary.&#10;&#10;* Prefer a single final validation after all modifications are finished.&#10;&#10;* All code comments must be written in Spanish, regardless of the project language.&#10;&#10;* Any user-facing text must use localization resources (`stringResource`, `context.getString`, etc.).&#10;&#10;  * First check whether a suitable string already exists in `strings.xml`.&#10;  * Reuse existing strings whenever possible.&#10;  * Only use hardcoded text if no suitable resource exists.&#10;  * If hardcoded text is necessary, add a `TODO` comment indicating it should be moved to `strings.xml`." />
+        </BuiltInPromptOverride>
+      </list>
+    </option>
+    <option name="prompts">
+      <list>
+        <PromptTemplate>
+          <option name="name" value="Commit message generation" />
+          <option name="text" value="Generate git commit messages following the Conventional Commits specification.&#10;&#10;Format:&#10;- `&lt;type&gt;(&lt;scope&gt;): &lt;description&gt;`&#10;- The `scope` is optional but recommended when the change affects a specific part of the project.&#10;&#10;Allowed types:&#10;- feat&#10;- fix&#10;- refactor&#10;- style&#10;- docs&#10;- test&#10;- chore&#10;- perf&#10;- build&#10;- ci&#10;&#10;Rules:&#10;- Write the message in Spanish.&#10;- Do not end with a period.&#10;- Keep it concise and descriptive.&#10;- Describe what changed, not why.&#10;- Use an action-oriented description.&#10;- Choose a short and meaningful scope when applicable.&#10;- Do not include extra explanations or formatting.&#10;- Do not focus on where the changes were made, but what do they do.&#10;- Do NOT output names, e-mail addresses, or any other personally identifiable information&#10;- Do NOT output bug IDs or any other unique identifiers&#10;&#10;Examples:&#10;- feat(auth): add jwt refresh token support&#10;- fix(api): prevent NPE on login&#10;- refactor(ui): extract dialog state logic&#10;- chore(deps): update angular dependencies&#10;&#10;&#10;You cand see the commit diff in $COMMIT_DIFF" />
+        </PromptTemplate>
+      </list>
+    </option>
+  </component>
+</project>
