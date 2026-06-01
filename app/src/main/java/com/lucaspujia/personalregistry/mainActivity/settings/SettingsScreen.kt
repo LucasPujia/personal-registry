@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,6 +37,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
@@ -56,6 +58,7 @@ import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
+import com.lucaspujia.personalregistry.utils.mockSettingsViewModel
 
 enum class SettingsCategory(val titleId: Int) {
     GENERAL(R.string.general),
@@ -67,35 +70,34 @@ enum class SettingsOption(
     val icon: ImageVector,
     val titleId: Int,
     val category: SettingsCategory,
-    // TODO: revisar parametros
     val content: @Composable (notificationFrequency: NotificationFrequency, themeMode: ThemeMode) -> String
 ) {
     MEASURE_UNIT(
         Icons.Default.Scale,
         R.string.measure_unit,
-        SettingsCategory.GENERAL,
-        { _, _ -> stringResource(MeasureUnit.METRIC.messageId) }),
+        category = SettingsCategory.GENERAL,
+        content = { _, _ -> stringResource(MeasureUnit.METRIC.messageId) }),
     NOTIFICATIONS(
         Icons.Default.Notifications,
         R.string.notifications,
-        SettingsCategory.GENERAL,
-        { frequency, _ -> stringResource(frequency.messageId) }),
+        category = SettingsCategory.GENERAL,
+        content = { frequency, _ -> stringResource(frequency.messageId) }),
     THEME(
         Icons.Default.Palette,
         R.string.theme,
-        SettingsCategory.GENERAL,
-        { _, theme -> stringResource(theme.messageId) }),
+        category = SettingsCategory.GENERAL,
+        content = { theme, _ -> stringResource(theme.messageId) }),
     EXPORT_IMPORT(
         Icons.Default.ImportExport,
         R.string.export_import,
-        SettingsCategory.DATA,
-        { _, _ -> stringResource(R.string.export_import_content) }
+        category = SettingsCategory.DATA,
+        content = { _, _ -> stringResource(R.string.export_import_content) }
     ),
     ABOUT(
         Icons.Default.Info,
         R.string.about,
-        SettingsCategory.ABOUT,
-        { _, _ -> "${stringResource(R.string.version)} ${stringResource(R.string.app_version)}" })
+        category = SettingsCategory.ABOUT,
+        content = { _, _ -> "${stringResource(R.string.version)} ${stringResource(R.string.app_version)}" })
 }
 
 enum class MeasureUnit(val messageId: Int) {
@@ -124,7 +126,7 @@ fun SettingsScreen(
 @Composable
 private fun SettingsScreenContent(
     modifier: Modifier = Modifier,
-    onSettingsOpenedChange: (Boolean) -> Unit,
+    onSettingsOpenedChange: (Boolean) -> Unit = {},
     notificationFrequency: NotificationFrequency,
     themeMode: ThemeMode,
 ) {
@@ -150,19 +152,7 @@ private fun SettingsScreenContent(
 
     Scaffold(
         topBar = {
-            LargeTopAppBar(
-                title = { Text(stringResource(R.string.settings)) },
-                navigationIcon = {
-                    IconButton(onClick = { onSettingsOpenedChange(false) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retroceder")
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
-            )
+            SettingsTitle(onSettingsOpenedChange, scrollBehavior)
         },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier
@@ -177,66 +167,20 @@ private fun SettingsScreenContent(
         ) {
             SettingsCategory.entries.forEach { category ->
                 item(key = category.name) {
-                    Text(
-                        text = stringResource(category.titleId),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .animateItem(
-                                fadeInSpec = tween(durationMillis = 500),
-                                placementSpec = tween(durationMillis = 500)
-                            )
-                            .padding(start = 24.dp, top = 24.dp, bottom = 8.dp)
-                    )
+                    CategoryTitle(category)
                 }
 
                 val optionsInCategory = SettingsOption.entries.filter { it.category == category }
                 item(key = "${category.name}_group") {
-                    Surface(
-                        modifier = Modifier
-                            .animateItem(
-                                fadeInSpec = tween(durationMillis = 500),
-                                placementSpec = tween(durationMillis = 500)
-                            )
-                            .padding(horizontal = 16.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surface
-                    ) {
-                        Column {
-                            optionsInCategory.forEachIndexed { index, option ->
-                                ListItem(
-                                    headlineContent = { Text(stringResource(option.titleId)) },
-                                    supportingContent = { Text(option.content(notificationFrequency, themeMode)) },
-                                    leadingContent = {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(40.dp)
-                                                .clip(CircleShape)
-                                                .background(MaterialTheme.colorScheme.secondaryContainer),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = option.icon,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                        }
-                                    },
-                                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                                    modifier = Modifier.clickable { showSettingDialog.value = option }
-                                )
-                                if (index < optionsInCategory.size - 1) {
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(horizontal = 16.dp),
-                                        color = MaterialTheme.colorScheme.outlineVariant
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    SettingItemsColumn(
+                        optionsInCategory,
+                        notificationFrequency,
+                        themeMode,
+                        showSettingDialog
+                    )
                 }
             }
+            // Para permitir el desplazamiento hacia arriba
             item(key = "bottom_spacer") {
                 Spacer(modifier = Modifier
                     .animateItem(
@@ -247,6 +191,109 @@ private fun SettingsScreenContent(
             }
         }
     }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun SettingsTitle(
+    onSettingsOpenedChange: (Boolean) -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior
+) {
+    LargeTopAppBar(
+        title = { Text(stringResource(R.string.settings)) },
+        navigationIcon = {
+            IconButton(onClick = { onSettingsOpenedChange(false) }) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retroceder")
+            }
+        },
+        scrollBehavior = scrollBehavior,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background,
+            scrolledContainerColor = MaterialTheme.colorScheme.surface
+        )
+    )
+}
+
+@Composable
+private fun LazyItemScope.SettingItemsColumn(
+    optionsInCategory: List<SettingsOption>,
+    notificationFrequency: NotificationFrequency,
+    themeMode: ThemeMode,
+    showSettingDialog: MutableState<SettingsOption?>
+) {
+    Surface(
+        modifier = Modifier
+            .animateItem(
+                fadeInSpec = tween(durationMillis = 500),
+                placementSpec = tween(durationMillis = 500)
+            )
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Column {
+            optionsInCategory.forEachIndexed { index, option ->
+                SettingItem(
+                    option,
+                    notificationFrequency,
+                    themeMode,
+                    showSettingDialog
+                )
+                if (index < optionsInCategory.size - 1) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LazyItemScope.CategoryTitle(category: SettingsCategory) {
+    Text(
+        text = stringResource(category.titleId),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .animateItem(
+                fadeInSpec = tween(durationMillis = 500),
+                placementSpec = tween(durationMillis = 500)
+            )
+            .padding(start = 24.dp, top = 24.dp, bottom = 8.dp)
+    )
+}
+
+@Composable
+private fun SettingItem(
+    option: SettingsOption,
+    notificationFrequency: NotificationFrequency,
+    themeMode: ThemeMode,
+    showSettingDialog: MutableState<SettingsOption?>
+) {
+    ListItem(
+        headlineContent = { Text(stringResource(option.titleId)) },
+        supportingContent = { Text(option.content(notificationFrequency, themeMode)) },
+        leadingContent = {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = option.icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        modifier = Modifier.clickable { showSettingDialog.value = option }
+    )
 }
 
 @Composable
@@ -288,28 +335,9 @@ private fun Modifier.closeOnLeftSlide(onSettingsOpenedChange: (Boolean) -> Unit)
 @ThemePreviews
 @Composable
 private fun SettingsScreenPreview() {
-    val fakeActions = object : SettingsActions {
-        override val themeMode = ThemeMode.SYSTEM
-        override val notificationFrequency = NotificationFrequency.OFF
-        override val notificationDay = NotificationDay.MONDAY
-        override val notificationHour = 8
-        override val notificationMinute = 0
-        override val importExportState = ImportExportState()
-
-        override fun updateSetting(settingOption: SettingOption, value: Setting) {}
-        override fun updateNotificationTime(hour: Int, minute: Int) {}
-        override fun exportWeights() = ""
-        override fun importWeights(json: String) {}
-        override fun confirmImport() {}
-        override fun dismissImportError() {}
-        override fun dismissImportConfirmation() {}
-        override fun dismissSuccessMessage() {}
-    }
-
     PersonalRegistryTheme {
-        CompositionLocalProvider(LocalSettingsActions provides fakeActions) {
+        CompositionLocalProvider(LocalSettingsActions provides mockSettingsViewModel) {
             SettingsScreenContent(
-                onSettingsOpenedChange = {},
                 notificationFrequency = NotificationFrequency.OFF,
                 themeMode = ThemeMode.SYSTEM,
             )
