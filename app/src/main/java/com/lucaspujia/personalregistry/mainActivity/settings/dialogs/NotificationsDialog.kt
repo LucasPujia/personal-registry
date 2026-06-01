@@ -1,4 +1,4 @@
-package com.lucaspujia.personalregistry.mainActivity.settings
+package com.lucaspujia.personalregistry.mainActivity.settings.dialogs
 
 import android.Manifest
 import android.content.Context
@@ -41,6 +41,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.lucaspujia.personalregistry.R
+import com.lucaspujia.personalregistry.mainActivity.settings.LocalSettingsActions
+import com.lucaspujia.personalregistry.mainActivity.settings.NotificationDay
+import com.lucaspujia.personalregistry.mainActivity.settings.NotificationFrequency
+import com.lucaspujia.personalregistry.mainActivity.settings.SettingOption
 import com.lucaspujia.personalregistry.ui.theme.DialogPreviews
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 

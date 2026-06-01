@@ -1,4 +1,4 @@
-package com.lucaspujia.personalregistry.mainActivity.settings
+package com.lucaspujia.personalregistry.mainActivity.settings.dialogs
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.lucaspujia.personalregistry.R
+import com.lucaspujia.personalregistry.mainActivity.settings.LocalSettingsActions
 import com.lucaspujia.personalregistry.ui.theme.DialogPreviews
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import java.io.BufferedWriter

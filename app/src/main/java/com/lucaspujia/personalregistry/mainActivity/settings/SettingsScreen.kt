@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Scale
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -35,7 +34,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -51,11 +49,17 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
+import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.AboutDialog
+import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.ExportImportDialog
+import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.ImportConfirmationDialog
+import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.ImportErrorDialog
+import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.NotificationsDialog
+import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.SuccessDialog
+import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.ThemeSelectionDialog
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.mockSettingsViewModel
@@ -297,25 +301,6 @@ private fun SettingItem(
 }
 
 @Composable
-private fun AboutDialog(dismissDialog: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = dismissDialog,
-        title = { Text(stringResource(R.string.about)) },
-        text = {
-            Column {
-                Text("${stringResource(R.string.app_name)} ${stringResource(R.string.version)} ${stringResource(R.string.app_version)}")
-                Text(stringResource(R.string.mit_license))
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = dismissDialog) {
-                Text(stringResource(R.string.accept))
-            }
-        }
-    )
-}
-
-@Composable
 private fun Modifier.closeOnLeftSlide(onSettingsOpenedChange: (Boolean) -> Unit): Modifier {
     return this.pointerInput(Unit) {
         var offsetX = 0f
@@ -345,10 +330,3 @@ private fun SettingsScreenPreview() {
     }
 }
 
-@Preview(showBackground = true, widthDp = 400, heightDp = 300)
-@Composable
-private fun AboutDialogPreview() {
-    PersonalRegistryTheme {
-        AboutDialog(dismissDialog = {})
-    }
-}
