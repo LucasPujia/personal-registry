@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -21,21 +20,35 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.R
-import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
+import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
-import com.lucaspujia.personalregistry.utils.viewModelFromFloats
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewTogglesContent(
     onDismissRequest: () -> Unit,
-    viewModel: MainActivityViewModel = hiltViewModel(),
 ) {
-    var showGraph by remember { mutableStateOf(viewModel.viewToggles.graph) }
-    var showList by remember { mutableStateOf(viewModel.viewToggles.list) }
+    val viewModel = LocalMainActivityActions.current
+    ViewTogglesContentImpl(
+        onDismissRequest = onDismissRequest,
+        initialShowGraph = viewModel.viewToggles.graph,
+        initialShowList = viewModel.viewToggles.list,
+        onApplyViewToggles = { graph, list ->
+            viewModel.applyViewToggles(graph, list)
+        }
+    )
+}
+
+@Composable
+private fun ViewTogglesContentImpl(
+    onDismissRequest: () -> Unit,
+    initialShowGraph: Boolean,
+    initialShowList: Boolean,
+    onApplyViewToggles: (Boolean, Boolean) -> Unit
+) {
+    var showGraph by remember { mutableStateOf(initialShowGraph) }
+    var showList by remember { mutableStateOf(initialShowList) }
 
     Column(
         modifier = Modifier
@@ -58,7 +71,7 @@ fun ViewTogglesContent(
 
         Button(
             onClick = {
-                viewModel.applyViewToggles(showGraph, showList)
+                onApplyViewToggles(showGraph, showList)
                 onDismissRequest()
             },
             modifier = Modifier.fillMaxWidth()
@@ -70,11 +83,13 @@ fun ViewTogglesContent(
 
 @ThemePreviews
 @Composable
-fun ViewTogglesContentPreview() {
+private fun ViewTogglesContentPreview() {
     PersonalRegistryTheme {
-        ViewTogglesContent(
-            viewModel = viewModelFromFloats(listOf()),
-            onDismissRequest = {}
+        ViewTogglesContentImpl(
+            onDismissRequest = {},
+            initialShowGraph = true,
+            initialShowList = true,
+            onApplyViewToggles = { _, _ -> }
         )
     }
 }

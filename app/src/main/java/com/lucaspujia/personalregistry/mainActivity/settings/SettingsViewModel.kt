@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lucaspujia.personalregistry.R
@@ -26,19 +27,42 @@ data class ImportExportState(
     val pendingRecords: List<WeightRecord> = emptyList()
 )
 
+// TODO: Moverlo al settingsModel, y ver de renombrar el settingsModel
+interface SettingsActions {
+    val themeMode: ThemeMode
+    val notificationFrequency: NotificationFrequency
+    val notificationDay: NotificationDay
+    val notificationHour: Int
+    val notificationMinute: Int
+    val importExportState: ImportExportState
+
+    fun updateSetting(settingOption: SettingOption, value: Setting)
+    fun updateNotificationTime(hour: Int, minute: Int)
+    fun exportWeights(): String
+    fun importWeights(json: String)
+    fun confirmImport()
+    fun dismissImportError()
+    fun dismissImportConfirmation()
+    fun dismissSuccessMessage()
+}
+
+val LocalSettingsActions = staticCompositionLocalOf<SettingsActions> {
+    error("No SettingsActions provided")
+}
+
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val model: MainActivityModel,
     private val settingsRepository: SettingsRepository,
     private val notificationScheduler: NotificationScheduler,
-) : ViewModel() {
+) : ViewModel(), SettingsActions {
 
-    var themeMode by mutableStateOf(SettingOption.THEME.defaultValue as ThemeMode); private set
-    var notificationFrequency by mutableStateOf(SettingOption.NOTIFICATION_FREQUENCY.defaultValue as NotificationFrequency); private set
-    var notificationDay by mutableStateOf(SettingOption.NOTIFICATION_DAY.defaultValue as NotificationDay); private set
-    var notificationHour by mutableIntStateOf(8); private set
-    var notificationMinute by mutableIntStateOf(0); private set
-    var importExportState by mutableStateOf(ImportExportState()); private set
+    override var themeMode by mutableStateOf(SettingOption.THEME.defaultValue as ThemeMode); private set
+    override var notificationFrequency by mutableStateOf(SettingOption.NOTIFICATION_FREQUENCY.defaultValue as NotificationFrequency); private set
+    override var notificationDay by mutableStateOf(SettingOption.NOTIFICATION_DAY.defaultValue as NotificationDay); private set
+    override var notificationHour by mutableIntStateOf(8); private set
+    override var notificationMinute by mutableIntStateOf(0); private set
+    override var importExportState by mutableStateOf(ImportExportState()); private set
 
     init {
         settingsRepository.themeModeFlow
@@ -61,26 +85,26 @@ class SettingsViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
-    fun updateSetting(settingOption: SettingOption, value: Setting) {
+    override fun updateSetting(settingOption: SettingOption, value: Setting) {
         viewModelScope.launch {
             settingsRepository.updateSetting(settingOption, value)
         }
     }
 
-    fun updateNotificationTime(hour: Int, minute: Int) {
+    override fun updateNotificationTime(hour: Int, minute: Int) {
         viewModelScope.launch {
             settingsRepository.updateNotificationHour(hour)
             settingsRepository.updateNotificationMinute(minute)
         }
     }
 
-    fun exportWeights(): String {
+    override fun exportWeights(): String {
         val json = model.getRecordsAsJSON()
         importExportState = importExportState.copy(successMessageRes = R.string.export_success)
         return json
     }
 
-    fun importWeights(json: String) {
+    override fun importWeights(json: String) {
         val records = model.fromRawJson(json)
         importExportState = if (records == null) {
             importExportState.copy(showError = true)
@@ -89,7 +113,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun confirmImport() {
+    override fun confirmImport() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 model.replaceWeights(importExportState.pendingRecords)
@@ -102,15 +126,15 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun dismissImportError() {
+    override fun dismissImportError() {
         importExportState = importExportState.copy(showError = false)
     }
 
-    fun dismissImportConfirmation() {
+    override fun dismissImportConfirmation() {
         importExportState = importExportState.copy(showConfirmation = false, pendingRecords = emptyList())
     }
 
-    fun dismissSuccessMessage() {
+    override fun dismissSuccessMessage() {
         importExportState = importExportState.copy(successMessageRes = null)
     }
 }

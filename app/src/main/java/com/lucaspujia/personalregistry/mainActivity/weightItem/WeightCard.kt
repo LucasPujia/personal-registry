@@ -38,13 +38,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
+import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
 import com.lucaspujia.personalregistry.mainActivity.weightsViewer.WeightDeletionState
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.ui.theme.extendedColors
-import com.lucaspujia.personalregistry.utils.viewModelFromFloats
 
 enum class DragValue { Settled, Revealed }
 
@@ -53,7 +51,22 @@ fun WeightCard(
     item: WeightItem,
     previousWeight: Double?,
     deletionState: WeightDeletionState,
-    viewModel: MainActivityViewModel = hiltViewModel(),
+) {
+    val viewModel = LocalMainActivityActions.current
+    WeightCardContent(
+        item = item,
+        previousWeight = previousWeight,
+        deletionState = deletionState,
+        onDeleteClick = { deletionState.askForDeletion(item, onRemoveWeight = { viewModel.removeWeight(it) }) }
+    )
+}
+
+@Composable
+private fun WeightCardContent(
+    item: WeightItem,
+    previousWeight: Double?,
+    deletionState: WeightDeletionState,
+    onDeleteClick: () -> Unit
 ) {
     val receiver = LocalDensity.current
     val state = remember {
@@ -83,9 +96,11 @@ fun WeightCard(
         }
     }
 
-    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 4.dp)) {
         // Acción de eliminar (fondo)
-        CloseButton(deletionState, item, viewModel)
+        CloseButton(onDeleteClick)
 
         // Contenido de la fila (frente)
         Surface(
@@ -112,7 +127,9 @@ fun WeightCard(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
             ) {
                 Surface(
                     color = MaterialTheme.colorScheme.tertiary,
@@ -175,9 +192,7 @@ fun WeightCard(
 
 @Composable
 private fun BoxScope.CloseButton(
-    deletionState: WeightDeletionState,
-    item: WeightItem,
-    viewModel: MainActivityViewModel = hiltViewModel()
+    onDeleteClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -185,7 +200,7 @@ private fun BoxScope.CloseButton(
             .padding(end = 16.dp)
     ) {
         Button(
-            onClick = { deletionState.askForDeletion(item, viewModel) },
+            onClick = onDeleteClick,
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
             shape = RoundedCornerShape(8.dp),
             contentPadding = PaddingValues(0.dp),
@@ -202,7 +217,7 @@ private fun BoxScope.CloseButton(
 
 @ThemePreviews
 @Composable
-fun WeightCardPreview() {
+private fun WeightCardPreview() {
     PersonalRegistryTheme {
         val item = WeightItem(
             weight = 70.5,
@@ -210,11 +225,11 @@ fun WeightCardPreview() {
             date = "15/06"
         )
 
-        WeightCard(
+        WeightCardContent(
             item = item,
             previousWeight = 71.0,
-            viewModel = viewModelFromFloats(listOf(70.5f)),
-            deletionState = WeightDeletionState()
+            deletionState = WeightDeletionState(),
+            onDeleteClick = {}
         )
     }
 }

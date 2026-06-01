@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,7 +56,6 @@ import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
-import com.lucaspujia.personalregistry.utils.viewModelFromFloats
 
 enum class SettingsCategory(val titleId: Int) {
     GENERAL(R.string.general),
@@ -67,34 +67,35 @@ enum class SettingsOption(
     val icon: ImageVector,
     val titleId: Int,
     val category: SettingsCategory,
-    val content: @Composable (viewModel: SettingsViewModel) -> String
+    // TODO: revisar parametros
+    val content: @Composable (notificationFrequency: NotificationFrequency, themeMode: ThemeMode) -> String
 ) {
     MEASURE_UNIT(
         Icons.Default.Scale,
         R.string.measure_unit,
         SettingsCategory.GENERAL,
-        { stringResource(MeasureUnit.METRIC.messageId) }),
+        { _, _ -> stringResource(MeasureUnit.METRIC.messageId) }),
     NOTIFICATIONS(
         Icons.Default.Notifications,
         R.string.notifications,
         SettingsCategory.GENERAL,
-        { viewModel -> stringResource(viewModel.notificationFrequency.messageId) }),
+        { frequency, _ -> stringResource(frequency.messageId) }),
     THEME(
         Icons.Default.Palette,
         R.string.theme,
         SettingsCategory.GENERAL,
-        { viewModel -> stringResource(viewModel.themeMode.messageId) }),
+        { _, theme -> stringResource(theme.messageId) }),
     EXPORT_IMPORT(
         Icons.Default.ImportExport,
         R.string.export_import,
         SettingsCategory.DATA,
-        { stringResource(R.string.export_import_content) }
+        { _, _ -> stringResource(R.string.export_import_content) }
     ),
     ABOUT(
         Icons.Default.Info,
         R.string.about,
         SettingsCategory.ABOUT,
-        { "${stringResource(R.string.version)} ${stringResource(R.string.app_version)}" })
+        { _, _ -> "${stringResource(R.string.version)} ${stringResource(R.string.app_version)}" })
 }
 
 enum class MeasureUnit(val messageId: Int) {
@@ -109,8 +110,26 @@ fun SettingsScreen(
     mainViewModel: MainActivityViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
+    CompositionLocalProvider(LocalSettingsActions provides settingsViewModel) {
+        SettingsScreenContent(
+            modifier = modifier,
+            onSettingsOpenedChange = { mainViewModel.settingsOpened = it },
+            notificationFrequency = settingsViewModel.notificationFrequency,
+            themeMode = settingsViewModel.themeMode,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsScreenContent(
+    modifier: Modifier = Modifier,
+    onSettingsOpenedChange: (Boolean) -> Unit,
+    notificationFrequency: NotificationFrequency,
+    themeMode: ThemeMode,
+) {
     // Manejo del botón atrás del sistema
-    BackHandler { mainViewModel.settingsOpened = false }
+    BackHandler { onSettingsOpenedChange(false) }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -118,23 +137,23 @@ fun SettingsScreen(
     val dismissDialog = { showSettingDialog.value = null }
     when (showSettingDialog.value) {
         SettingsOption.MEASURE_UNIT -> {}
-        SettingsOption.NOTIFICATIONS -> NotificationsDialog(viewModel = settingsViewModel, dismissDialog = dismissDialog)
-        SettingsOption.THEME -> ThemeSelectionDialog(viewModel = settingsViewModel, dismissDialog = dismissDialog)
-        SettingsOption.EXPORT_IMPORT -> ExportImportDialog(viewModel = settingsViewModel, dismissDialog = dismissDialog)
+        SettingsOption.NOTIFICATIONS -> NotificationsDialog(dismissDialog = dismissDialog)
+        SettingsOption.THEME -> ThemeSelectionDialog(dismissDialog = dismissDialog)
+        SettingsOption.EXPORT_IMPORT -> ExportImportDialog(dismissDialog = dismissDialog)
         SettingsOption.ABOUT -> AboutDialog(dismissDialog)
         else -> {}
     }
 
-    ImportErrorDialog(viewModel = settingsViewModel)
-    ImportConfirmationDialog(viewModel = settingsViewModel)
-    SuccessDialog(viewModel = settingsViewModel)
+    ImportErrorDialog()
+    ImportConfirmationDialog()
+    SuccessDialog()
 
     Scaffold(
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
-                    IconButton(onClick = { mainViewModel.settingsOpened = false }) {
+                    IconButton(onClick = { onSettingsOpenedChange(false) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retroceder")
                     }
                 },
@@ -147,7 +166,7 @@ fun SettingsScreen(
         },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier
-            .closeOnLeftSlide(mainViewModel)
+            .closeOnLeftSlide(onSettingsOpenedChange)
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
@@ -187,7 +206,7 @@ fun SettingsScreen(
                             optionsInCategory.forEachIndexed { index, option ->
                                 ListItem(
                                     headlineContent = { Text(stringResource(option.titleId)) },
-                                    supportingContent = { Text(option.content(settingsViewModel)) },
+                                    supportingContent = { Text(option.content(notificationFrequency, themeMode)) },
                                     leadingContent = {
                                         Box(
                                             modifier = Modifier
@@ -250,7 +269,7 @@ private fun AboutDialog(dismissDialog: () -> Unit) {
 }
 
 @Composable
-private fun Modifier.closeOnLeftSlide(viewModel: MainActivityViewModel): Modifier {
+private fun Modifier.closeOnLeftSlide(onSettingsOpenedChange: (Boolean) -> Unit): Modifier {
     return this.pointerInput(Unit) {
         var offsetX = 0f
         detectHorizontalDragGestures(
@@ -259,7 +278,7 @@ private fun Modifier.closeOnLeftSlide(viewModel: MainActivityViewModel): Modifie
             onHorizontalDrag = { _, dragAmount ->
                 offsetX += dragAmount
                 if (offsetX > 200) { // Umbral para detectar el slide de salida
-                    viewModel.settingsOpened = false
+                    onSettingsOpenedChange(false)
                 }
             }
         )
@@ -268,15 +287,39 @@ private fun Modifier.closeOnLeftSlide(viewModel: MainActivityViewModel): Modifie
 
 @ThemePreviews
 @Composable
-fun SettingsScreenPreview() {
+private fun SettingsScreenPreview() {
+    val fakeActions = object : SettingsActions {
+        override val themeMode = ThemeMode.SYSTEM
+        override val notificationFrequency = NotificationFrequency.OFF
+        override val notificationDay = NotificationDay.MONDAY
+        override val notificationHour = 8
+        override val notificationMinute = 0
+        override val importExportState = ImportExportState()
+
+        override fun updateSetting(settingOption: SettingOption, value: Setting) {}
+        override fun updateNotificationTime(hour: Int, minute: Int) {}
+        override fun exportWeights() = ""
+        override fun importWeights(json: String) {}
+        override fun confirmImport() {}
+        override fun dismissImportError() {}
+        override fun dismissImportConfirmation() {}
+        override fun dismissSuccessMessage() {}
+    }
+
     PersonalRegistryTheme {
-        SettingsScreen(mainViewModel = viewModelFromFloats(listOf()))
+        CompositionLocalProvider(LocalSettingsActions provides fakeActions) {
+            SettingsScreenContent(
+                onSettingsOpenedChange = {},
+                notificationFrequency = NotificationFrequency.OFF,
+                themeMode = ThemeMode.SYSTEM,
+            )
+        }
     }
 }
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 300)
 @Composable
-fun AboutDialogPreview() {
+private fun AboutDialogPreview() {
     PersonalRegistryTheme {
         AboutDialog(dismissDialog = {})
     }

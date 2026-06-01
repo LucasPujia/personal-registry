@@ -3,6 +3,7 @@ package com.lucaspujia.personalregistry.mainActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lucaspujia.personalregistry.R
@@ -36,23 +37,49 @@ data class ViewToggles(
     val list: Boolean = true,
 )
 
+// TODO: Ver de moverlo a un viewModel-Model o símil
+interface MainActivityActions {
+    val filters: ActiveFilters
+    val viewToggles: ViewToggles
+    val currentTimeRange: TimeRange?
+    var filtersOpened: Boolean
+    var viewTogglesOpened: Boolean
+    var settingsOpened: Boolean
+
+    fun addWeight(weight: Float, pickerMillis: Long?)
+    fun removeWeight(weightItem: WeightItem)
+    fun isSelectableDate(utcTimeMillis: Long): Boolean
+    fun applyFilters(
+        minViewValue: Int? = null,
+        maxViewValue: Int? = null,
+        goalWeight: Int? = null,
+        dateRange: Pair<Long, Long>? = lastMonthRange(),
+    ): Int?
+    fun applyViewToggles(showGraph: Boolean, showList: Boolean)
+    fun updateTimeRange(range: TimeRange)
+}
+
+val LocalMainActivityActions = staticCompositionLocalOf<MainActivityActions> {
+    error("No MainActivityActions provided")
+}
+
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
     private val model: MainActivityModel,
-) : ViewModel() {
+) : ViewModel(), MainActivityActions {
 
     private var allWeights: List<WeightItem> = emptyList()
     private var registeredDateKeys: Set<String> = emptySet()
 
     // Data filters
-    var filters by mutableStateOf(ActiveFilters()); private set
-    var viewToggles by mutableStateOf(ViewToggles()); private set
-    var currentTimeRange by mutableStateOf<TimeRange?>(TimeRange.MONTH_1); private set
+    override var filters by mutableStateOf(ActiveFilters()); private set
+    override var viewToggles by mutableStateOf(ViewToggles()); private set
+    override var currentTimeRange by mutableStateOf<TimeRange?>(TimeRange.MONTH_1); private set
 
     // UI State
-    var filtersOpened by mutableStateOf(false)
-    var viewTogglesOpened by mutableStateOf(false)
-    var settingsOpened by mutableStateOf(false)
+    override var filtersOpened by mutableStateOf(false)
+    override var viewTogglesOpened by mutableStateOf(false)
+    override var settingsOpened by mutableStateOf(false)
 
     init {
         model.weightsFlow
@@ -76,14 +103,14 @@ class MainActivityViewModel @Inject constructor(
      * [pickerMillis] son los milisegundos UTC-midnight provenientes del DatePicker.
      * Se convierten a LocalDate y dateKey justo aquí; no viajan como Long al modelo.
      */
-    fun addWeight(weight: Float, pickerMillis: Long?) {
+    override fun addWeight(weight: Float, pickerMillis: Long?) {
         viewModelScope.launch {
             val date = pickerMillis?.let { fromDatePicker(it) } ?: now()
             withContext(Dispatchers.IO) { model.addWeight(weight, date) }
         }
     }
 
-    fun removeWeight(weightItem: WeightItem) {
+    override fun removeWeight(weightItem: WeightItem) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) { model.removeWeight(weightItem) }
         }
@@ -93,7 +120,7 @@ class MainActivityViewModel @Inject constructor(
      * [utcTimeMillis] proviene del DatePicker (UTC-midnight del día seleccionado).
      * La comparación de unicidad se hace contra el dateKey almacenado, no contra timestamps.
      */
-    fun isSelectableDate(utcTimeMillis: Long): Boolean {
+    override fun isSelectableDate(utcTimeMillis: Long): Boolean {
         val selectedDate = fromDatePicker(utcTimeMillis)
         val selectedDateKey = localDateToDateKey(selectedDate)
 
@@ -102,11 +129,11 @@ class MainActivityViewModel @Inject constructor(
         return !hasWeightThisDay && !selectedDate.isAfter(now())
     }
 
-    fun applyFilters(
-        minViewValue: Int? = null,
-        maxViewValue: Int? = null,
-        goalWeight: Int? = null,
-        dateRange: Pair<Long, Long>? = lastMonthRange(),
+    override fun applyFilters(
+        minViewValue: Int?,
+        maxViewValue: Int?,
+        goalWeight: Int?,
+        dateRange: Pair<Long, Long>?,
     ): Int? {
         if (allWeights.isEmpty()) filters = filters.copy(weights = emptyList(), dateLabels = emptyList())
         val newWeights = getWeightsFilteredByDate(dateRange)
@@ -137,11 +164,11 @@ class MainActivityViewModel @Inject constructor(
         return null
     }
 
-    fun applyViewToggles(showGraph: Boolean, showList: Boolean) {
+    override fun applyViewToggles(showGraph: Boolean, showList: Boolean) {
         viewToggles = ViewToggles(graph = showGraph, list = showList)
     }
 
-    fun updateTimeRange(range: TimeRange) {
+    override fun updateTimeRange(range: TimeRange) {
         currentTimeRange = range
         val endDate = now()
         val startDate = range.apply(endDate)

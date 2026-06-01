@@ -14,13 +14,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.R
+import com.lucaspujia.personalregistry.ui.theme.DialogPreviews
+import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 
 @Composable
 fun ThemeSelectionDialog(
     dismissDialog: () -> Unit,
-    viewModel: SettingsViewModel = hiltViewModel(),
+) {
+    val viewModel = LocalSettingsActions.current
+    ThemeSelectionDialogContent(
+        selectedThemeMode = viewModel.themeMode,
+        onThemeModeSelected = {
+            viewModel.updateSetting(SettingOption.THEME, it)
+            dismissDialog()
+        },
+        dismissDialog = dismissDialog
+    )
+}
+
+@Composable
+private fun ThemeSelectionDialogContent(
+    selectedThemeMode: ThemeMode,
+    onThemeModeSelected: (ThemeMode) -> Unit,
+    dismissDialog: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = dismissDialog,
@@ -28,16 +45,13 @@ fun ThemeSelectionDialog(
         text = {
             Column {
                 ThemeMode.entries.forEach { mode ->
-                    val isSelected = mode == viewModel.themeMode
+                    val isSelected = mode == selectedThemeMode
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .selectable(
                                 selected = isSelected,
-                                onClick = {
-                                    viewModel.updateSetting(SettingOption.THEME, mode)
-                                    dismissDialog()
-                                }
+                                onClick = { onThemeModeSelected(mode) }
                             )
                             .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -60,4 +74,16 @@ fun ThemeSelectionDialog(
             }
         }
     )
+}
+
+@DialogPreviews
+@Composable
+private fun ThemeSelectionDialogPreview() {
+    PersonalRegistryTheme {
+        ThemeSelectionDialogContent(
+            selectedThemeMode = ThemeMode.DARK,
+            onThemeModeSelected = {},
+            dismissDialog = {}
+        )
+    }
 }

@@ -38,16 +38,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.R
-import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
+import com.lucaspujia.personalregistry.mainActivity.ActiveFilters
+import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
+import com.lucaspujia.personalregistry.mainActivity.MainActivityActions
 import com.lucaspujia.personalregistry.mainActivity.TimeRange
+import com.lucaspujia.personalregistry.mainActivity.ViewToggles
 import com.lucaspujia.personalregistry.mainActivity.weightItem.WeightCard
 import com.lucaspujia.personalregistry.mainActivity.weightItem.WeightItem
+import com.lucaspujia.personalregistry.ui.theme.DialogPreviews
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
-import com.lucaspujia.personalregistry.utils.viewModelFromFloats
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DotProperties
@@ -62,17 +64,39 @@ import ir.ehsannarmani.compose_charts.models.Line
 @Composable
 fun WeightsViewer(
     modifier: Modifier = Modifier,
-    viewModel: MainActivityViewModel = hiltViewModel()
+) {
+    val viewModel = LocalMainActivityActions.current
+    WeightsViewerContent(
+        modifier = modifier,
+        viewToggles = viewModel.viewToggles,
+        currentTimeRange = viewModel.currentTimeRange,
+        filters = viewModel.filters,
+        onRangeSelected = { viewModel.updateTimeRange(it) },
+        weightCard = { item, prev, delState ->
+            WeightCard(item, prev, delState)
+        }
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun WeightsViewerContent(
+    modifier: Modifier = Modifier,
+    viewToggles: ViewToggles,
+    currentTimeRange: TimeRange?,
+    filters: ActiveFilters,
+    onRangeSelected: (TimeRange) -> Unit,
+    weightCard: @Composable (WeightItem, Double?, WeightDeletionState) -> Unit
 ) {
     val isPreview = LocalInspectionMode.current
     val deletionState = rememberWeightDeletionState()
 
-    ConfirmDeletionDialog(deletionState)
+    ConfirmDeletionDialog(deletionState = deletionState)
 
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        if (viewModel.viewToggles.graph) {
+        if (viewToggles.graph) {
             Surface(
                 shape = RoundedCornerShape(OUTER_PADDING),
                 color = MaterialTheme.colorScheme.surface,
@@ -85,8 +109,8 @@ fun WeightsViewer(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         QuickFilters(
-                            selectedRange = viewModel.currentTimeRange,
-                            onRangeSelected = { viewModel.updateTimeRange(it) }
+                            selectedRange = currentTimeRange,
+                            onRangeSelected = onRangeSelected
                         )
                     }
                     val primaryColor = MaterialTheme.colorScheme.primary
@@ -95,10 +119,10 @@ fun WeightsViewer(
                     LineChart(
                         modifier = Modifier
                             .height(200.dp),
-                        data = remember(viewModel.filters, primaryColor, secondaryColor) {
+                        data = remember(filters, primaryColor, secondaryColor) {
                             buildList {
                                 add(Line(
-                                    values = viewModel.filters.weightsD,
+                                    values = filters.weightsD,
                                     color = SolidColor(primaryColor),
                                     firstGradientFillColor = primaryColor.copy(alpha = .3f),
                                     secondGradientFillColor = primaryColor.copy(alpha = .0f),
@@ -107,14 +131,14 @@ fun WeightsViewer(
                                     drawStyle = DrawStyle.Stroke(width = 2.dp),
                                     curvedEdges = true,
                                     dotProperties = DotProperties(
-                                        enabled = viewModel.filters.weights.size < 32,
+                                        enabled = filters.weights.size < 32,
                                         radius = 4.dp,
                                         color = SolidColor(primaryColor)
                                     )
                                 ))
-                                viewModel.filters.goalWeight?.let { goal ->
+                                filters.goalWeight?.let { goal ->
                                     add(Line(
-                                        values = viewModel.filters.weights.map { goal.toDouble() },
+                                        values = filters.weights.map { goal.toDouble() },
                                         color = SolidColor(secondaryColor),
                                         strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
                                         drawStyle = DrawStyle.Stroke(width = 2.dp),
@@ -122,19 +146,19 @@ fun WeightsViewer(
                                 }
                             }
                         },
-                        animationMode = if (isPreview || !viewModel.filters.shouldAnimate) AnimationMode.None else AnimationMode.Together(
+                        animationMode = if (isPreview || !filters.shouldAnimate) AnimationMode.None else AnimationMode.Together(
                             delayBuilder = { it * 500L }
                         ),
                         labelHelperProperties = LabelHelperProperties(
                             enabled = true,
                             labelCountPerLine = 5,
                         ),
-                        minValue = viewModel.filters.minViewValue.toDouble(),
-                        maxValue = viewModel.filters.maxViewValue.toDouble(),
+                        minValue = filters.minViewValue.toDouble(),
+                        maxValue = filters.maxViewValue.toDouble(),
                         labelProperties = LabelProperties(
                             enabled = true,
                             textStyle = MaterialTheme.typography.labelSmall.copy(color = textColor),
-                            labels = viewModel.filters.dateLabels,
+                            labels = filters.dateLabels,
                             padding = 0.dp,
                             rotation = LabelProperties.Rotation(
                                 degree = -45f,
@@ -149,7 +173,7 @@ fun WeightsViewer(
                             enabled = true,
                             xAxisProperties = GridProperties.AxisProperties(color = SolidColor(textColor)),
                             yAxisProperties = GridProperties.AxisProperties(
-                                lineCount = viewModel.filters.dateLabels.size.coerceAtLeast(2),
+                                lineCount = filters.dateLabels.size.coerceAtLeast(2),
                                 color = SolidColor(textColor)
                             )
                         )
@@ -158,10 +182,10 @@ fun WeightsViewer(
             }
         }
 
-        if (viewModel.viewToggles.list) {
+        if (viewToggles.list) {
             HistorialHeader()
-            val weightsListReversed = remember(viewModel.filters.weights) {
-                viewModel.filters.weights.reversed()
+            val weightsListReversed = remember(filters.weights) {
+                filters.weights.reversed()
             }
             LazyColumn(
                 contentPadding = PaddingValues(bottom = OUTER_PADDING)
@@ -171,7 +195,7 @@ fun WeightsViewer(
                     key = { _, item -> item.dateKey }
                 ) { index, item ->
                     val previousItem = if (index + 1 < weightsListReversed.size) weightsListReversed[index + 1] else null
-                    WeightCard(item, previousItem?.weight, deletionState)
+                    weightCard(item, previousItem?.weight, deletionState)
                 }
             }
         }
@@ -239,9 +263,20 @@ private fun HistorialHeader() {
 }
 
 @Composable
-private fun ConfirmDeletionDialog(
+fun ConfirmDeletionDialog(
     deletionState: WeightDeletionState,
-    viewModel: MainActivityViewModel = hiltViewModel()
+) {
+    val viewModel = LocalMainActivityActions.current
+    ConfirmDeletionDialogContent(
+        deletionState = deletionState,
+        onConfirm = { viewModel.removeWeight(it) }
+    )
+}
+
+@Composable
+private fun ConfirmDeletionDialogContent(
+    deletionState: WeightDeletionState,
+    onConfirm: (WeightItem) -> Unit
 ) {
     if (deletionState.weightToDelete == null) return
     AlertDialog(
@@ -265,7 +300,7 @@ private fun ConfirmDeletionDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { deletionState.confirmDeletion(viewModel) }) {
+            TextButton(onClick = { deletionState.confirmDeletion(onConfirm) }) {
                 Text(stringResource(R.string.delete))
             }
         },
@@ -275,7 +310,6 @@ private fun ConfirmDeletionDialog(
             }
         }
     )
-
 }
 
 @Composable
@@ -295,18 +329,18 @@ class WeightDeletionState(
     var dontAskAgainChecked by mutableStateOf(false)
     var openedItemKey by mutableStateOf<String?>(null)
 
-    fun askForDeletion(item: WeightItem, viewModel: MainActivityViewModel) {
+    fun askForDeletion(item: WeightItem, onRemoveWeight: (WeightItem) -> Unit) {
         if (skipConfirmation) {
-            viewModel.removeWeight(item)
+            onRemoveWeight(item)
         } else {
             dontAskAgainChecked = false
             weightToDelete = item
         }
     }
 
-    fun confirmDeletion(viewModel: MainActivityViewModel) {
+    fun confirmDeletion(onRemoveWeight: (WeightItem) -> Unit) {
         weightToDelete?.let {
-            viewModel.removeWeight(it)
+            onRemoveWeight(it)
             deletionCount++
             if (dontAskAgainChecked) skipConfirmation = true
         }
@@ -325,12 +359,49 @@ class WeightDeletionState(
     }
 }
 
+@DialogPreviews
+@Composable
+private fun ConfirmDeletionDialogPreview() {
+    PersonalRegistryTheme {
+        val deletionState = WeightDeletionState()
+        deletionState.weightToDelete = WeightItem(70.5, "2024-06-15", "15/06")
+        ConfirmDeletionDialogContent(
+            deletionState = deletionState,
+            onConfirm = {}
+        )
+    }
+}
+
 @ThemePreviews
 @Composable
-fun WeightsViewerPreview() {
+private fun WeightsViewerPreview() {
     val initialValues = listOf(25f, 30f, 35.5f, 32f, 28f, 29f)
-    val viewModel = viewModelFromFloats(initialValues)
+    val weights = initialValues.mapIndexed { index, f -> WeightItem(f.toDouble(), index.toString(), "$index/1") }
+    val filters = ActiveFilters(weights = weights)
+    val fakeActions = object : MainActivityActions {
+        override val filters = filters
+        override val viewToggles = ViewToggles()
+        override val currentTimeRange = TimeRange.MONTH_1
+        override var filtersOpened = false
+        override var viewTogglesOpened = false
+        override var settingsOpened = false
+        override fun addWeight(weight: Float, pickerMillis: Long?) {}
+        override fun removeWeight(weightItem: WeightItem) {}
+        override fun isSelectableDate(utcTimeMillis: Long) = true
+        override fun applyFilters(minViewValue: Int?, maxViewValue: Int?, goalWeight: Int?, dateRange: Pair<Long, Long>?) = null
+        override fun applyViewToggles(showGraph: Boolean, showList: Boolean) {}
+        override fun updateTimeRange(range: TimeRange) {}
+    }
+
     PersonalRegistryTheme {
-        WeightsViewer(viewModel = viewModel)
+        WeightsViewerContent(
+            viewToggles = fakeActions.viewToggles,
+            currentTimeRange = fakeActions.currentTimeRange,
+            filters = fakeActions.filters,
+            onRangeSelected = {},
+            weightCard = { item, prev, delState ->
+                WeightCard(item, prev, delState)
+            }
+        )
     }
 }

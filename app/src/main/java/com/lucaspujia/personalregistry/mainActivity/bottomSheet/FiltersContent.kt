@@ -32,30 +32,50 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.extensionFunctions.selectedDateRange
-import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
+import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.defaultDatePickerFormatter
 import com.lucaspujia.personalregistry.utils.resolveDatePickerText
 import com.lucaspujia.personalregistry.utils.selectableDatesFromFunction
 import com.lucaspujia.personalregistry.utils.todayForDatePicker
-import com.lucaspujia.personalregistry.utils.viewModelFromFloats
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FiltersContent(
-    onDismissRequest: () -> Unit,
-    viewModel: MainActivityViewModel = hiltViewModel(),
+    onDismissRequest: () -> Unit = {},
 ) {
-    var minVal by remember { mutableStateOf(viewModel.filters.minViewValue.toString()) }
-    var maxVal by remember { mutableStateOf(viewModel.filters.maxViewValue.toString()) }
-    var goal by remember { mutableStateOf(viewModel.filters.goalWeight?.toString() ?: "") }
+    val viewModel = LocalMainActivityActions.current
+    FiltersContentImpl(
+        onDismissRequest = onDismissRequest,
+        initialMinViewValue = viewModel.filters.minViewValue,
+        initialMaxViewValue = viewModel.filters.maxViewValue,
+        initialGoalWeight = viewModel.filters.goalWeight,
+        initialDateRange = viewModel.filters.dateRange,
+        onApplyFilters = { min, max, goal, range ->
+            viewModel.applyFilters(min, max, goal, range)
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FiltersContentImpl(
+    initialMinViewValue: Int,
+    initialMaxViewValue: Int,
+    initialGoalWeight: Int?,
+    initialDateRange: Pair<Long, Long>?,
+    onApplyFilters: (Int?, Int?, Int?, Pair<Long, Long>?) -> Int?,
+    onDismissRequest: () -> Unit = {},
+) {
+    var minVal by remember { mutableStateOf(initialMinViewValue.toString()) }
+    var maxVal by remember { mutableStateOf(initialMaxViewValue.toString()) }
+    var goal by remember { mutableStateOf(initialGoalWeight?.toString() ?: "") }
     val dateRangePickerState = rememberDateRangePickerState(
-        initialSelectedStartDateMillis = viewModel.filters.dateRange?.first,
-        initialSelectedEndDateMillis = viewModel.filters.dateRange?.second,
+        initialSelectedStartDateMillis = initialDateRange?.first,
+        initialSelectedEndDateMillis = initialDateRange?.second,
         selectableDates = selectableDatesFromFunction { it <= todayForDatePicker() }
     )
 
@@ -160,7 +180,7 @@ fun FiltersContent(
             }
         }
 
-        AcceptButton(minVal, maxVal, goal, dateRangePickerState, onDismissRequest)
+        AcceptButton(minVal, maxVal, goal, dateRangePickerState, onApplyFilters, onDismissRequest)
     }
 }
 
@@ -170,17 +190,17 @@ private fun AcceptButton(
     maxVal: String,
     goal: String,
     dateRangePickerState: DateRangePickerState,
-    onDismissRequest: () -> Unit,
-    viewModel: MainActivityViewModel = hiltViewModel()
+    onApplyFilters: (Int?, Int?, Int?, Pair<Long, Long>?) -> Int?,
+    onDismissRequest: () -> Unit = {},
 ) {
     val responseMessage = remember { mutableStateOf<Int?>(null) }
     Button(
         onClick = {
-            val response = viewModel.applyFilters(
-                minViewValue = minVal.toIntOrNull(),
-                maxViewValue = maxVal.toIntOrNull(),
-                goalWeight = goal.toIntOrNull(),
-                dateRange = dateRangePickerState.selectedDateRange()
+            val response = onApplyFilters(
+                minVal.toIntOrNull(),
+                maxVal.toIntOrNull(),
+                goal.toIntOrNull(),
+                dateRangePickerState.selectedDateRange()
             )
             if (response != null) {
                 responseMessage.value = response
@@ -216,9 +236,14 @@ private fun AcceptButton(
 
 @ThemePreviews
 @Composable
-fun FiltersContentPreview() {
+private fun FiltersContentPreview() {
     PersonalRegistryTheme {
-        val viewModel = viewModelFromFloats(listOf())
-        FiltersContent(viewModel = viewModel, onDismissRequest = {})
+        FiltersContentImpl(
+            initialMinViewValue = 60,
+            initialMaxViewValue = 80,
+            initialGoalWeight = 70,
+            initialDateRange = null,
+            onApplyFilters = { _, _, _, _ -> null }
+        )
     }
 }

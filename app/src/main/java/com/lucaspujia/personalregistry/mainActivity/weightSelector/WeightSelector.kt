@@ -44,9 +44,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.R
-import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
+import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
 import com.lucaspujia.personalregistry.mainActivity.WEIGHT_DECIMAL_PRECISION
 import com.lucaspujia.personalregistry.mainActivity.WEIGHT_DEFAULT_VALUE
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
@@ -58,16 +57,30 @@ import com.lucaspujia.personalregistry.utils.pressedInteractionSource
 import com.lucaspujia.personalregistry.utils.resolveDatePickerText
 import com.lucaspujia.personalregistry.utils.selectableDatesFromFunction
 import com.lucaspujia.personalregistry.utils.todayForDatePicker
-import com.lucaspujia.personalregistry.utils.viewModelFromFloats
 import java.time.LocalDate
 import kotlin.math.pow
 
 @Composable
 fun WeightSelector(
     modifier: Modifier = Modifier,
-    viewModel: MainActivityViewModel = hiltViewModel()
 ) {
-    val latestStoredWeight = viewModel.filters.weightsF.lastOrNull()
+    val viewModel = LocalMainActivityActions.current
+    WeightSelectorContent(
+        modifier = modifier,
+        latestStoredWeight = viewModel.filters.weightsF.lastOrNull(),
+        isSelectableDate = { viewModel.isSelectableDate(it) },
+        onAddWeight = { weight, date -> viewModel.addWeight(weight, date) },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WeightSelectorContent(
+    modifier: Modifier = Modifier,
+    latestStoredWeight: Float?,
+    isSelectableDate: (Long) -> Boolean,
+    onAddWeight: (Float, Long?) -> Unit
+) {
     val weightStep = remember { (10.0).pow(-WEIGHT_DECIMAL_PRECISION).toFloat() }
     var weight by remember(latestStoredWeight) {
         mutableFloatStateOf(latestStoredWeight ?: WEIGHT_DEFAULT_VALUE)
@@ -75,7 +88,7 @@ fun WeightSelector(
 
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = todayForDatePicker(),
-        selectableDates = selectableDatesFromFunction { viewModel.isSelectableDate(it) },
+        selectableDates = selectableDatesFromFunction { isSelectableDate(it) },
         yearRange = IntRange(LocalDate.now().year - 1, LocalDate.now().year),
     )
 
@@ -85,11 +98,13 @@ fun WeightSelector(
             .fillMaxWidth()
             .padding(OUTER_PADDING),
     ) {
-        FilterControls(datePickerState)
+        FilterControls(
+            datePickerState = datePickerState
+        )
 
         Spacer(Modifier.height(8.dp))
 
-        if (viewModel.isSelectableDate(datePickerState.selectedDateMillis ?: nowMillis())) {
+        if (isSelectableDate(datePickerState.selectedDateMillis ?: nowMillis())) {
             VerticalNumberPicker(
                 value = weight,
                 onValueChange = { weight = it },
@@ -110,7 +125,7 @@ fun WeightSelector(
                     Icon(Icons.Default.Remove, contentDescription = "Disminuir peso")
                 }
                 Button(
-                    onClick = { viewModel.addWeight(weight, datePickerState.selectedDateMillis) },
+                    onClick = { onAddWeight(weight, datePickerState.selectedDateMillis) },
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 16.dp),
@@ -139,9 +154,25 @@ fun WeightSelector(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FilterControls(
+fun FilterControls(
     datePickerState: DatePickerState,
-    viewModel: MainActivityViewModel = hiltViewModel()
+) {
+    val viewModel = LocalMainActivityActions.current
+    FilterControlsContent(
+        datePickerState = datePickerState,
+        onViewTogglesOpened = { viewModel.viewTogglesOpened = true },
+        onFiltersOpened = { viewModel.filtersOpened = true },
+        onSettingsOpened = { viewModel.settingsOpened = true }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FilterControlsContent(
+    datePickerState: DatePickerState,
+    onViewTogglesOpened: () -> Unit,
+    onFiltersOpened: () -> Unit,
+    onSettingsOpened: () -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -176,7 +207,7 @@ private fun FilterControls(
         Spacer(Modifier.weight(1f))
 
         FilledIconButton(
-            onClick = { viewModel.viewTogglesOpened = true },
+            onClick = onViewTogglesOpened,
             shape = RoundedCornerShape(12.dp),
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -194,7 +225,7 @@ private fun FilterControls(
         Spacer(Modifier.width(12.dp))
 
         FilledIconButton(
-            onClick = { viewModel.filtersOpened = true },
+            onClick = onFiltersOpened,
             shape = RoundedCornerShape(12.dp),
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -227,7 +258,7 @@ private fun FilterControls(
         Spacer(Modifier.width(12.dp))
 
         FilledIconButton(
-            onClick = { viewModel.settingsOpened = true },
+            onClick = onSettingsOpened,
             shape = RoundedCornerShape(12.dp),
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -246,15 +277,35 @@ private fun FilterControls(
 
 @ThemePreviews
 @Composable
-fun WeightSelectorPreview() {
+private fun FilterControlsPreview() {
     PersonalRegistryTheme {
-        WeightSelector(viewModel = viewModelFromFloats(listOf()))
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = todayForDatePicker()
+        )
+        FilterControlsContent(
+            datePickerState = datePickerState,
+            onViewTogglesOpened = {},
+            onFiltersOpened = {},
+            onSettingsOpened = {}
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun WeightSelectorPreview() {
+    PersonalRegistryTheme {
+        WeightSelectorContent(
+            latestStoredWeight = 70.5f,
+            isSelectableDate = { true },
+            onAddWeight = { _, _ -> }
+        )
     }
 }
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 600)
 @Composable
-fun DatePickerPreview() {
+private fun DatePickerPreview() {
     MaterialTheme {
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = todayForDatePicker(),

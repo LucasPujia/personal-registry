@@ -4,38 +4,78 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
+import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
+import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
+import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomSheetHandler(
-    viewModel: MainActivityViewModel = hiltViewModel()
+fun BottomSheetHandler() {
+    val viewModel = LocalMainActivityActions.current
+    BottomSheetHandlerContent(
+        filtersOpened = viewModel.filtersOpened,
+        onFiltersDismissRequest = { viewModel.filtersOpened = false },
+        viewTogglesOpened = viewModel.viewTogglesOpened,
+        onViewTogglesDismissRequest = { viewModel.viewTogglesOpened = false },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BottomSheetHandlerContent(
+    filtersOpened: Boolean,
+    onFiltersDismissRequest: () -> Unit,
+    viewTogglesOpened: Boolean,
+    onViewTogglesDismissRequest: () -> Unit,
 ) {
-    if (viewModel.filtersOpened) {
+    if (filtersOpened) {
         val filtersSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
-            onDismissRequest = { viewModel.filtersOpened = false },
+            onDismissRequest = onFiltersDismissRequest,
             sheetState = filtersSheetState,
         ) {
             FiltersContent(
-                viewModel = viewModel,
-                onDismissRequest = { viewModel.filtersOpened = false }
+                onDismissRequest = onFiltersDismissRequest
             )
         }
     }
 
-    if (viewModel.viewTogglesOpened) {
+    if (viewTogglesOpened) {
         val viewTogglesSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
-            onDismissRequest = { viewModel.viewTogglesOpened = false },
+            onDismissRequest = onViewTogglesDismissRequest,
             sheetState = viewTogglesSheetState,
         ) {
             ViewTogglesContent(
-                viewModel = viewModel,
-                onDismissRequest = { viewModel.viewTogglesOpened = false }
+                onDismissRequest = onViewTogglesDismissRequest
             )
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun FiltersBottomSheetPreview() {
+    PersonalRegistryTheme {
+        BottomSheetHandlerContent(
+            filtersOpened = true,
+            onFiltersDismissRequest = {},
+            viewTogglesOpened = false,
+            onViewTogglesDismissRequest = {},
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun ViewTogglesBottomSheetPreview() {
+    PersonalRegistryTheme {
+        BottomSheetHandlerContent(
+            filtersOpened = false,
+            onFiltersDismissRequest = {},
+            viewTogglesOpened = true,
+            onViewTogglesDismissRequest = {},
+        )
     }
 }
