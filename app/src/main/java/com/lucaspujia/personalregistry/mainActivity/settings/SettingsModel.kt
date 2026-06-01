@@ -22,6 +22,16 @@ enum class NotificationFrequency(override val messageId: Int) : Setting {
     DAYS_7(R.string.notifications_7d);
 }
 
+enum class NotificationDay(override val messageId: Int, val shortMessageId: Int) : Setting {
+    MONDAY(R.string.monday, R.string.monday_short),
+    TUESDAY(R.string.tuesday, R.string.tuesday_short),
+    WEDNESDAY(R.string.wednesday, R.string.wednesday_short),
+    THURSDAY(R.string.thursday, R.string.thursday_short),
+    FRIDAY(R.string.friday, R.string.friday_short),
+    SATURDAY(R.string.saturday, R.string.saturday_short),
+    SUNDAY(R.string.sunday, R.string.sunday_short);
+}
+
 enum class SettingOption(
     val key: Preferences.Key<String>,
     val defaultValue: Setting,
@@ -34,7 +44,12 @@ enum class SettingOption(
     ),
     NOTIFICATION_FREQUENCY(
         stringPreferencesKey("notification_frequency"),
-        NotificationFrequency.DAYS_1,
+        NotificationFrequency.OFF,
         NotificationFrequency.entries
+    ),
+    NOTIFICATION_DAY(
+        stringPreferencesKey("notification_day"),
+        NotificationDay.MONDAY,
+        NotificationDay.entries
     );
 }

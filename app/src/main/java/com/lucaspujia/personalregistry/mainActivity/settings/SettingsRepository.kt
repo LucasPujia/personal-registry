@@ -16,10 +16,31 @@ class SettingsRepository(val context: Context) {
 
     val themeModeFlow by settingFlow<ThemeMode>(SettingOption.THEME)
     val notificationFrequencyFlow by settingFlow<NotificationFrequency>(SettingOption.NOTIFICATION_FREQUENCY)
+    val notificationDayFlow by settingFlow<NotificationDay>(SettingOption.NOTIFICATION_DAY)
+
+    val notificationHourFlow: Flow<Int> = context.dataStore.data
+        .map { preferences -> preferences[intPreferencesKey("notification_hour")] ?: 8 }
+        .distinctUntilChanged()
+
+    val notificationMinuteFlow: Flow<Int> = context.dataStore.data
+        .map { preferences -> preferences[intPreferencesKey("notification_minute")] ?: 0 }
+        .distinctUntilChanged()
 
     suspend fun updateSetting(settingOption: SettingOption, setting: Setting) {
         context.dataStore.edit { preferences ->
             preferences[settingOption.key] = setting.name
+        }
+    }
+
+    suspend fun updateNotificationHour(hour: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[intPreferencesKey("notification_hour")] = hour
+        }
+    }
+
+    suspend fun updateNotificationMinute(minute: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[intPreferencesKey("notification_minute")] = minute
         }
     }
 }

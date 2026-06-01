@@ -277,8 +277,7 @@ fun SettingsScreenPreview() {
 @Preview(showBackground = true, widthDp = 400, heightDp = 300)
 @Composable
 fun AboutDialogPreview() {
-    val showSettingDialog = remember<MutableState<SettingsOption?>> { mutableStateOf(SettingsOption.ABOUT) }
     PersonalRegistryTheme {
-        AboutDialog(dismissDialog = {showSettingDialog.value = null})
+        AboutDialog(dismissDialog = {})
     }
 }

@@ -66,4 +66,20 @@
     <string name="notification_channel_description">Notifications to remind you to record your weight</string>
     <string name="notification_title">Time to record your weight!</string>
     <string name="notification_text">Keep track of your progress by recording your weight today.</string>
+    <string name="notification_time">Notification time</string>
+    <string name="monday">Monday</string>
+    <string name="tuesday">Tuesday</string>
+    <string name="wednesday">Wednesday</string>
+    <string name="thursday">Thursday</string>
+    <string name="friday">Friday</string>
+    <string name="saturday">Saturday</string>
+    <string name="sunday">Sunday</string>
+    <string name="monday_short">M</string>
+    <string name="tuesday_short">Tu</string>
+    <string name="wednesday_short">W</string>
+    <string name="thursday_short">Th</string>
+    <string name="friday_short">F</string>
+    <string name="saturday_short">Sa</string>
+    <string name="sunday_short">Su</string>
+    <string name="notification_day">Notification day</string>
 </resources>
