@@ -39,8 +39,8 @@ android {
 
         create("beta") {
             initWith(getByName("debug"))
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = true // Activa la ofuscación y optimización de código (R8). Reduce tamaño del bytecode y renombra clases/métodos, dificultando ingeniería inversa.
+            isShrinkResources = true // Elimina recursos no usados (drawables, strings, layouts, etc.). Solo funciona cuando isMinifyEnabled está activo, y reduce el tamaño final del APK/AAB.
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
