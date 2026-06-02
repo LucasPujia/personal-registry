@@ -152,7 +152,7 @@ class MainActivityViewModel @Inject constructor(
             minViewValue
         ).minOrNull() ?: filters.minViewValue
 
-        filters = filters.copy(
+        filters = ActiveFilters(
             minViewValue = min,
             maxViewValue = max,
             dateRange = dateRange ?: filters.dateRange,
@@ -188,14 +188,6 @@ class MainActivityViewModel @Inject constructor(
         )
     }
 
-    private fun resolveDateLabels(newWeights: List<WeightItem>): List<String> {
-        val size = newWeights.size
-        return if (size < 6) newWeights.map { it.date } else {
-            newWeights.slice(listOf(0, size / 4, size / 2, (size * 3) / 4, size - 1))
-                .map { it.date }
-        }
-    }
-
     private fun syncWeights(weights: List<WeightItem>) {
         allWeights = weights
         registeredDateKeys = weights.map { it.dateKey }.toSet()
@@ -226,4 +218,12 @@ data class ActiveFilters(
 ) {
     val weightsF: List<Float> by lazy { weights.map { it.weight.toFloat() } }
     val weightsD: List<Double> by lazy { weights.map { it.weight } }
+}
+
+fun resolveDateLabels(newWeights: List<WeightItem>): List<String> {
+    val size = newWeights.size
+    return if (size < 6) newWeights.map { it.date } else {
+        newWeights.slice(listOf(0, size / 4, size / 2, (size * 3) / 4, size - 1))
+            .map { it.date }
+    }
 }

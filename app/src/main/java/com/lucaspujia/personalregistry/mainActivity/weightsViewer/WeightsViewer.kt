@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.ActiveFilters
 import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
-import com.lucaspujia.personalregistry.mainActivity.MainActivityActions
 import com.lucaspujia.personalregistry.mainActivity.TimeRange
 import com.lucaspujia.personalregistry.mainActivity.ViewToggles
 import com.lucaspujia.personalregistry.mainActivity.weightItem.WeightCard
@@ -50,6 +49,7 @@ import com.lucaspujia.personalregistry.ui.theme.DialogPreviews
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
+import com.lucaspujia.personalregistry.utils.filtersFromFloats
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DotProperties
@@ -72,12 +72,10 @@ fun WeightsViewer(
         currentTimeRange = viewModel.currentTimeRange,
         filters = viewModel.filters,
         onRangeSelected = { viewModel.updateTimeRange(it) },
-        weightCard = { item, prev, delState ->
-            WeightCard(item, prev, delState)
-        }
     )
 }
 
+// TODO: Modularizar
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun WeightsViewerContent(
@@ -85,8 +83,7 @@ private fun WeightsViewerContent(
     viewToggles: ViewToggles,
     currentTimeRange: TimeRange?,
     filters: ActiveFilters,
-    onRangeSelected: (TimeRange) -> Unit,
-    weightCard: @Composable (WeightItem, Double?, WeightDeletionState) -> Unit
+    onRangeSelected: (TimeRange) -> Unit = {},
 ) {
     val isPreview = LocalInspectionMode.current
     val deletionState = rememberWeightDeletionState()
@@ -195,7 +192,7 @@ private fun WeightsViewerContent(
                     key = { _, item -> item.dateKey }
                 ) { index, item ->
                     val previousItem = if (index + 1 < weightsListReversed.size) weightsListReversed[index + 1] else null
-                    weightCard(item, previousItem?.weight, deletionState)
+                    WeightCard(item, previousItem?.weight, deletionState)
                 }
             }
         }
@@ -276,7 +273,7 @@ fun ConfirmDeletionDialog(
 @Composable
 private fun ConfirmDeletionDialogContent(
     deletionState: WeightDeletionState,
-    onConfirm: (WeightItem) -> Unit
+    onConfirm: (WeightItem) -> Unit = {}
 ) {
     if (deletionState.weightToDelete == null) return
     AlertDialog(
@@ -359,49 +356,27 @@ class WeightDeletionState(
     }
 }
 
+@ThemePreviews
+@Composable
+private fun WeightsViewerPreview() {
+    PersonalRegistryTheme {
+        WeightsViewerContent(
+            viewToggles = ViewToggles(graph = true, list = true),
+            currentTimeRange = null,
+            filters = filtersFromFloats(listOf(25f, 30f, 35.5f, 32f, 28f, 29f)),
+        )
+
+    }
+}
+
 @DialogPreviews
 @Composable
 private fun ConfirmDeletionDialogPreview() {
     PersonalRegistryTheme {
         val deletionState = WeightDeletionState()
-        deletionState.weightToDelete = WeightItem(70.5, "2024-06-15", "15/06")
+        deletionState.weightToDelete = WeightItem(70.5, "2024-06-15")
         ConfirmDeletionDialogContent(
-            deletionState = deletionState,
-            onConfirm = {}
-        )
-    }
-}
-
-@ThemePreviews
-@Composable
-private fun WeightsViewerPreview() {
-    val initialValues = listOf(25f, 30f, 35.5f, 32f, 28f, 29f)
-    val weights = initialValues.mapIndexed { index, f -> WeightItem(f.toDouble(), index.toString(), "$index/1") }
-    val filters = ActiveFilters(weights = weights)
-    val fakeActions = object : MainActivityActions {
-        override val filters = filters
-        override val viewToggles = ViewToggles()
-        override val currentTimeRange = TimeRange.MONTH_1
-        override var filtersOpened = false
-        override var viewTogglesOpened = false
-        override var settingsOpened = false
-        override fun addWeight(weight: Float, pickerMillis: Long?) {}
-        override fun removeWeight(weightItem: WeightItem) {}
-        override fun isSelectableDate(utcTimeMillis: Long) = true
-        override fun applyFilters(minViewValue: Int?, maxViewValue: Int?, goalWeight: Int?, dateRange: Pair<Long, Long>?) = null
-        override fun applyViewToggles(showGraph: Boolean, showList: Boolean) {}
-        override fun updateTimeRange(range: TimeRange) {}
-    }
-
-    PersonalRegistryTheme {
-        WeightsViewerContent(
-            viewToggles = fakeActions.viewToggles,
-            currentTimeRange = fakeActions.currentTimeRange,
-            filters = fakeActions.filters,
-            onRangeSelected = {},
-            weightCard = { item, prev, delState ->
-                WeightCard(item, prev, delState)
-            }
+            deletionState = deletionState
         )
     }
 }

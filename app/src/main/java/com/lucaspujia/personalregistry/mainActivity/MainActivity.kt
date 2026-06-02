@@ -31,6 +31,8 @@ import com.lucaspujia.personalregistry.ui.theme.DarkPreviewWithSystemUI
 import com.lucaspujia.personalregistry.ui.theme.LightPreviewWithSystemUI
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
+import com.lucaspujia.personalregistry.utils.mockMainActivityViewModel
+import com.lucaspujia.personalregistry.utils.weightsFromFloats
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -97,39 +99,14 @@ private fun PersonalRegistryAppContent(
 @DarkPreviewWithSystemUI
 @Composable
 fun PersonalRegistryAppPreview() {
-    val weights = listOf(
-        WeightItem(61.0, "1", "1/1"),
-        WeightItem(60.0, "2", "2/1")
-    )
-    // TODO: ver de moverlo a Defaults.kt
-    val fakeActions = object : MainActivityActions {
-        override val filters = ActiveFilters(weights = weights)
-        override val viewToggles = ViewToggles()
-        override val currentTimeRange = TimeRange.MONTH_1
-        override var filtersOpened = false
-        override var viewTogglesOpened = false
-        override var settingsOpened = false
-        override fun addWeight(weight: Float, pickerMillis: Long?) {}
-        override fun removeWeight(weightItem: WeightItem) {}
-        override fun isSelectableDate(utcTimeMillis: Long) = true
-        override fun applyFilters(
-            minViewValue: Int?,
-            maxViewValue: Int?,
-            goalWeight: Int?,
-            dateRange: Pair<Long, Long>?
-        ) = null
+    val floatWeights = listOf(61f, 60f, 62f, 62f, 60f, 63f)
+    val weights = weightsFromFloats(floatWeights)
 
-        override fun applyViewToggles(showGraph: Boolean, showList: Boolean) {}
-        override fun updateTimeRange(range: TimeRange) {}
-    }
-
-    PersonalRegistryTheme {
-        CompositionLocalProvider(LocalMainActivityActions provides fakeActions) {
-            PersonalRegistryAppContent(
-                weights = weights,
-                settingsOpened = false,
-            )
-        }
+    PersonalRegistryTheme(mainActivityViewModel = mockMainActivityViewModel(initialValues = floatWeights)) {
+        PersonalRegistryAppContent(
+            weights = weights,
+            settingsOpened = false,
+        )
     }
 }
 

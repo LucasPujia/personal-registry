@@ -62,7 +62,6 @@ import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.SuccessDial
 import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.ThemeSelectionDialog
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
-import com.lucaspujia.personalregistry.utils.mockSettingsViewModel
 
 enum class SettingsCategory(val titleId: Int) {
     GENERAL(R.string.general),
@@ -321,12 +320,10 @@ private fun Modifier.closeOnLeftSlide(onSettingsOpenedChange: (Boolean) -> Unit)
 @Composable
 private fun SettingsScreenPreview() {
     PersonalRegistryTheme {
-        CompositionLocalProvider(LocalSettingsActions provides mockSettingsViewModel) {
-            SettingsScreenContent(
-                notificationFrequency = NotificationFrequency.OFF,
-                themeMode = ThemeMode.SYSTEM,
-            )
-        }
+        SettingsScreenContent(
+            notificationFrequency = NotificationFrequency.OFF,
+            themeMode = ThemeMode.SYSTEM,
+        )
     }
 }
 

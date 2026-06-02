@@ -1,15 +1,16 @@
 package com.lucaspujia.personalregistry.utils
 
-import android.annotation.SuppressLint
 import androidx.compose.material3.CalendarLocale
 import androidx.compose.material3.DatePickerFormatter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.lucaspujia.personalregistry.database.weight.InMemoryWeightsStorage
-import com.lucaspujia.personalregistry.mainActivity.MainActivityModel
-import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
+import com.lucaspujia.personalregistry.mainActivity.ActiveFilters
+import com.lucaspujia.personalregistry.mainActivity.MainActivityActions
+import com.lucaspujia.personalregistry.mainActivity.TimeRange
+import com.lucaspujia.personalregistry.mainActivity.ViewToggles
+import com.lucaspujia.personalregistry.mainActivity.resolveDateLabels
 import com.lucaspujia.personalregistry.mainActivity.settings.ImportExportState
 import com.lucaspujia.personalregistry.mainActivity.settings.NotificationDay
 import com.lucaspujia.personalregistry.mainActivity.settings.NotificationFrequency
@@ -17,6 +18,7 @@ import com.lucaspujia.personalregistry.mainActivity.settings.Setting
 import com.lucaspujia.personalregistry.mainActivity.settings.SettingOption
 import com.lucaspujia.personalregistry.mainActivity.settings.SettingsActions
 import com.lucaspujia.personalregistry.mainActivity.settings.ThemeMode
+import com.lucaspujia.personalregistry.mainActivity.weightItem.WeightItem
 
 fun lastMonthRange() = Pair(forDatePicker(now().minusMonths(1)), todayForDatePicker())
 
@@ -37,14 +39,19 @@ fun defaultDatePickerFormatter(): DatePickerFormatter {
     }
 }
 
-@SuppressLint("ViewModelConstructorInComposable")
-@Composable
-fun viewModelFromFloats(weights: List<Float>): MainActivityViewModel {
-    val initialValues: List<Float> = weights
-    val memoryStorage = InMemoryWeightsStorage.fromFloats(initialValues)
-    return MainActivityViewModel(
-        model = MainActivityModel(memoryStorage)
+fun filtersFromFloats(weights: List<Float>, goal: Int? = null): ActiveFilters {
+    val weightsFromFloats = weightsFromFloats(weights)
+    return ActiveFilters(
+        minViewValue = weights.min().toInt() - 2,
+        maxViewValue = weights.max().toInt() + 2,
+        goalWeight = goal,
+        weights = weightsFromFloats,
+        dateLabels = resolveDateLabels(weightsFromFloats)
     )
+}
+
+fun weightsFromFloats(weights: List<Float>): List<WeightItem> {
+    return weights.mapIndexed { index, f -> WeightItem(weight = f.toDouble(), dateKey = "2026-10-0${index + 1}") }
 }
 
 val mockSettingsViewModel = object : SettingsActions {
@@ -65,4 +72,20 @@ val mockSettingsViewModel = object : SettingsActions {
     override fun dismissSuccessMessage() {}
 }
 
+fun mockMainActivityViewModel(initialValues: List<Float> = listOf(25f, 30f, 35.5f, 32f, 28f, 29f)): MainActivityActions {
+    return object : MainActivityActions {
+        override val filters = filtersFromFloats(initialValues)
+        override val viewToggles = ViewToggles()
+        override val currentTimeRange = TimeRange.MONTH_1
+        override var filtersOpened = false
+        override var viewTogglesOpened = false
+        override var settingsOpened = false
+        override fun addWeight(weight: Float, pickerMillis: Long?) {}
+        override fun removeWeight(weightItem: WeightItem) {}
+        override fun isSelectableDate(utcTimeMillis: Long) = true
+        override fun applyFilters(minViewValue: Int?, maxViewValue: Int?, goalWeight: Int?, dateRange: Pair<Long, Long>?) = null
+        override fun applyViewToggles(showGraph: Boolean, showList: Boolean) {}
+        override fun updateTimeRange(range: TimeRange) {}
+    }
+}
 val OUTER_PADDING = 16.dp

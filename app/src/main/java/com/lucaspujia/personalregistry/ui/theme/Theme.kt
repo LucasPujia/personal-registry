@@ -8,13 +8,20 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
+import com.lucaspujia.personalregistry.mainActivity.MainActivityActions
+import com.lucaspujia.personalregistry.mainActivity.settings.LocalSettingsActions
+import com.lucaspujia.personalregistry.mainActivity.settings.SettingsActions
 import com.lucaspujia.personalregistry.mainActivity.settings.ThemeMode
+import com.lucaspujia.personalregistry.utils.mockMainActivityViewModel
+import com.lucaspujia.personalregistry.utils.mockSettingsViewModel
 
 private val LightColorScheme = lightColorScheme(
     primary = PurplePrimary,
@@ -83,6 +90,8 @@ val MaterialTheme.extendedColors: ExtendedColors
 @Composable
 fun PersonalRegistryTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
+    settingsViewModel: SettingsActions = mockSettingsViewModel,
+    mainActivityViewModel: MainActivityActions = mockMainActivityViewModel(),
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themeMode) {
@@ -95,19 +104,22 @@ fun PersonalRegistryTheme(
     val extendedColors = if (darkTheme) darkExtendedColors else lightExtendedColors
 
     val view = LocalView.current
-    if (!view.isInEditMode) {
+    val providers: MutableList<ProvidedValue<*>> = mutableListOf(LocalExtendedColors provides extendedColors)
+    if (view.isInEditMode) {
+        providers.add(LocalSettingsActions provides settingsViewModel)
+        providers.add(LocalMainActivityActions provides mainActivityViewModel)
+    } else {
         SideEffect {
             val window = (view.context as Activity).window
             val insetsController = WindowCompat.getInsetsController(window, view)
-            
+
             // Solo controlamos la apariencia de los iconos (claro/oscuro)
             // La transparencia la maneja enableEdgeToEdge() en la Activity
             insetsController.isAppearanceLightStatusBars = !darkTheme
             insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }
-
-    CompositionLocalProvider(LocalExtendedColors provides extendedColors) {
+    CompositionLocalProvider(*providers.toTypedArray()) {
         MaterialTheme(
             colorScheme = colorScheme,
             content = content

@@ -314,12 +314,8 @@ private fun DatePickerPreview() {
         )
         DatePickerDialog(
             onDismissRequest = { },
-            confirmButton = {
-                TextButton(onClick = { }) { Text(stringResource(R.string.accept)) }
-            },
-            dismissButton = {
-                TextButton(onClick = {}) { Text(stringResource(R.string.clear)) }
-            }
+            confirmButton = { TextButton(onClick = { }) { Text(stringResource(R.string.accept)) } },
+            dismissButton = { TextButton(onClick = {}) { Text(stringResource(R.string.clear)) } }
         ) {
             DatePicker(state = datePickerState, title = null)
         }

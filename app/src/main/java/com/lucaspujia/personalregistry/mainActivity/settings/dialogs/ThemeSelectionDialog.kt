@@ -39,8 +39,8 @@ fun ThemeSelectionDialog(
 @Composable
 private fun ThemeSelectionDialogContent(
     selectedThemeMode: ThemeMode,
-    onThemeModeSelected: (ThemeMode) -> Unit,
-    dismissDialog: () -> Unit,
+    onThemeModeSelected: (ThemeMode) -> Unit = {},
+    dismissDialog: () -> Unit = {},
 ) {
     AlertDialog(
         onDismissRequest = dismissDialog,
@@ -85,8 +85,6 @@ private fun ThemeSelectionDialogPreview() {
     PersonalRegistryTheme {
         ThemeSelectionDialogContent(
             selectedThemeMode = ThemeMode.DARK,
-            onThemeModeSelected = {},
-            dismissDialog = {}
         )
     }
 }

@@ -221,8 +221,7 @@ private fun WeightCardPreview() {
     PersonalRegistryTheme {
         val item = WeightItem(
             weight = 70.5,
-            dateKey = "2024-06-15",
-            date = "15/06"
+            dateKey = "2024-06-15"
         )
 
         WeightCardContent(

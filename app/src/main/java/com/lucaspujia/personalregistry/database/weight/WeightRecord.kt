@@ -37,7 +37,6 @@ data class WeightRecord(
 
     fun toWeightItem(): WeightItem = WeightItem(
         weight = weight.toDouble(),
-        date = formattedDate(),
         dateKey = dateKey
     )
 }

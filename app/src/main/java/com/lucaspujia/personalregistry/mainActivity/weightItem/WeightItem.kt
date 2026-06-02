@@ -13,9 +13,11 @@ import java.time.format.DateTimeFormatter
 
 data class WeightItem(
     val weight: Double,
-    val date: String, // dd/MM
     val dateKey: String, // yyyy-MM-dd
 ) {
+    val date: String
+        get() = dateKey.split("-", limit = 2)[1].replace("-","/")
+
     fun localDate(): LocalDate = dateKeyToLocalDate(dateKey)
 
     fun formattedWeight(decimalPrecision: Int = WEIGHT_DECIMAL_PRECISION): String {
