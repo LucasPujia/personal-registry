@@ -5,11 +5,13 @@ import android.util.Log
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.lucaspujia.personalregistry.mainActivity.settings.NotificationDay
 import com.lucaspujia.personalregistry.mainActivity.settings.NotificationFrequency
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAdjusters
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,7 +24,7 @@ class NotificationScheduler @Inject constructor(@ApplicationContext private val 
         private const val TAG = "NotificationScheduler"
     }
 
-    fun scheduleNotification(frequency: NotificationFrequency, hour: Int, minute: Int) {
+    fun scheduleNotification(frequency: NotificationFrequency, dayOfWeek: NotificationDay, hour: Int, minute: Int) {
         val workManager = WorkManager.getInstance(context)
 
         if (frequency == NotificationFrequency.OFF) {
@@ -31,36 +33,26 @@ class NotificationScheduler @Inject constructor(@ApplicationContext private val 
             return
         }
 
-        val repeatInterval = when (frequency) {
-            NotificationFrequency.DAYS_1 -> 1L
-            NotificationFrequency.DAYS_3 -> 3L
-            NotificationFrequency.DAYS_7 -> 7L
+        val now = LocalDateTime.now()
+        var scheduledTime = now.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
+
+        if (frequency == NotificationFrequency.DAYS_7) {
+            scheduledTime = scheduledTime.with(TemporalAdjusters.nextOrSame(dayOfWeek.dayOfWeek))
         }
 
-        val currentTime = Calendar.getInstance()
-        val scheduledTime = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-            if (before(currentTime)) {
-                add(Calendar.DAY_OF_YEAR, 1)
+        if (scheduledTime.isBefore(now)) {
+            scheduledTime = if (frequency == NotificationFrequency.DAYS_7) {
+                scheduledTime.plusWeeks(1)
+            } else {
+                scheduledTime.plusDays(1)
             }
         }
-        val initialDelay = scheduledTime.timeInMillis - currentTime.timeInMillis
 
-        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        Log.d(
-            TAG,
-            "Hora actual: ${formatter.format(currentTime.time)} | " +
-                "Próxima notificación: ${formatter.format(scheduledTime.time)} | " +
-                "Delay(ms): $initialDelay | Frecuencia(días): $repeatInterval"
-        )
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        Log.d(TAG, "Hora actual: ${now.format(formatter)} | Próxima notificación: ${scheduledTime.format(formatter)}")
 
-        val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(
-            repeatInterval, TimeUnit.DAYS
-        )
-            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+        val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(frequency.days, TimeUnit.DAYS)
+            .setInitialDelay(Duration.between(now, scheduledTime))
             .build()
 
         workManager.enqueueUniquePeriodicWork(

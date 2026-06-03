@@ -81,7 +81,7 @@ class SettingsViewModel @Inject constructor(
             notificationDay = day
             notificationHour = hourMinute.first
             notificationMinute = hourMinute.second
-            notificationScheduler.scheduleNotification(frequency, hourMinute.first, hourMinute.second)
+            notificationScheduler.scheduleNotification(frequency, day, hourMinute.first, hourMinute.second)
         }.launchIn(viewModelScope)
     }
 
