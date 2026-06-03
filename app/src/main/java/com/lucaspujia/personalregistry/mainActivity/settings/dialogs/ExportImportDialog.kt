@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.lucaspujia.personalregistry.R
+import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
 import com.lucaspujia.personalregistry.mainActivity.settings.LocalSettingsActions
 import com.lucaspujia.personalregistry.ui.theme.DialogPreviews
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
@@ -17,10 +18,13 @@ import java.io.OutputStreamWriter
 
 @Composable
 fun ExportImportDialog(dismissDialog: () -> Unit) {
-    val viewModel = LocalSettingsActions.current
+    val settingsViewModel = LocalSettingsActions.current
+    val mainViewModel = LocalMainActivityActions.current
+    val activeRegistryId = mainViewModel.activeRegistry?.id ?: 1L
+
     ExportImportDialogContent(
-        onImport = { json -> viewModel.importWeights(json) },
-        exportJsonProvider = { viewModel.exportWeights() },
+        onImport = { json -> settingsViewModel.importRecords(json, activeRegistryId) },
+        exportJsonProvider = { settingsViewModel.exportRecords(activeRegistryId) },
         dismissDialog = dismissDialog
     )
 }
@@ -62,7 +66,8 @@ private fun ExportImportDialogContent(
         title = { Text(stringResource(R.string.export_import)) },
         text = { Text(stringResource(R.string.export_import_content)) },
         confirmButton = {
-            TextButton(onClick = { exportLauncher.launch("weights.json") }) {
+            // TODO: nombre según el registro
+            TextButton(onClick = { exportLauncher.launch("records.json") }) {
                 Text(stringResource(R.string.export))
             }
         },
@@ -104,11 +109,14 @@ private fun ImportErrorDialogContent(
 
 @Composable
 fun ImportConfirmationDialog() {
-    val viewModel = LocalSettingsActions.current
+    val settingsViewModel = LocalSettingsActions.current
+    val mainViewModel = LocalMainActivityActions.current
+    val activeRegistryId = mainViewModel.activeRegistry?.id ?: 1L
+
     ImportConfirmationDialogContent(
-        showConfirmation = viewModel.importExportState.showConfirmation,
-        onConfirm = { viewModel.confirmImport() },
-        onDismiss = { viewModel.dismissImportConfirmation() }
+        showConfirmation = settingsViewModel.importExportState.showConfirmation,
+        onConfirm = { settingsViewModel.confirmImport(activeRegistryId) },
+        onDismiss = { settingsViewModel.dismissImportConfirmation() }
     )
 }
 

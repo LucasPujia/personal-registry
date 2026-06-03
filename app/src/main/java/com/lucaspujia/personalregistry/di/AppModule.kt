@@ -2,9 +2,12 @@ package com.lucaspujia.personalregistry.di
 
 import android.content.Context
 import com.lucaspujia.personalregistry.database.AppDatabase
-import com.lucaspujia.personalregistry.database.weight.RoomWeightsStorage
-import com.lucaspujia.personalregistry.database.weight.WeightRecordDao
-import com.lucaspujia.personalregistry.database.weight.WeightsStorage
+import com.lucaspujia.personalregistry.database.registry.RecordDao
+import com.lucaspujia.personalregistry.database.registry.RecordsStorage
+import com.lucaspujia.personalregistry.database.registry.RegistriesStorage
+import com.lucaspujia.personalregistry.database.registry.RegistryDao
+import com.lucaspujia.personalregistry.database.registry.RoomRecordsStorage
+import com.lucaspujia.personalregistry.database.registry.RoomRegistriesStorage
 import com.lucaspujia.personalregistry.mainActivity.MainActivityModel
 import com.lucaspujia.personalregistry.mainActivity.settings.SettingsRepository
 import dagger.Module
@@ -31,14 +34,25 @@ object AppModule {
     }
 
     @Provides
-    fun provideWeightRecordDao(database: AppDatabase): WeightRecordDao {
-        return database.weightRecordDao()
+    fun provideRegistryDao(database: AppDatabase): RegistryDao {
+        return database.registryDao()
+    }
+
+    @Provides
+    fun provideRecordDao(database: AppDatabase): RecordDao {
+        return database.recordDao()
     }
 
     @Provides
     @Singleton
-    fun provideWeightsStorage(dao: WeightRecordDao): WeightsStorage {
-        return RoomWeightsStorage(dao)
+    fun provideRegistriesStorage(registryDao: RegistryDao): RegistriesStorage {
+        return RoomRegistriesStorage(registryDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRecordsStorage(recordDao: RecordDao): RecordsStorage {
+        return RoomRecordsStorage(recordDao)
     }
 
     @Provides
@@ -49,7 +63,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideMainActivityModel(storage: WeightsStorage): MainActivityModel {
-        return MainActivityModel(storage)
+    fun provideMainActivityModel(
+        registriesStorage: RegistriesStorage,
+        recordsStorage: RecordsStorage
+    ): MainActivityModel {
+        return MainActivityModel(registriesStorage, recordsStorage)
     }
 }

@@ -17,7 +17,7 @@ import javax.inject.Singleton
 class NotificationHelper @Inject constructor(@ApplicationContext private val context: Context) {
 
     companion object {
-        private const val CHANNEL_ID = "weight_reminders"
+        private const val CHANNEL_ID = "record_reminders"
         private const val NOTIFICATION_ID = 1
     }
 

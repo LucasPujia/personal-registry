@@ -52,7 +52,7 @@ fun FiltersContent(
         onDismissRequest = onDismissRequest,
         initialMinViewValue = viewModel.filters.minViewValue,
         initialMaxViewValue = viewModel.filters.maxViewValue,
-        initialGoalWeight = viewModel.filters.goalWeight,
+        initialGoalValue = viewModel.filters.goalValue,
         initialDateRange = viewModel.filters.dateRange,
         onApplyFilters = { min, max, goal, range ->
             viewModel.applyFilters(min, max, goal, range)
@@ -65,14 +65,14 @@ fun FiltersContent(
 private fun FiltersContentImpl(
     initialMinViewValue: Int,
     initialMaxViewValue: Int,
-    initialGoalWeight: Int?,
+    initialGoalValue: Int?,
     initialDateRange: Pair<Long, Long>?,
     onApplyFilters: (Int?, Int?, Int?, Pair<Long, Long>?) -> Int?,
     onDismissRequest: () -> Unit = {},
 ) {
     var minVal by remember { mutableStateOf(initialMinViewValue.toString()) }
     var maxVal by remember { mutableStateOf(initialMaxViewValue.toString()) }
-    var goal by remember { mutableStateOf(initialGoalWeight?.toString() ?: "") }
+    var goalValue by remember { mutableStateOf(initialGoalValue?.toString() ?: "") }
     val dateRangePickerState = rememberDateRangePickerState(
         initialSelectedStartDateMillis = initialDateRange?.first,
         initialSelectedEndDateMillis = initialDateRange?.second,
@@ -110,9 +110,9 @@ private fun FiltersContentImpl(
         )
 
         OutlinedTextField(
-            value = goal,
-            onValueChange = { goal = it },
-            label = { Text(stringResource(R.string.weight_goal)) },
+            value = goalValue,
+            onValueChange = { goalValue = it },
+            label = { Text(stringResource(R.string.goal_value)) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
@@ -180,7 +180,7 @@ private fun FiltersContentImpl(
             }
         }
 
-        AcceptButton(minVal, maxVal, goal, dateRangePickerState, onApplyFilters, onDismissRequest)
+        AcceptButton(minVal, maxVal, goalValue, dateRangePickerState, onApplyFilters, onDismissRequest)
     }
 }
 
@@ -188,7 +188,7 @@ private fun FiltersContentImpl(
 private fun AcceptButton(
     minVal: String,
     maxVal: String,
-    goal: String,
+    goalValue: String,
     dateRangePickerState: DateRangePickerState,
     onApplyFilters: (Int?, Int?, Int?, Pair<Long, Long>?) -> Int?,
     onDismissRequest: () -> Unit = {},
@@ -199,7 +199,7 @@ private fun AcceptButton(
             val response = onApplyFilters(
                 minVal.toIntOrNull(),
                 maxVal.toIntOrNull(),
-                goal.toIntOrNull(),
+                goalValue.toIntOrNull(),
                 dateRangePickerState.selectedDateRange()
             )
             if (response != null) {
@@ -241,7 +241,7 @@ private fun FiltersContentPreview() {
         FiltersContentImpl(
             initialMinViewValue = 60,
             initialMaxViewValue = 80,
-            initialGoalWeight = 70,
+            initialGoalValue = 70,
             initialDateRange = null,
             onApplyFilters = { _, _, _, _ -> null }
         )

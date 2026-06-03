@@ -1,6 +1,5 @@
-package com.lucaspujia.personalregistry.mainActivity.weightSelector
+package com.lucaspujia.personalregistry.mainActivity.recordSelector
 
-import android.content.res.Configuration
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -44,56 +43,37 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.extensionFunctions.isFloat
-import com.lucaspujia.personalregistry.mainActivity.WEIGHT_DECIMAL_PRECISION
-import com.lucaspujia.personalregistry.mainActivity.WEIGHT_MAX_VALUE
-import com.lucaspujia.personalregistry.mainActivity.WEIGHT_MIN_VALUE
-import com.lucaspujia.personalregistry.mainActivity.WEIGHT_PIXELS_PER_UNIT
-import com.lucaspujia.personalregistry.mainActivity.WEIGHT_SCROLL_INVERTED
-import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
-import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
+import com.lucaspujia.personalregistry.mainActivity.RECORD_MAX_VALUE
+import com.lucaspujia.personalregistry.mainActivity.RECORD_MIN_VALUE
+import com.lucaspujia.personalregistry.mainActivity.RECORD_PIXELS_PER_UNIT
+import com.lucaspujia.personalregistry.mainActivity.RECORD_SCROLL_INVERTED
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-/**
- * Selector de número vertical tipo drum-wheel con movimiento fluido.
- *
- * - Arrastrar verticalmente para cambiar el valor.
- * - Muestra el valor central resaltado y previsualizaciones de los valores adyacentes.
- * - El movimiento es fluido y los números cambian de tamaño y opacidad al alejarse del centro.
- *
- * @param value         Valor actual.
- * @param onValueChange Callback llamado con el nuevo valor durante el arrastre.
- * @param precision     Decimales: 0 = enteros, 1 = pasos de 0.1, 2 = pasos de 0.01, etc.
- * @param pixelsPerUnit Píxeles de arrastre por 1.0 unidad de cambio (lineal, sin aceleración).
- * @param isScrollInverted Si es true, arrastrar hacia abajo aumenta el valor.
- * @param minValue      Valor mínimo permitido (inclusive).
- * @param maxValue      Valor máximo permitido (inclusive).
- */
 @Composable
 fun VerticalNumberPicker(
     value: Float,
     onValueChange: (Float) -> Unit,
+    unit: String,
     modifier: Modifier = Modifier,
-    precision: Int = WEIGHT_DECIMAL_PRECISION,
-    pixelsPerUnit: Float = WEIGHT_PIXELS_PER_UNIT,
-    isScrollInverted: Boolean = WEIGHT_SCROLL_INVERTED,
-    minValue: Float = WEIGHT_MIN_VALUE,
-    maxValue: Float = WEIGHT_MAX_VALUE,
+    precision: Int = 1,
+    pixelsPerUnit: Float = RECORD_PIXELS_PER_UNIT,
+    isScrollInverted: Boolean = RECORD_SCROLL_INVERTED,
+    minValue: Float = RECORD_MIN_VALUE,
+    maxValue: Float = RECORD_MAX_VALUE,
+    label: String = "",
 ) {
     val step = remember(precision) { (10.0).pow(-precision).toFloat() }
     val scope = rememberCoroutineScope()
     
-    // Animatable para el valor continuo con soporte para snapping fluido
     val continuousValue = remember { Animatable(value) }
     var isDragging by remember { mutableStateOf(false) }
 
-    // Sincronizar con cambios externos (e.g. filtros/botones, así no salta sino que anima)
     LaunchedEffect(value) {
         if (!isDragging && abs(continuousValue.value - value) > 0.0001f) {
             continuousValue.animateTo(
@@ -119,7 +99,6 @@ fun VerticalNumberPicker(
         }
     }
 
-    // Ancho medido del valor para ubicar 'kg' a su derecha sin afectar el centrado.
     var valueTextWidthPx by remember { mutableIntStateOf(500) }
     val density = LocalDensity.current
 
@@ -134,7 +113,6 @@ fun VerticalNumberPicker(
                 onDragStarted = { isDragging = true },
                 onDragStopped = {
                     isDragging = false
-                    // Al soltar, animamos hacia el valor actual con rebote visual (bouncy)
                     scope.launch {
                         continuousValue.animateTo(
                             targetValue = value,
@@ -147,11 +125,9 @@ fun VerticalNumberPicker(
                 }
             ),
     ) {
-        val mainWeightHeight = 45.dp
-        val kgOffsetX = remember(valueTextWidthPx, density) { (valueTextWidthPx / (2f * density.density)).dp + 16.dp }
+        val mainRecordHeight = 45.dp
+        val unitOffsetX = remember(valueTextWidthPx, density) { (valueTextWidthPx / (2f * density.density)).dp + 16.dp }
 
-        // Calculamos el índice central y el rango de items a mostrar
-        // Mayor arriba, menor abajo.
         val centerIndexFloat = continuousValue.value / step
         val centerIndexInt = centerIndexFloat.roundToInt()
         val startIndex = centerIndexInt - 2
@@ -161,23 +137,21 @@ fun VerticalNumberPicker(
             val itemValue = i * step
             if (itemValue < minValue - 0.0001f || itemValue > maxValue + 0.0001f) continue
 
-            // Para que el mayor esté ARRIBA, usamos (centerIndex - i)
             val distanceFromCenter = centerIndexFloat - i
             val absDistance = abs(distanceFromCenter)
-            val isMainWeight = i == centerIndexInt
+            val isMainValue = i == centerIndexInt
 
-            // Interpolación de estilos agresiva para que el central destaque mucho más
             val scale = (1f - absDistance * 0.5f).coerceAtLeast(0.5f)
             val alpha = (1f - (absDistance * 0.3f)).coerceIn(0f, 1f)
-            val yOffset = distanceFromCenter * mainWeightHeight.value
+            val yOffset = distanceFromCenter * mainRecordHeight.value
 
             Text(
                 text = "%.${precision}f".format(itemValue),
                 fontSize = MaterialTheme.typography.displayLarge.fontSize,
-                fontWeight = if (isMainWeight) FontWeight.Bold else FontWeight.SemiBold,
+                fontWeight = if (isMainValue) FontWeight.Bold else FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary,
                 onTextLayout = { 
-                    if (isMainWeight && valueTextWidthPx != it.size.width) {
+                    if (isMainValue && valueTextWidthPx != it.size.width) {
                         valueTextWidthPx = it.size.width 
                     }
                 },
@@ -194,23 +168,22 @@ fun VerticalNumberPicker(
         }
 
         Text(
-            text = "kg",
+            text = unit,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Normal,
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
             modifier = Modifier
                 .align(Alignment.Center)
-                .offset(x = kgOffsetX, y = 8.dp),
+                .offset(x = unitOffsetX, y = 8.dp),
         )
 
         val showDialog = remember { mutableStateOf(false) }
 
-        // Capa para detectar clic en el centro y abrir el modal
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .height(mainWeightHeight + 16.dp)
-                .width(kgOffsetX + 64.dp)
+                .height(mainRecordHeight + 16.dp)
+                .width(unitOffsetX + 64.dp)
                 .clickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
@@ -219,14 +192,16 @@ fun VerticalNumberPicker(
                 }
         )
 
-        WeightInputModal(showDialog, value.toString(), onValueChange, minValue, maxValue)
+        ValueInputModal(showDialog, value.toString(), unit, label, onValueChange, minValue, maxValue)
     }
 }
 
 @Composable
-private fun WeightInputModal(
+private fun ValueInputModal(
     showDialog: MutableState<Boolean>,
     initialValue: String,
+    unit: String,
+    label: String,
     onValueChange: (Float) -> Unit,
     minValue: Float,
     maxValue: Float
@@ -237,7 +212,6 @@ private fun WeightInputModal(
 
         val closeDialog = { showDialog.value = false }
         val onConfirm = {
-            // No lo puede parsear con coma, debe ser con punto
             val parsed = editValue.replace(',', '.').toFloatOrNull()
             if (parsed != null) {
                 onValueChange(parsed.coerceIn(minValue, maxValue))
@@ -257,7 +231,7 @@ private fun WeightInputModal(
                             editValue = it
                             successfulEdit = true
                         } },
-                        label = { Text(stringResource(R.string.weight) + " (kg)") },
+                        label = { Text("$label ($unit)") },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Decimal,
                             imeAction = ImeAction.Done
@@ -273,7 +247,7 @@ private fun WeightInputModal(
                     )
                     if (!successfulEdit) {
                         Text(
-                            text = stringResource(R.string.invalid_weight),
+                            text = stringResource(R.string.invalid_value),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(top = 4.dp)
@@ -291,36 +265,6 @@ private fun WeightInputModal(
                     Text(stringResource(R.string.cancel))
                 }
             }
-        )
-    }
-}
-
-@ThemePreviews
-@Composable
-fun VerticalNumberPickerPreview() {
-    PersonalRegistryTheme {
-        VerticalNumberPicker(
-            value = 75.5f,
-            onValueChange = {},
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(160.dp),
-        )
-    }
-}
-
-@Preview(showBackground = true, widthDp = 400, heightDp = 300)
-@Preview(showBackground = true, widthDp = 400, heightDp = 300, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun WeightInputModalPreview() {
-    PersonalRegistryTheme {
-        val showDialog = remember { mutableStateOf(true) }
-        WeightInputModal(
-            showDialog = showDialog,
-            initialValue = "70.0",
-            onValueChange = {},
-            minValue = WEIGHT_MIN_VALUE,
-            maxValue = WEIGHT_MAX_VALUE
         )
     }
 }

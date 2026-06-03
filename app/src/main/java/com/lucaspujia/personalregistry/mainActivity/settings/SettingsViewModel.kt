@@ -8,7 +8,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lucaspujia.personalregistry.R
-import com.lucaspujia.personalregistry.database.weight.WeightRecord
+import com.lucaspujia.personalregistry.database.registry.Record
 import com.lucaspujia.personalregistry.mainActivity.MainActivityModel
 import com.lucaspujia.personalregistry.notifications.NotificationScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,7 +24,7 @@ data class ImportExportState(
     val showError: Boolean = false,
     val showConfirmation: Boolean = false,
     val successMessageRes: Int? = null,
-    val pendingRecords: List<WeightRecord> = emptyList()
+    val pendingRecords: List<Record> = emptyList()
 )
 
 // TODO: Moverlo al settingsModel, y ver de renombrar el settingsModel
@@ -38,9 +38,9 @@ interface SettingsActions {
 
     fun updateSetting(settingOption: SettingOption, value: Setting)
     fun updateNotificationTime(hour: Int, minute: Int)
-    fun exportWeights(): String
-    fun importWeights(json: String)
-    fun confirmImport()
+    fun exportRecords(registryId: Long): String
+    fun importRecords(json: String, registryId: Long)
+    fun confirmImport(registryId: Long)
     fun dismissImportError()
     fun dismissImportConfirmation()
     fun dismissSuccessMessage()
@@ -98,14 +98,14 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    override fun exportWeights(): String {
-        val json = model.getRecordsAsJSON()
+    override fun exportRecords(registryId: Long): String {
+        val json = model.getRecordsAsJSON(registryId)
         importExportState = importExportState.copy(successMessageRes = R.string.export_success)
         return json
     }
 
-    override fun importWeights(json: String) {
-        val records = model.fromRawJson(json)
+    override fun importRecords(json: String, registryId: Long) {
+        val records = model.fromRawJson(json, registryId)
         importExportState = if (records == null) {
             importExportState.copy(showError = true)
         } else {
@@ -113,10 +113,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    override fun confirmImport() {
+    override fun confirmImport(registryId: Long) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                model.replaceWeights(importExportState.pendingRecords)
+                model.replaceRecords(registryId, importExportState.pendingRecords)
             }
             importExportState = importExportState.copy(
                 showConfirmation = false,

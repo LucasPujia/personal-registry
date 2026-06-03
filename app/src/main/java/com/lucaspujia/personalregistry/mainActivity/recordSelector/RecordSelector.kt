@@ -1,4 +1,4 @@
-package com.lucaspujia.personalregistry.mainActivity.weightSelector
+package com.lucaspujia.personalregistry.mainActivity.recordSelector
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +34,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.setSelectedDate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,12 +42,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
+import com.lucaspujia.personalregistry.database.registry.MeasureUnit
+import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
-import com.lucaspujia.personalregistry.mainActivity.WEIGHT_DECIMAL_PRECISION
-import com.lucaspujia.personalregistry.mainActivity.WEIGHT_DEFAULT_VALUE
+import com.lucaspujia.personalregistry.mainActivity.RECORD_DEFAULT_VALUE
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
@@ -61,29 +61,39 @@ import java.time.LocalDate
 import kotlin.math.pow
 
 @Composable
-fun WeightSelector(
+fun RecordSelector(
     modifier: Modifier = Modifier,
 ) {
     val viewModel = LocalMainActivityActions.current
-    WeightSelectorContent(
+    val registry = viewModel.activeRegistry ?: return
+
+    RecordSelectorContent(
         modifier = modifier,
-        latestStoredWeight = viewModel.filters.weightsF.lastOrNull(),
+        registry = registry,
+        latestRecord = viewModel.filters.records.lastOrNull(),
         isSelectableDate = { viewModel.isSelectableDate(it) },
-        onAddWeight = { weight, date -> viewModel.addWeight(weight, date) },
+        onAddRecord = { v1, v2, date -> viewModel.addRecord(v1, v2, date) },
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WeightSelectorContent(
+private fun RecordSelectorContent(
     modifier: Modifier = Modifier,
-    latestStoredWeight: Float?,
+    registry: Registry,
+    latestRecord: com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem?,
     isSelectableDate: (Long) -> Boolean,
-    onAddWeight: (Float, Long?) -> Unit
+    onAddRecord: (Double, Double?, Long?) -> Unit
 ) {
-    val weightStep = remember { (10.0).pow(-WEIGHT_DECIMAL_PRECISION).toFloat() }
-    var weight by remember(latestStoredWeight) {
-        mutableFloatStateOf(latestStoredWeight ?: WEIGHT_DEFAULT_VALUE)
+    // TODO: checkk
+    val step1 = remember(registry.unit1.precision) { (10.0).pow(-registry.unit1.precision) }
+    val step2 = remember(registry.unit2?.precision) { registry.unit2?.let { (10.0).pow(-it.precision) } }
+
+    var value1 by remember(latestRecord, registry.id) {
+        mutableDoubleStateOf(latestRecord?.value1 ?: RECORD_DEFAULT_VALUE.toDouble())
+    }
+    var value2 by remember(latestRecord, registry.id) {
+        mutableDoubleStateOf(latestRecord?.value2 ?: RECORD_DEFAULT_VALUE.toDouble())
     }
 
     val datePickerState = rememberDatePickerState(
@@ -105,13 +115,32 @@ private fun WeightSelectorContent(
         Spacer(Modifier.height(8.dp))
 
         if (isSelectableDate(datePickerState.selectedDateMillis ?: nowMillis())) {
-            VerticalNumberPicker(
-                value = weight,
-                onValueChange = { weight = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-            )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                VerticalNumberPicker(
+                    value = value1.toFloat(),
+                    onValueChange = { value1 = it.toDouble() },
+                    unit = registry.unit1.symbol,
+                    precision = registry.unit1.precision,
+                    label = registry.unit1.name,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(120.dp)
+                )
+
+                registry.unit2?.let { u2 ->
+                    Spacer(Modifier.width(8.dp))
+                    VerticalNumberPicker(
+                        value = value2.toFloat(),
+                        onValueChange = { value2 = it.toDouble() },
+                        unit = u2.symbol,
+                        precision = u2.precision,
+                        label = u2.name,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(120.dp)
+                    )
+                }
+            }
 
             Spacer(Modifier.height(8.dp))
 
@@ -119,27 +148,29 @@ private fun WeightSelectorContent(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 FilledIconButton(
-                    onClick = { weight -= weightStep },
-                    interactionSource = pressedInteractionSource { weight -= weightStep }
+                    onClick = { value1 -= step1 },
+                    interactionSource = pressedInteractionSource { value1 -= step1 }
                 ) {
-                    Icon(Icons.Default.Remove, contentDescription = "Disminuir peso")
+                    Icon(Icons.Default.Remove, contentDescription = "Decrease value 1")
                 }
                 Button(
-                    onClick = { onAddWeight(weight, datePickerState.selectedDateMillis) },
+                    onClick = { onAddRecord(value1, if (registry.unit2 != null) value2 else null, datePickerState.selectedDateMillis) },
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 16.dp),
                     shape = RoundedCornerShape(28.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.add_weight), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "${stringResource(R.string.add)} ${registry.name}",
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 }
                 FilledIconButton(
-                    onClick = { weight += weightStep },
-                    interactionSource = pressedInteractionSource { weight += weightStep }
+                    onClick = { value1 += step1 },
+                    interactionSource = pressedInteractionSource { value1 += step1 }
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Aumentar peso")
+                    Icon(Icons.Default.Add, contentDescription = "Increase value 1")
                 }
             }
         } else {
@@ -149,6 +180,24 @@ private fun WeightSelectorContent(
                 style = MaterialTheme.typography.bodyMedium
             )
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+fun RecordSelectorPreview() {
+    val registry = Registry(
+        name = "Peso",
+        emoji = "⚖️",
+        unit1 = MeasureUnit("Kilo", "kg", 1)
+    )
+    PersonalRegistryTheme {
+        RecordSelectorContent(
+            registry = registry,
+            latestRecord = null,
+            isSelectableDate = { true },
+            onAddRecord = { _, _, _ -> }
+        )
     }
 }
 
@@ -197,7 +246,7 @@ private fun FilterControlsContent(
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = Icons.Default.CalendarMonth,
-                    contentDescription = "Seleccionar fecha",
+                    contentDescription = "Select date",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )
@@ -217,7 +266,7 @@ private fun FilterControlsContent(
         ) {
             Icon(
                 imageVector = Icons.Default.RemoveRedEye,
-                contentDescription = "Abrir Controles de vista",
+                contentDescription = "Open View Controls",
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -235,7 +284,7 @@ private fun FilterControlsContent(
         ) {
             Icon(
                 imageVector = Icons.Default.FilterAlt,
-                contentDescription = "Abrir Filtros",
+                contentDescription = "Open Filters",
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -268,56 +317,9 @@ private fun FilterControlsContent(
         ) {
             Icon(
                 imageVector = Icons.Default.Settings,
-                contentDescription = "Abrir Configuración",
+                contentDescription = "Open Settings",
                 modifier = Modifier.size(20.dp)
             )
-        }
-    }
-}
-
-@ThemePreviews
-@Composable
-private fun FilterControlsPreview() {
-    PersonalRegistryTheme {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = todayForDatePicker()
-        )
-        FilterControlsContent(
-            datePickerState = datePickerState,
-            onViewTogglesOpened = {},
-            onFiltersOpened = {},
-            onSettingsOpened = {}
-        )
-    }
-}
-
-@ThemePreviews
-@Composable
-private fun WeightSelectorPreview() {
-    PersonalRegistryTheme {
-        WeightSelectorContent(
-            latestStoredWeight = 70.5f,
-            isSelectableDate = { true },
-            onAddWeight = { _, _ -> }
-        )
-    }
-}
-
-@Preview(showBackground = true, widthDp = 400, heightDp = 600)
-@Composable
-private fun DatePickerPreview() {
-    MaterialTheme {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = todayForDatePicker(),
-            selectableDates = selectableDatesFromFunction { true },
-            yearRange = IntRange(LocalDate.now().year - 1, LocalDate.now().year),
-        )
-        DatePickerDialog(
-            onDismissRequest = { },
-            confirmButton = { TextButton(onClick = { }) { Text(stringResource(R.string.accept)) } },
-            dismissButton = { TextButton(onClick = {}) { Text(stringResource(R.string.clear)) } }
-        ) {
-            DatePicker(state = datePickerState, title = null)
         }
     }
 }

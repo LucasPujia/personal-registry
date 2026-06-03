@@ -20,7 +20,7 @@ import javax.inject.Singleton
 class NotificationScheduler @Inject constructor(@ApplicationContext private val context: Context) {
 
     companion object {
-        private const val WORK_NAME = "weight_reminder_work"
+        private const val WORK_NAME = "record_reminder_work"
         private const val TAG = "NotificationScheduler"
     }
 

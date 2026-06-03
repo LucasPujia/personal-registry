@@ -4,12 +4,22 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.lucaspujia.personalregistry.database.weight.WeightRecord
-import com.lucaspujia.personalregistry.database.weight.WeightRecordDao
+import androidx.room.TypeConverters
+import com.lucaspujia.personalregistry.database.registry.Record
+import com.lucaspujia.personalregistry.database.registry.RecordDao
+import com.lucaspujia.personalregistry.database.registry.Registry
+import com.lucaspujia.personalregistry.database.registry.RegistryConverters
+import com.lucaspujia.personalregistry.database.registry.RegistryDao
 
-@Database(entities = [WeightRecord::class], version = 3, exportSchema = false)
+@Database(
+    entities = [Registry::class, Record::class],
+    version = 4,
+    exportSchema = false
+)
+@TypeConverters(RegistryConverters::class)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun weightRecordDao(): WeightRecordDao
+    abstract fun registryDao(): RegistryDao
+    abstract fun recordDao(): RecordDao
 
     companion object {
         @Volatile
@@ -20,7 +30,7 @@ abstract class AppDatabase : RoomDatabase() {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "weights_database"
+                    "records_database"
                 )
                     .fallbackToDestructiveMigration(true)
                     .build().also { instance = it }
