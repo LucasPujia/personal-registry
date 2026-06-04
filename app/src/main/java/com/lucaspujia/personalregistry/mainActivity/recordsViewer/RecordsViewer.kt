@@ -197,7 +197,6 @@ private fun RecordsViewerContent(
         }
 
         if (viewToggles.list) {
-            val viewModel = LocalMainActivityActions.current
             HistorialHeader()
             val recordsWithVariation = remember(filters.records) {
                 filters.records.mapIndexed { index, record ->
@@ -215,7 +214,7 @@ private fun RecordsViewerContent(
                     RecordCard(
                         recordItem = item,
                         registry = registry,
-                        onDelete = { deletionState.askForDeletion(it) { r -> viewModel.removeRecord(r) } },
+                        deletionState = deletionState,
                         variation = variation
                     )
                 }
@@ -358,6 +357,7 @@ class RecordDeletionState(
     var deletionCount by mutableIntStateOf(initialDeletionCount)
     var skipConfirmation by mutableStateOf(initialSkipConfirmation)
     var dontAskAgainChecked by mutableStateOf(false)
+    var openedItemKey by mutableStateOf<String?>(null)
 
     fun askForDeletion(item: RecordItem, onRemoveRecord: (RecordItem) -> Unit) {
         if (skipConfirmation) {

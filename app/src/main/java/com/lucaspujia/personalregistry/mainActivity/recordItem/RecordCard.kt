@@ -1,168 +1,216 @@
 package com.lucaspujia.personalregistry.mainActivity.recordItem
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.database.registry.MeasureUnit
 import com.lucaspujia.personalregistry.database.registry.Registry
+import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
+import com.lucaspujia.personalregistry.mainActivity.recordsViewer.RecordDeletionState
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.ui.theme.extendedColors
 
-@OptIn(ExperimentalMaterial3Api::class)
+enum class DragValue { Settled, Revealed }
+
 @Composable
 fun RecordCard(
     recordItem: RecordItem,
     registry: Registry,
-    onDelete: (RecordItem) -> Unit,
+    deletionState: RecordDeletionState,
     variation: Double? = null,
 ) {
-    // TODO: checkk
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = {
-            if (it == SwipeToDismissBoxValue.EndToStart) {
-                onDelete(recordItem)
-            }
-            false
-        },
-        positionalThreshold = { it * 0.4f }
+    val viewModel = LocalMainActivityActions.current
+    RecordCardContent(
+        recordItem = recordItem,
+        registry = registry,
+        variation = variation,
+        deletionState = deletionState,
+        onDeleteClick = { deletionState.askForDeletion(recordItem, onRemoveRecord = { viewModel.removeRecord(it) }) }
     )
+}
 
-    SwipeToDismissBox(
-        state = dismissState,
-        backgroundContent = {
-            val color by animateColorAsState(
-                when (dismissState.targetValue) {
-                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error
-                    else -> Color.Transparent
-                }, label = "dismiss_color"
-            )
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(color)
-                    .padding(horizontal = 24.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = MaterialTheme.colorScheme.onError
-                )
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun RecordCardContent(
+    recordItem: RecordItem,
+    registry: Registry,
+    variation: Double?,
+    deletionState: RecordDeletionState,
+    onDeleteClick: () -> Unit
+) {
+    val receiver = LocalDensity.current
+    val state = remember {
+        AnchoredDraggableState(
+            initialValue = DragValue.Settled,
+            anchors = DraggableAnchors {
+                DragValue.Settled at 0f
+                DragValue.Revealed at -with(receiver) { 80.dp.toPx() }
             }
-        },
-        enableDismissFromStartToEnd = false
-    ) {
-        Card(
+        )
+    }
+
+    LaunchedEffect(state) {
+        snapshotFlow { state.targetValue }
+            .collect { target ->
+                if (target == DragValue.Revealed) {
+                    deletionState.openedItemKey = recordItem.dateKey
+                } else if ((deletionState.openedItemKey == recordItem.dateKey) && (target == DragValue.Settled)) {
+                    deletionState.openedItemKey = null
+                }
+            }
+    }
+
+    LaunchedEffect(deletionState.openedItemKey) {
+        if (deletionState.openedItemKey != recordItem.dateKey && state.currentValue == DragValue.Revealed) {
+            state.animateTo(DragValue.Settled)
+        }
+    }
+
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 4.dp)) {
+        // Acción de eliminar (fondo)
+        CloseButton(onDeleteClick)
+
+        // Contenido de la fila (frente)
+        Surface(
+            color = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(12.dp),
+            shadowElevation = 1.dp,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.tertiary
-            )
+                .offset {
+                    IntOffset(
+                        x = state.requireOffset().toInt(),
+                        y = 0
+                    )
+                }
+                .anchoredDraggable(
+                    state = state,
+                    orientation = Orientation.Horizontal,
+                    flingBehavior = AnchoredDraggableDefaults.flingBehavior(
+                        state = state,
+                        positionalThreshold = { distance: Float -> distance * 0.5f },
+                        animationSpec = tween()
+                    )
+                )
         ) {
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(12.dp),
             ) {
-                Text(
-                    text = registry.emoji,
-                    style = MaterialTheme.typography.headlineSmall
-                )
-
+                Surface(
+                    color = MaterialTheme.colorScheme.tertiary,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = recordItem.getFullDateText(),
+                        recordItem.getFullDateText(),
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                        fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = recordItem.getDayOfWeekText(),
-                        style = MaterialTheme.typography.labelMedium,
+                        recordItem.getDayOfWeekText(),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-
                 Column(horizontalAlignment = Alignment.End) {
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
-                            text = recordItem.formattedValue1(registry),
-                            style = MaterialTheme.typography.titleLarge,
+                            recordItem.formattedValue1(registry),
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
+                        Spacer(Modifier.width(4.dp))
                         Text(
-                            text = registry.unit1.symbol,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(bottom = 2.dp, start = 2.dp)
+                            registry.unit1.symbol,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 2.dp)
                         )
                     }
-
+                    
                     recordItem.formattedValue2(registry)?.let { v2 ->
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
-                                text = v2,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
+                                v2,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.secondary
                             )
+                            Spacer(Modifier.width(4.dp))
                             Text(
-                                text = registry.unit2?.symbol ?: "",
+                                registry.unit2?.symbol ?: "",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f),
-                                modifier = Modifier.padding(bottom = 2.dp, start = 2.dp)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 2.dp)
                             )
                         }
                     }
-
+                    
                     variation?.let { v ->
                         val color = if (v > 0) {
                             MaterialTheme.extendedColors.trendIncrease
                         } else if (v < 0) {
                             MaterialTheme.extendedColors.trendDecrease
                         } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                            MaterialTheme.extendedColors.trendNeutral
                         }
                         Text(
                             text = recordItem.formattedVariation(registry, v) ?: "",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = color
+                            color = color,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -171,41 +219,75 @@ fun RecordCard(
     }
 }
 
+@Composable
+private fun BoxScope.CloseButton(
+    onDeleteClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .align(Alignment.CenterEnd)
+            .padding(end = 16.dp)
+    ) {
+        Button(
+            onClick = onDeleteClick,
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+            shape = RoundedCornerShape(8.dp),
+            contentPadding = PaddingValues(0.dp),
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Eliminar",
+                tint = MaterialTheme.colorScheme.onError
+            )
+        }
+    }
+}
+
 @ThemePreviews
 @Composable
-fun RecordCardPreview() {
+private fun RecordCardPreview() {
     val registry = Registry(
         name = "Peso",
         emoji = "⚖️",
         unit1 = MeasureUnit("Kilo", "kg", 1)
     )
-    val record = RecordItem(value1 = 70.5, dateKey = "2024-03-20")
+    val item = RecordItem(
+        value1 = 70.5,
+        dateKey = "2024-06-15"
+    )
     PersonalRegistryTheme {
-        RecordCard(
-            recordItem = record,
+        RecordCardContent(
+            recordItem = item,
             registry = registry,
-            onDelete = {},
-            variation = -0.5
+            variation = -0.5,
+            deletionState = RecordDeletionState(),
+            onDeleteClick = {}
         )
     }
 }
 
 @ThemePreviews
 @Composable
-fun RecordCardDoublePreview() {
+private fun RecordCardDoublePreview() {
     val registry = Registry(
         name = "Running",
         emoji = "🏃",
         unit1 = MeasureUnit("Distancia", "km", 2),
         unit2 = MeasureUnit("Tiempo", "min", 0)
     )
-    val record = RecordItem(value1 = 5.23, value2 = 25.0, dateKey = "2024-03-20")
+    val item = RecordItem(
+        value1 = 5.23,
+        value2 = 25.0,
+        dateKey = "2024-06-15"
+    )
     PersonalRegistryTheme {
-        RecordCard(
-            recordItem = record,
+        RecordCardContent(
+            recordItem = item,
             registry = registry,
-            onDelete = {},
-            variation = 0.1
+            variation = 0.1,
+            deletionState = RecordDeletionState(),
+            onDeleteClick = {}
         )
     }
 }
