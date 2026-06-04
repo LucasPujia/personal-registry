@@ -1,22 +1,21 @@
 package com.lucaspujia.personalregistry.mainActivity
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateIntOffsetAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,25 +35,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lucaspujia.personalregistry.database.registry.MeasureUnit
 import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
+import com.lucaspujia.personalregistry.utils.defaultRegistry
 
 @Composable
 fun RegistryFab(
     modifier: Modifier = Modifier
 ) {
     val viewModel = LocalMainActivityActions.current
-    val registries by viewModel.allRegistries.collectAsState(initial = emptyList())
     val activeRegistry = viewModel.activeRegistry
+    val registries by viewModel.allRegistries.collectAsState(initial = emptyList())
 
     RegistryFabContent(
         modifier = modifier,
@@ -69,115 +67,142 @@ private fun RegistryFabContent(
     modifier: Modifier = Modifier,
     registries: List<Registry>,
     activeRegistry: Registry?,
-    onRegistrySelected: (Registry) -> Unit,
-    onCreateRegistryClick: () -> Unit
+    expanded: Boolean = false,
+    onRegistrySelected: (Registry) -> Unit = {},
+    onCreateRegistryClick: () -> Unit = {}
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(expanded) }
+    val toggleExpanded = { expanded = !expanded }
+    val baseSize = if (expanded) 48 else 40
+    val plusRotation by rotationAnimationState(expanded)
 
-    val centerOffset = calculateFabCenterOffset(fabSize = 64.dp, margin = 32.dp)
-    val targetOffsetX = if (expanded) 0 else centerOffset
-
-    val animatedOffset by animateIntOffsetAsState(
-        targetValue = IntOffset(targetOffsetX, 0),
-        label = "fabOffset",
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness = Spring.StiffnessLow
-        )
-    )
-
-    val fabSize by animateDpAsState(if (expanded) 48.dp else 64.dp, label = "fabSize")
-    val cornerRadius by animateDpAsState(if (expanded) 16.dp else 32.dp, label = "cornerRadius")
-
-    Row(
-        modifier = modifier
-            .offset { animatedOffset },
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.Bottom
     ) {
-        Surface(
-            onClick = { expanded = !expanded },
-            shape = RoundedCornerShape(cornerRadius),
-            color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.size(fabSize),
-            shadowElevation = 6.dp
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = activeRegistry?.emoji ?: "📊",
-                    fontSize = if (expanded) 24.sp else 32.sp
-                )
-            }
-        }
-
-        AnimatedVisibility(visible = expanded) {
-            Row(
+            Column(
                 modifier = Modifier
-                    .padding(start = 8.dp)
-                    .clip(RoundedCornerShape(24.dp))
+                    .padding(bottom = 8.dp)
+                    .clip(RoundedCornerShape((baseSize / 2).dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f))
                     .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.weight(1f, fill = false)
-                ) {
-                    items(registries) { registry ->
-                        val isSelected = registry.id == activeRegistry?.id
-                        val bgColor by animateColorAsState(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                CreateButton(onCreateRegistryClick, toggleExpanded, plusRotation)
 
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(bgColor)
-                                .clickable {
-                                    onRegistrySelected(registry)
-                                    expanded = false
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = registry.emoji, fontSize = 20.sp)
+                if (registries.size > 1) {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.weight(1f, fill = false)
+                    ) {
+                        items(registries.filter { it.id != activeRegistry?.id }) { registry ->
+                            RegistryItem(baseSize, onRegistrySelected, registry, toggleExpanded)
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Surface(
-                    onClick = {
-                        onCreateRegistryClick()
-                        expanded = false
-                    },
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Registry")
-                    }
-                }
             }
+        }
+
+        FloatingButton(toggleExpanded, activeRegistry, baseSize)
+    }
+}
+
+@Composable
+private fun CreateButton(
+    onCreateRegistryClick: () -> Unit,
+    toggleExpanded: () -> Unit,
+    plusRotation: Float
+) {
+    Surface(
+        onClick = {
+            onCreateRegistryClick()
+            toggleExpanded()
+        },
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.size(36.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                Icons.Default.Add,
+                contentDescription = "Add Registry",
+                modifier = Modifier.rotate(plusRotation)
+            )
         }
     }
 }
 
 @Composable
-private fun calculateFabCenterOffset(fabSize: Dp, margin: Dp): Int {
-    val windowInfo = LocalWindowInfo.current
-    return with(LocalDensity.current) {
-        val screenWidthPx = windowInfo.containerSize.width
-        val fabSizePx = fabSize.toPx()
-        val marginPx = margin.toPx()
-        (screenWidthPx / 2 - fabSizePx / 2 - marginPx).toInt()
+private fun RegistryItem(
+    baseSize: Int,
+    onRegistrySelected: (Registry) -> Unit,
+    registry: Registry,
+    toggleExpanded: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size((baseSize * 3 / 4).dp)
+            .clip(CircleShape)
+            .background(Color.Transparent)
+            .clickable {
+                onRegistrySelected(registry)
+                toggleExpanded()
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = registry.emoji, fontSize = (baseSize / 2).sp)
     }
 }
+
+@Composable
+private fun FloatingButton(
+    toggleExpanded: () -> Unit,
+    activeRegistry: Registry?,
+    baseSize: Int
+) {
+    val fabSize by animateDpAsState(baseSize.dp, label = "fabSize")
+    val cornerRadius by animateDpAsState((baseSize / 3).dp, label = "cornerRadius")
+
+    Surface(
+        onClick = toggleExpanded,
+        shape = RoundedCornerShape(cornerRadius),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.size(fabSize),
+        shadowElevation = 6.dp
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = activeRegistry?.emoji ?: "📊",
+                fontSize = (baseSize / 2).sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun rotationAnimationState(expanded: Boolean): State<Float> = animateFloatAsState(
+    targetValue = if (expanded) 0f else 45f,
+    animationSpec = if (expanded) {
+        tween(durationMillis = 300, delayMillis = 100)
+    } else {
+        tween(durationMillis = 300)
+    },
+    label = "plusRotation"
+)
 
 @ThemePreviews
 @Composable
 private fun RegistryFabPreview() {
     val registries = listOf(
-        Registry(id = 1, name = "Peso", emoji = "⚖️", unit1 = MeasureUnit("kg", "kg")),
+        defaultRegistry,
         Registry(id = 2, name = "Ahorros", emoji = "💰", unit1 = MeasureUnit("usd", "$"))
     )
     PersonalRegistryTheme {
@@ -185,8 +210,7 @@ private fun RegistryFabPreview() {
             RegistryFabContent(
                 registries = registries,
                 activeRegistry = registries[0],
-                onRegistrySelected = {},
-                onCreateRegistryClick = {}
+                expanded = true
             )
         }
     }

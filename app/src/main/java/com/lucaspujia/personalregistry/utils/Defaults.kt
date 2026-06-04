@@ -21,7 +21,6 @@ import com.lucaspujia.personalregistry.mainActivity.settings.Setting
 import com.lucaspujia.personalregistry.mainActivity.settings.SettingOption
 import com.lucaspujia.personalregistry.mainActivity.settings.SettingsActions
 import com.lucaspujia.personalregistry.mainActivity.settings.ThemeMode
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 fun lastMonthRange() = Pair(forDatePicker(now().minusMonths(1)), todayForDatePicker())
@@ -82,17 +81,12 @@ val mockSettingsViewModel = object : SettingsActions {
     override fun dismissSuccessMessage() {}
 }
 
+val defaultRegistry = Registry(id = 1, name = "Peso", emoji = "⚖️", unit1 = MeasureUnit("Kilo", "kg", 1))
+
 fun mockMainActivityViewModel(initialValues: List<Float> = listOf(25f, 30f, 35.5f, 32f, 28f, 29f)): MainActivityActions {
-    val defaultRegistry = Registry(
-        id = 1,
-        name = "Peso",
-        emoji = "⚖️",
-        unit1 = MeasureUnit("Kilo", "kg", 1)
-    )
     return object : MainActivityActions {
-        // TODO: check
-        override val activeRegistry: Registry? = defaultRegistry
-        override val allRegistries: Flow<List<Registry>> = flowOf(listOf(defaultRegistry))
+        override val activeRegistry = defaultRegistry
+        override val allRegistries = flowOf(listOf(defaultRegistry))
         override val filters = filtersFromFloats(initialValues)
         override val viewToggles = ViewToggles()
         override val currentTimeRange = TimeRange.MONTH_1
