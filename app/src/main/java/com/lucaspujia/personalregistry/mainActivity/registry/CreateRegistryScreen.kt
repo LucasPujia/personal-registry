@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -60,6 +61,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
@@ -106,8 +108,14 @@ data class EmojiState(
     val icon: String,
     val isEmojiMode: Boolean,
     val showIconSelector: Boolean
-)
+) {
+    fun getCurrentEmoji(): String {
+        return if (isEmojiMode) emoji else icon
+    }
+}
 
+
+// TODO: mover cada componente a archivos separados para mejorar legibilidad
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CreateRegistryScreenContent(
@@ -115,19 +123,19 @@ private fun CreateRegistryScreenContent(
     onCreateRegistry: (Registry) -> Unit,
     existingRegistries: List<Registry> = emptyList()
 ) {
-    var name by remember { mutableStateOf("") }
+    var registryName by remember { mutableStateOf("") }
 
-//    var emojiState by remember { mutableStateOf(EmojiState("Scale", "", false, false)) }
-    var emoji by remember { mutableStateOf("Scale") }
-    var isEmojiMode by remember { mutableStateOf(false) }
-    var showIconSelector by remember { mutableStateOf(false) }
-    val setEmoji = { it: String -> emoji = it}
-    val toggleEmojiMode = { isEmojiMode = !isEmojiMode }
-    val toggleIconSelector = { showIconSelector = !showIconSelector }
+    var emojiState by remember { mutableStateOf(EmojiState("", "",
+        isEmojiMode = false,
+        showIconSelector = false
+    )) }
+    val setEmojiState = { it: EmojiState -> emojiState = it }
 
     var unit1 by remember { mutableStateOf(MeasureUnitInput("", "", 1)) }
     var unit2Enabled by remember { mutableStateOf(false) }
     var unit2 by remember { mutableStateOf(MeasureUnitInput("", "", 1)) }
+    val setUnit1 = { it: MeasureUnitInput -> unit1 = it }
+    val setUnit2 = { it: MeasureUnitInput -> unit2 = it }
 
     var formula by remember { mutableStateOf("") }
 
@@ -135,11 +143,11 @@ private fun CreateRegistryScreenContent(
     val shakeOffset = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
 
-    val isDuplicateName = remember(name, existingRegistries) {
-        existingRegistries.any { it.name.equals(name.trim(), ignoreCase = true) }
+    val isDuplicateName = remember(registryName, existingRegistries) {
+        existingRegistries.any { it.name.equals(registryName.trim(), ignoreCase = true) }
     }
-    val isDuplicateEmoji = remember(emoji, existingRegistries) {
-        existingRegistries.any { it.emoji == emoji.trim() }
+    val isDuplicateEmoji = remember(emojiState.emoji, existingRegistries) {
+        existingRegistries.any { it.emoji == emojiState.emoji.trim() }
     }
 
     val suggestedWeightName = stringResource(R.string.weight)
@@ -147,14 +155,13 @@ private fun CreateRegistryScreenContent(
     val suggestedMoneyName = stringResource(R.string.money)
     val suggestedMoneyUnitName = stringResource(R.string.currency)
 
-    if (showIconSelector) {
+    if (emojiState.showIconSelector && emojiState.icon.isEmpty()) {
         IconSelectorDialog(
-            selectedIcon = emoji,
+            selectedIcon = emojiState.icon,
             onIconSelected = {
-                emoji = it
-                toggleIconSelector()
+                emojiState = emojiState.copy(icon = it, showIconSelector = false)
             },
-            onDismissRequest = toggleIconSelector
+            onDismissRequest = { emojiState = emojiState.copy(showIconSelector = false) }
         )
     }
 
@@ -190,9 +197,8 @@ private fun CreateRegistryScreenContent(
                     name = suggestedWeightName,
                     emoji = "Scale",
                     onClick = {
-                        name = suggestedWeightName
-                        emoji = "Scale"
-                        toggleEmojiMode()
+                        registryName = suggestedWeightName
+                        emojiState = emojiState.copy(icon = "Scale", isEmojiMode = false)
                         unit1 = MeasureUnitInput(suggestedWeightUnitName, "kg", 1)
                         unit2Enabled = false
                     }
@@ -201,9 +207,8 @@ private fun CreateRegistryScreenContent(
                     name = suggestedMoneyName,
                     emoji = "Money",
                     onClick = {
-                        name = suggestedMoneyName
-                        emoji = "Money"
-                        toggleEmojiMode()
+                        registryName = suggestedMoneyName
+                        emojiState = emojiState.copy(icon = "Money", isEmojiMode = false)
                         unit1 = MeasureUnitInput(suggestedMoneyUnitName, "$", 2)
                         unit2Enabled = false
                     }
@@ -213,8 +218,8 @@ private fun CreateRegistryScreenContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
+                value = registryName,
+                onValueChange = { registryName = it },
                 label = { Text(stringResource(R.string.registry_name)) },
                 modifier = Modifier.fillMaxWidth(),
                 isError = isDuplicateName,
@@ -225,60 +230,31 @@ private fun CreateRegistryScreenContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            EmojiChipsSelector(
-                isEmojiMode,
-                toggleEmojiMode,
-                toggleIconSelector,
-                coroutineScope,
-                focusRequester
-            )
+            EmojiChipsSelector(emojiState, setEmojiState, coroutineScope, focusRequester)
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val isEmojiTooLong = isEmojiMode && emoji.isNotEmpty() && run {
+            val isEmojiTooLong = emojiState.isEmojiMode && emojiState.emoji.isNotEmpty() && run {
                 try {
-                    emoji.codePointCount(0, emoji.length) > 1
+                    emojiState.emoji.codePointCount(0, emojiState.emoji.length) > 1
                 } catch (_: Exception) {
                     false
                 }
             }
 
+            // TODO: simplificar parametros
             EmojiSelector(
-                emoji,
-                isEmojiMode,
-                setEmoji,
+                emojiState,
+                setEmojiState,
                 coroutineScope,
                 shakeOffset,
                 focusRequester,
                 isDuplicateEmoji,
                 isEmojiTooLong,
-                toggleIconSelector
             )
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text(stringResource(R.string.unit) + " 1", style = MaterialTheme.typography.titleMedium)
-
-            OutlinedTextField(
-                value = unit1.name,
-                onValueChange = { unit1 = unit1.copy(name = it) },
-                label = { Text(stringResource(R.string.unit_name)) },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Row(modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = unit1.symbol,
-                    onValueChange = { unit1 = unit1.copy(symbol = it) },
-                    label = { Text(stringResource(R.string.symbol)) },
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = unit1.precision.toString(),
-                    onValueChange = { if (it.all { c -> c.isDigit() }) unit1 = unit1.copy(precision = it.toIntOrNull() ?: 1) },
-                    label = { Text(stringResource(R.string.precision)) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            MeasureUnitForm(unit1, setUnit1, 1)
 
             Spacer(modifier = Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -288,34 +264,14 @@ private fun CreateRegistryScreenContent(
 
             if (unit2Enabled) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(stringResource(R.string.unit) + " 2", style = MaterialTheme.typography.titleMedium)
-                OutlinedTextField(
-                    value = unit2.name,
-                    onValueChange = { unit2 = unit2.copy(name = it) },
-                    label = { Text(stringResource(R.string.unit_name)) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = unit2.symbol,
-                        onValueChange = { unit2 = unit2.copy(symbol = it) },
-                        label = { Text(stringResource(R.string.symbol)) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    OutlinedTextField(
-                        value = unit2.precision.toString(),
-                        onValueChange = { if (it.all { c -> c.isDigit() }) unit2 = unit2.copy(precision = it.toIntOrNull() ?: 1) },
-                        label = { Text(stringResource(R.string.precision)) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                MeasureUnitForm(unit2, setUnit2, 2)
 
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = formula,
                     onValueChange = { formula = it },
                     label = { Text(stringResource(R.string.formula_desc)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -325,8 +281,8 @@ private fun CreateRegistryScreenContent(
             Button(
                 onClick = {
                     val registry = Registry(
-                        name = name.trim(),
-                        emoji = emoji.trim(),
+                        name = registryName.trim(),
+                        emoji = emojiState.emoji.trim(),
                         unit1 = unit1.toMeasureUnit(),
                         unit2 = if (unit2Enabled) unit2.toMeasureUnit() else null,
                         formula = if (unit2Enabled) formula.trim() else null
@@ -334,7 +290,8 @@ private fun CreateRegistryScreenContent(
                     onCreateRegistry(registry)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = name.isNotBlank() && unit1.hasValidData() && (!unit2Enabled || unit2.hasValidData())
+                // TODO: extraer esta lógica a una función para mejorar legibilidad
+                enabled = registryName.isNotBlank() && emojiState.getCurrentEmoji().isNotBlank() && unit1.hasValidData() && (!unit2Enabled || unit2.hasValidData())
                         && !isDuplicateName && !isDuplicateEmoji && !isEmojiTooLong
             ) {
                 Icon(Icons.Default.Save, contentDescription = null)
@@ -346,21 +303,58 @@ private fun CreateRegistryScreenContent(
 }
 
 @Composable
+private fun MeasureUnitForm(
+    unit1: MeasureUnitInput,
+    setUnit1: (MeasureUnitInput) -> Unit,
+    unitNumber: Int
+) {
+    Text("${stringResource(R.string.unit)} $unitNumber", style = MaterialTheme.typography.titleMedium)
+
+    OutlinedTextField(
+        value = unit1.name,
+        onValueChange = { setUnit1(unit1.copy(name = it)) },
+        label = { Text(stringResource(R.string.unit_name)) },
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Row(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = unit1.symbol,
+            onValueChange = { setUnit1(unit1.copy(symbol = it)) },
+            label = { Text(stringResource(R.string.symbol)) },
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        OutlinedTextField(
+            value = unit1.precision.toString(),
+            onValueChange = {
+                if (it.all { c -> c.isDigit() }) setUnit1(
+                    unit1.copy(
+                        precision = it.toIntOrNull() ?: 1
+                    )
+                )
+            },
+            label = { Text(stringResource(R.string.precision)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
 private fun EmojiSelector(
-    emoji: String,
-    isEmojiMode: Boolean,
-    setEmoji: (String) -> Unit,
+    emojiState: EmojiState,
+    setEmojiState: (EmojiState) -> Unit,
     coroutineScope: CoroutineScope,
     shakeOffset: Animatable<Float, AnimationVector1D>,
     focusRequester: FocusRequester,
     isDuplicateEmoji: Boolean,
     isEmojiTooLong: Boolean,
-    toggleIconSelector: () -> Unit
 ) {
     OutlinedTextField(
-        value = emoji,
+        value = emojiState.getCurrentEmoji(),
         onValueChange = { newValue ->
-            if (isEmojiMode) {
+            if (emojiState.isEmojiMode) {
                 val codePointCount = try {
                     newValue.codePointCount(0, newValue.length)
                 } catch (_: Exception) {
@@ -368,12 +362,16 @@ private fun EmojiSelector(
                 }
 
                 if (codePointCount <= 1) {
-                    setEmoji(newValue)
+                    setEmojiState(emojiState.copy(emoji = newValue))
                 } else {
                     // Filtro automático: si pegan algo largo, tomamos solo el primer code point
                     try {
                         val firstCodePoint = newValue.codePointAt(0)
-                        setEmoji(String(Character.toChars(firstCodePoint)))
+                        setEmojiState(
+                            emojiState.copy(
+                                emoji = String(Character.toChars(firstCodePoint))
+                            )
+                        )
                         // Trigger shake animation on automatic clipping
                         coroutineScope.launch {
                             shakeOffset.animateTo(
@@ -388,14 +386,14 @@ private fun EmojiSelector(
                 }
             }
         },
-        readOnly = !isEmojiMode,
+        readOnly = !emojiState.isEmojiMode,
         label = { Text(stringResource(R.string.registry_icon)) },
         modifier = Modifier
             .fillMaxWidth()
             .focusRequester(focusRequester)
             .offset { IntOffset(shakeOffset.value.roundToInt(), 0) },
         isError = isDuplicateEmoji || isEmojiTooLong,
-        placeholder = if (isEmojiMode) {
+        placeholder = if (emojiState.isEmojiMode) {
             { Text(stringResource(R.string.emoji_hint)) }
         } else null,
         supportingText = when {
@@ -407,15 +405,17 @@ private fun EmojiSelector(
                 { Text(stringResource(R.string.emoji_length_error)) }
             }
 
-            isEmojiMode -> {
+            emojiState.isEmojiMode -> {
                 { Text(stringResource(R.string.emoji_hint)) }
             }
 
             else -> null
         },
-        trailingIcon = if (!isEmojiMode) {
+        trailingIcon = if (!emojiState.isEmojiMode) {
             {
-                IconButton(onClick = toggleIconSelector) {
+                IconButton(onClick = {
+                    setEmojiState(emojiState.copy(showIconSelector = true))
+                }) {
                     Icon(
                         Icons.Default.Search,
                         contentDescription = stringResource(R.string.select_icon)
@@ -425,7 +425,7 @@ private fun EmojiSelector(
         } else null,
         leadingIcon = {
             Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-                RegistryIcon(iconIdentifier = emoji, contentDescription = null)
+                RegistryIcon(iconIdentifier = emojiState.getCurrentEmoji(), contentDescription = null)
             }
         }
     )
@@ -433,9 +433,8 @@ private fun EmojiSelector(
 
 @Composable
 private fun EmojiChipsSelector(
-    isEmojiMode: Boolean,
-    toggleEmojiMode: () -> Unit,
-    toggleIconSelector: () -> Unit,
+    emojiState: EmojiState,
+    setEmojiState: (EmojiState) -> Unit,
     coroutineScope: CoroutineScope,
     focusRequester: FocusRequester
 ) {
@@ -443,17 +442,15 @@ private fun EmojiChipsSelector(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        FilterChip(
-            selected = !isEmojiMode,
+        FilterChip( // ICON CHIP
+            selected = !emojiState.isEmojiMode,
             onClick = {
-                if (isEmojiMode) {
-                    toggleEmojiMode()
-//                            emoji = "Scale"
-                    toggleIconSelector()
+                if (emojiState.isEmojiMode) {
+                    setEmojiState(emojiState.copy(isEmojiMode = false, showIconSelector = true))
                 }
             },
             label = { Text(stringResource(R.string.use_icon)) },
-            leadingIcon = if (!isEmojiMode) {
+            leadingIcon = if (!emojiState.isEmojiMode) {
                 {
                     Icon(
                         Icons.Default.Check,
@@ -463,12 +460,11 @@ private fun EmojiChipsSelector(
                 }
             } else null
         )
-        FilterChip(
-            selected = isEmojiMode,
+        FilterChip( // EMOJI CHIP
+            selected = emojiState.isEmojiMode,
             onClick = {
-                if (!isEmojiMode) {
-                    toggleEmojiMode()
-//                            emoji = ""
+                if (!emojiState.isEmojiMode) {
+                    setEmojiState(emojiState.copy(isEmojiMode = true, showIconSelector = false))
                     coroutineScope.launch {
                         // Pequeño delay para asegurar que el campo es editable antes de pedir el foco
                         focusRequester.requestFocus()
@@ -476,7 +472,7 @@ private fun EmojiChipsSelector(
                 }
             },
             label = { Text(stringResource(R.string.use_emoji)) },
-            leadingIcon = if (isEmojiMode) {
+            leadingIcon = if (emojiState.isEmojiMode) {
                 {
                     Icon(
                         Icons.Default.Check,

@@ -1,4 +1,5 @@
 <resources>
+<!--    TODO: separar en archivos distintos según uso/categorización -->
     <string name="app_name">Personal Registry</string>
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
