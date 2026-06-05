@@ -65,7 +65,8 @@ fun PersonalRegistryApp(
         PersonalRegistryAppContent(
             records = viewModel.filters.records,
             settingsOpened = viewModel.settingsOpened,
-            createRegistryOpened = viewModel.createRegistryOpened
+            createRegistryOpened = viewModel.createRegistryOpened,
+            hasActiveRegistry = viewModel.activeRegistry != null
         )
     }
 }
@@ -76,26 +77,29 @@ private fun PersonalRegistryAppContent(
     records: List<RecordItem>,
     settingsOpened: Boolean,
     createRegistryOpened: Boolean,
+    hasActiveRegistry: Boolean = true
 ) {
     Box(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = MaterialTheme.colorScheme.background)
-                .statusBarsPadding(),
-        ) {
-            RecordSelector()
-            if (records.isNotEmpty()) RecordsViewer(
-                modifier = Modifier.offset(y = -OUTER_PADDING),
+        if (hasActiveRegistry) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = MaterialTheme.colorScheme.background)
+                    .statusBarsPadding(),
+            ) {
+                RecordSelector()
+                if (records.isNotEmpty()) RecordsViewer(
+                    modifier = Modifier.offset(y = -OUTER_PADDING),
+                )
+            }
+
+            RegistryFab(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .navigationBarsPadding()
+                    .padding(bottom = 32.dp, end = 32.dp)
             )
         }
-
-        RegistryFab(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .navigationBarsPadding()
-                .padding(bottom = 32.dp, end = 32.dp)
-        )
 
         BottomSheetHandler()
 

@@ -54,7 +54,9 @@ class MainActivityViewModel @Inject constructor(
     init {
         allRegistries
             .onEach { registries ->
-                if (activeRegistry == null && registries.isNotEmpty()) {
+                if (registries.isEmpty()) {
+                    createRegistryOpened = true
+                } else if (activeRegistry == null) {
                     switchRegistry(registries.first())
                 }
             }
