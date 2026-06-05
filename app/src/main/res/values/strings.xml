@@ -126,4 +126,23 @@ Text: Add today's value to keep your records up to date.
     <string name="unit_symbol">Unit Symbol (e.g. kg)</string>
     <string name="unit2_enabled">Enable second unit?</string>
     <string name="formula_desc">Formula (e.g. v1 / (v2*v2))</string>
+    <string name="suggested_registries">Suggested Registries</string>
+    <string name="weight">Weight</string>
+    <string name="money">Money</string>
+    <string name="kilogram">Kilogram</string>
+    <string name="currency">Currency</string>
+    <string name="duplicate_name_error">This name is already in use</string>
+    <string name="duplicate_icon_error">This icon is already in use</string>
+    <string name="select_icon">Select Icon</string>
+    <string name="registry_icon">Registry Icon</string>
+    <string name="search_icons">Search icons...</string>
+    <string name="category_all">All</string>
+    <string name="category_health">Health</string>
+    <string name="category_finance">Finance</string>
+    <string name="category_lifestyle">Lifestyle</string>
+    <string name="category_work">Work</string>
+    <string name="use_icon">Icon</string>
+    <string name="use_emoji">Emoji</string>
+    <string name="emoji_hint">Enter a single emoji</string>
+    <string name="emoji_length_error">Please enter only one emoji</string>
 </resources>

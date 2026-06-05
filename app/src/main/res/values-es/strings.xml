@@ -122,4 +122,23 @@ Texto: Ingresá el valor de hoy para seguir viendo tu progreso.
     <string name="unit_symbol">Símbolo de Unidad (ej: kg)</string>
     <string name="unit2_enabled">¿Habilitar segunda unidad?</string>
     <string name="formula_desc">Fórmula (ej: v1 / (v2*v2))</string>
+    <string name="suggested_registries">Registros sugeridos</string>
+    <string name="weight">Peso</string>
+    <string name="money">Dinero</string>
+    <string name="kilogram">Kilogramo</string>
+    <string name="currency">Moneda</string>
+    <string name="duplicate_name_error">Este nombre ya está en uso</string>
+    <string name="duplicate_icon_error">Este icono ya está en uso</string>
+    <string name="select_icon">Seleccionar Icono</string>
+    <string name="registry_icon">Icono del Registro</string>
+    <string name="search_icons">Buscar iconos…</string>
+    <string name="category_all">Todos</string>
+    <string name="category_health">Salud</string>
+    <string name="category_finance">Finanzas</string>
+    <string name="category_lifestyle">Estilo de vida</string>
+    <string name="category_work">Trabajo</string>
+    <string name="use_icon">Icono</string>
+    <string name="use_emoji">Emoji</string>
+    <string name="emoji_hint">Ingresa un solo emoji</string>
+    <string name="emoji_length_error">Por favor, ingresa solo un emoji</string>
 </resources>

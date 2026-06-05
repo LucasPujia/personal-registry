@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
@@ -43,6 +42,7 @@ import com.lucaspujia.personalregistry.database.registry.MeasureUnit
 import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
+import com.lucaspujia.personalregistry.utils.RegistryIcon
 import com.lucaspujia.personalregistry.utils.defaultRegistry
 
 @Composable
@@ -158,7 +158,11 @@ private fun RegistryItem(
             },
         contentAlignment = Alignment.Center
     ) {
-        Text(text = registry.emoji, fontSize = (baseSize / 2).sp)
+        RegistryIcon(
+            iconIdentifier = registry.emoji,
+            contentDescription = null,
+            textSize = (baseSize / 2).sp
+        )
     }
 }
 
@@ -179,9 +183,10 @@ private fun FloatingButton(
         shadowElevation = 6.dp
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = activeRegistry?.emoji ?: "📊",
-                fontSize = (baseSize / 2).sp
+            RegistryIcon(
+                iconIdentifier = activeRegistry?.emoji ?: "📊",
+                contentDescription = null,
+                textSize = (baseSize / 2).sp
             )
         }
     }
