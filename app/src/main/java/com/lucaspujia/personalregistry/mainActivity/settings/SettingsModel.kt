@@ -54,3 +54,21 @@ enum class SettingOption(
         NotificationDay.entries
     );
 }
+
+interface SettingsActions {
+    val themeMode: ThemeMode
+    val notificationFrequency: NotificationFrequency
+    val notificationDay: NotificationDay
+    val notificationHour: Int
+    val notificationMinute: Int
+    val importExportState: ImportExportState
+
+    fun updateSetting(settingOption: SettingOption, value: Setting)
+    fun updateNotificationTime(hour: Int, minute: Int)
+    fun exportRecords(registryId: Long): String
+    fun importRecords(json: String, registryId: Long)
+    fun confirmImport(registryId: Long)
+    fun dismissImportError()
+    fun dismissImportConfirmation()
+    fun dismissSuccessMessage()
+}
