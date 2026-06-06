@@ -5,7 +5,9 @@ import androidx.compose.material3.DatePickerFormatter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.database.registry.MeasureUnit
 import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.ActiveFilters
@@ -63,6 +65,12 @@ fun recordsFromFloats(values: List<Float>): List<RecordItem> {
     }
 }
 
+@Composable
+fun defaultWeightRegistry() = Registry(id = 1, name = stringResource(R.string.weight), emoji = "Scale", unit1 = MeasureUnit(stringResource(R.string.kilogram), "kg", 1))
+
+@Composable
+fun defaultMoneyRegistry() = Registry(id = 2, name = stringResource(R.string.money), emoji = "Money", unit1 = MeasureUnit(stringResource(R.string.currency), "$", 1))
+
 val mockSettingsViewModel = object : SettingsActions {
     override val themeMode = ThemeMode.SYSTEM
     override val notificationFrequency = NotificationFrequency.OFF
@@ -81,12 +89,12 @@ val mockSettingsViewModel = object : SettingsActions {
     override fun dismissSuccessMessage() {}
 }
 
-val defaultRegistry = Registry(id = 1, name = "Peso", emoji = "⚖️", unit1 = MeasureUnit("Kilo", "kg", 1))
-
+@Composable
 fun mockMainActivityViewModel(initialValues: List<Float> = listOf(25f, 30f, 35.5f, 32f, 28f, 29f)): MainActivityActions {
     return object : MainActivityActions {
-        override val activeRegistry = defaultRegistry
-        override val allRegistries = flowOf(listOf(defaultRegistry))
+        val defaultWeightRegistry = defaultWeightRegistry()
+        override val activeRegistry = defaultWeightRegistry
+        override val allRegistries = flowOf(listOf(defaultWeightRegistry))
         override val filters = filtersFromFloats(initialValues)
         override val viewToggles = ViewToggles()
         override val currentTimeRange = TimeRange.MONTH_1

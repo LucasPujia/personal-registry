@@ -38,12 +38,12 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.lucaspujia.personalregistry.database.registry.MeasureUnit
 import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.RegistryIcon
-import com.lucaspujia.personalregistry.utils.defaultRegistry
+import com.lucaspujia.personalregistry.utils.defaultMoneyRegistry
+import com.lucaspujia.personalregistry.utils.defaultWeightRegistry
 
 @Composable
 fun RegistryFab(
@@ -205,11 +205,8 @@ private fun rotationAnimationState(expanded: Boolean): State<Float> = animateFlo
 
 @ThemePreviews
 @Composable
-private fun RegistryFabPreview() {
-    val registries = listOf(
-        defaultRegistry,
-        Registry(id = 2, name = "Ahorros", emoji = "💰", unit1 = MeasureUnit("usd", "$"))
-    )
+private fun WeightRegistryFabPreview() {
+    val registries = listOf(defaultWeightRegistry(), defaultMoneyRegistry())
     PersonalRegistryTheme {
         Box(modifier = Modifier.padding(32.dp)) {
             RegistryFabContent(
