@@ -121,6 +121,8 @@ Text: Add today's value to keep your records up to date.
     <string name="symbol">Symbol</string>
     <string name="precision">Precision</string>
     <string name="create_registry">Create Registry</string>
+    <string name="edit_registry">Edit Registry</string>
+    <string name="save_changes">Save Changes</string>
     <string name="registry_name">Registry Name</string>
     <string name="registry_emoji">Emoji (Optional)</string>
     <string name="unit_name">Unit Name (e.g. Kilogram)</string>

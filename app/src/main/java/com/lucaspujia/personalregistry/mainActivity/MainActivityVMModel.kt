@@ -20,6 +20,14 @@ data class ViewToggles(
     val list: Boolean = true,
 )
 
+sealed class RegistryEditorState {
+    data object Closed : RegistryEditorState()
+    data object New : RegistryEditorState()
+    data class Edit(val registry: Registry) : RegistryEditorState()
+
+    fun isClosed() = this is Closed
+}
+
 interface MainActivityActions {
     val activeRegistry: Registry?
     val allRegistries: Flow<List<Registry>>
@@ -29,7 +37,7 @@ interface MainActivityActions {
     var filtersOpened: Boolean
     var viewTogglesOpened: Boolean
     var settingsOpened: Boolean
-    var createRegistryOpened: Boolean
+    var registryEditorState: RegistryEditorState
 
     fun switchRegistry(registry: Registry)
     fun addRecord(value1: Double, value2: Double?, pickerMillis: Long?)
@@ -44,6 +52,8 @@ interface MainActivityActions {
     fun applyViewToggles(showGraph: Boolean, showList: Boolean)
     fun updateTimeRange(range: TimeRange)
     fun createRegistry(registry: Registry)
+    fun updateRegistry(registry: Registry)
+    fun deleteRegistry(registry: Registry)
 }
 
 data class ActiveFilters(

@@ -4,24 +4,30 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -36,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lucaspujia.personalregistry.database.registry.Registry
@@ -46,97 +53,137 @@ import com.lucaspujia.personalregistry.utils.defaultMoneyRegistry
 import com.lucaspujia.personalregistry.utils.defaultWeightRegistry
 
 @Composable
-fun RegistryFab(
+fun RegistryFAB(
     modifier: Modifier = Modifier
 ) {
     val viewModel = LocalMainActivityActions.current
     val activeRegistry = viewModel.activeRegistry
     val registries by viewModel.allRegistries.collectAsState(initial = emptyList())
 
-    RegistryFabContent(
+    RegistryFABContent(
         modifier = modifier,
         registries = registries,
-        activeRegistry = activeRegistry,
+        activeRegistry = activeRegistry!!,
         onRegistrySelected = { viewModel.switchRegistry(it) },
-        onCreateRegistryClick = { viewModel.createRegistryOpened = true }
+        onCreateRegistryClick = { viewModel.registryEditorState = RegistryEditorState.New },
+        onEditRegistryClick = { viewModel.registryEditorState = RegistryEditorState.Edit(it) },
+        onDeleteRegistryClick = { viewModel.deleteRegistry(it) }
     )
 }
 
 @Composable
-private fun RegistryFabContent(
+private fun RegistryFABContent(
     modifier: Modifier = Modifier,
     registries: List<Registry>,
-    activeRegistry: Registry?,
+    activeRegistry: Registry,
     expanded: Boolean = false,
     onRegistrySelected: (Registry) -> Unit = {},
-    onCreateRegistryClick: () -> Unit = {}
+    onCreateRegistryClick: () -> Unit = {},
+    onEditRegistryClick: (Registry) -> Unit = { },
+    onDeleteRegistryClick: (Registry) -> Unit = { }
 ) {
     var expanded by remember { mutableStateOf(expanded) }
     val toggleExpanded = { expanded = !expanded }
-    val baseSize = if (expanded) 48 else 40
+    val baseSize = if (expanded) 64 else 48
+    val basePadding = 10.dp
     val plusRotation by rotationAnimationState(expanded)
 
-    Column(
+    Row(
         modifier = modifier,
-        horizontalAlignment = Alignment.End,
-        verticalArrangement = Arrangement.Bottom
+        verticalAlignment = Alignment.Bottom
     ) {
         AnimatedVisibility(
             visible = expanded,
-            enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
-            exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
+            enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
+            exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut()
         ) {
-            Column(
+            Row(
                 modifier = Modifier
-                    .padding(bottom = 8.dp)
+                    .height(baseSize.dp)
+                    .padding(end = basePadding)
                     .clip(RoundedCornerShape((baseSize / 2).dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f))
-                    .padding(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(basePadding),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                CreateButton(onCreateRegistryClick, toggleExpanded, plusRotation)
+                ActionButton(
+                    { onDeleteRegistryClick(activeRegistry); toggleExpanded() },
+                    plusRotation,
+                    baseSize,
+                    Icons.Default.Delete,
+                    "Delete Registry"
+                )
+                ActionButton(
+                    { onEditRegistryClick(activeRegistry); toggleExpanded() },
+                    plusRotation,
+                    baseSize,
+                    Icons.Default.Edit,
+                    "Edit Registry"
+                )
+            }
+        }
 
-                if (registries.size > 1) {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.weight(1f, fill = false)
-                    ) {
-                        items(registries.filter { it.id != activeRegistry?.id }) { registry ->
-                            RegistryItem(baseSize, onRegistrySelected, registry, toggleExpanded)
+        Column {
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
+                exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .width(baseSize.dp)
+                        .padding(bottom = basePadding)
+                        .clip(RoundedCornerShape((baseSize / 2).dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f))
+                        .padding(basePadding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    ActionButton(
+                        { onCreateRegistryClick(); toggleExpanded() },
+                        plusRotation,
+                        baseSize,
+                        Icons.Default.Add,
+                        "Add Registry"
+                    )
+
+                    if (registries.size > 1) {
+                        LazyColumn(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.weight(1f, fill = false)
+                        ) {
+                            items(registries.filter { it.id != activeRegistry.id }) { registry ->
+                                RegistryItem(baseSize, onRegistrySelected, registry, toggleExpanded)
+                            }
                         }
                     }
                 }
             }
-        }
 
-        FloatingButton(toggleExpanded, activeRegistry, baseSize)
+            FloatingButton(toggleExpanded, activeRegistry, baseSize)
+        }
     }
 }
 
 @Composable
-private fun CreateButton(
-    onCreateRegistryClick: () -> Unit,
-    toggleExpanded: () -> Unit,
-    plusRotation: Float
+private fun ActionButton(
+    onClick: () -> Unit,
+    plusRotation: Float,
+    baseSize: Int,
+    icon: ImageVector,
+    description: String
 ) {
-    Surface(
-        onClick = {
-            onCreateRegistryClick()
-            toggleExpanded()
-        },
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.size(36.dp)
+    IconButton(
+        onClick = onClick,
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+        )
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                Icons.Default.Add,
-                contentDescription = "Add Registry",
-                modifier = Modifier.rotate(plusRotation)
-            )
-        }
+        Icon(
+            icon,
+            contentDescription = description,
+            modifier = Modifier.rotate(plusRotation).size((baseSize / 2 - 4).dp),
+            tint = MaterialTheme.colorScheme.onPrimary
+        )
     }
 }
 
@@ -147,18 +194,17 @@ private fun RegistryItem(
     registry: Registry,
     toggleExpanded: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .size((baseSize * 3 / 4).dp)
-            .clip(CircleShape)
-            .background(Color.Transparent)
-            .clickable {
-                onRegistrySelected(registry)
-                toggleExpanded()
-            },
-        contentAlignment = Alignment.Center
+    IconButton(
+        onClick = {
+            onRegistrySelected(registry)
+            toggleExpanded()
+        },
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = Color.Transparent,
+        )
     ) {
         RegistryIcon(
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             iconIdentifier = registry.emoji,
             contentDescription = null,
             textSize = (baseSize / 2).sp
@@ -172,8 +218,8 @@ private fun FloatingButton(
     activeRegistry: Registry?,
     baseSize: Int
 ) {
-    val fabSize by animateDpAsState(baseSize.dp, label = "fabSize")
-    val cornerRadius by animateDpAsState((baseSize / 3).dp, label = "cornerRadius")
+    val fabSize by animateDpAsState(baseSize.dp)
+    val cornerRadius by animateDpAsState((baseSize / 3).dp)
 
     Surface(
         onClick = toggleExpanded,
@@ -186,7 +232,8 @@ private fun FloatingButton(
             RegistryIcon(
                 iconIdentifier = activeRegistry?.emoji ?: "📊",
                 contentDescription = null,
-                textSize = (baseSize / 2).sp
+                textSize = (baseSize / 2).sp,
+                tint = MaterialTheme.colorScheme.primary
             )
         }
     }
@@ -200,16 +247,15 @@ private fun rotationAnimationState(expanded: Boolean): State<Float> = animateFlo
     } else {
         tween(durationMillis = 300)
     },
-    label = "plusRotation"
 )
 
 @ThemePreviews
 @Composable
-private fun WeightRegistryFabPreview() {
-    val registries = listOf(defaultWeightRegistry(), defaultMoneyRegistry())
+private fun WeightRegistryFABPreview() {
+    val registries = listOf(defaultWeightRegistry(), defaultMoneyRegistry(), defaultWeightRegistry().copy(id=3))
     PersonalRegistryTheme {
         Box(modifier = Modifier.padding(32.dp)) {
-            RegistryFabContent(
+            RegistryFABContent(
                 registries = registries,
                 activeRegistry = registries[0],
                 expanded = true

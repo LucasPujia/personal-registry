@@ -65,7 +65,7 @@ fun PersonalRegistryApp(
         PersonalRegistryAppContent(
             records = viewModel.filters.records,
             settingsOpened = viewModel.settingsOpened,
-            createRegistryOpened = viewModel.createRegistryOpened,
+            registryEditorState = viewModel.registryEditorState,
             hasActiveRegistry = viewModel.activeRegistry != null
         )
     }
@@ -76,7 +76,7 @@ fun PersonalRegistryApp(
 private fun PersonalRegistryAppContent(
     records: List<RecordItem>,
     settingsOpened: Boolean,
-    createRegistryOpened: Boolean,
+    registryEditorState: RegistryEditorState,
     hasActiveRegistry: Boolean = true
 ) {
     Box(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
@@ -93,7 +93,7 @@ private fun PersonalRegistryAppContent(
                 )
             }
 
-            RegistryFab(
+            RegistryFAB(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .navigationBarsPadding()
@@ -104,8 +104,8 @@ private fun PersonalRegistryAppContent(
         BottomSheetHandler()
 
         listOf(
-            Pair(settingsOpened) @Composable{ SettingsScreen() },
-            Pair(createRegistryOpened) @Composable{ CreateRegistryScreen() }
+            Pair(settingsOpened) @Composable { SettingsScreen() },
+            Pair(!registryEditorState.isClosed()) @Composable { CreateRegistryScreen() }
         ).forEach { (isOpened, screen) ->
             AnimatedVisibility(
                 visible = isOpened,
@@ -129,7 +129,7 @@ fun PersonalRegistryAppPreview() {
         PersonalRegistryAppContent(
             records = records,
             settingsOpened = false,
-            createRegistryOpened = false
+            registryEditorState = RegistryEditorState.Closed
         )
     }
 }

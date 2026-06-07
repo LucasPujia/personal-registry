@@ -116,6 +116,8 @@ Texto: Ingresá el valor de hoy para seguir viendo tu progreso.
     <string name="symbol">Símbolo</string>
     <string name="precision">Precisión</string>
     <string name="create_registry">Crear Registro</string>
+    <string name="edit_registry">Editar Registro</string>
+    <string name="save_changes">Guardar Cambios</string>
     <string name="registry_name">Nombre del Registro</string>
     <string name="registry_emoji">Emoji (Opcional)</string>
     <string name="unit_name">Nombre de Unidad (ej: Kilogramo)</string>

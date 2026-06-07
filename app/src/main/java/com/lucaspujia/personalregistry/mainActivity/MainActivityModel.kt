@@ -27,6 +27,10 @@ class MainActivityModel(
 
     suspend fun insertRegistry(registry: Registry): Long = registriesStorage.insertRegistry(registry)
 
+    suspend fun updateRegistry(registry: Registry) = registriesStorage.updateRegistry(registry)
+
+    suspend fun deleteRegistry(registry: Registry) = registriesStorage.deleteRegistry(registry)
+
     suspend fun addRecord(registryId: Long, value1: Double, value2: Double?, date: LocalDate) {
         val newRecord = Record(
             registryId = registryId,

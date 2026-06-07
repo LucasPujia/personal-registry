@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
+import com.lucaspujia.personalregistry.mainActivity.RegistryEditorState
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.RegistryIcon
@@ -54,11 +55,21 @@ import com.lucaspujia.personalregistry.utils.defaultWeightRegistry
 fun CreateRegistryScreen() {
     val mainViewModel = LocalMainActivityActions.current
     val registries by mainViewModel.allRegistries.collectAsState(initial = emptyList())
+    val editorState = mainViewModel.registryEditorState
+
+    val registryToEdit = (editorState as? RegistryEditorState.Edit)?.registry
 
     CreateRegistryScreenContent(
-        onBack = { mainViewModel.createRegistryOpened = false },
-        onCreateRegistry = { mainViewModel.createRegistry(it) },
-        existingRegistries = registries
+        onBack = { mainViewModel.registryEditorState = RegistryEditorState.Closed },
+        onSaveRegistry = {
+            if (registryToEdit != null) {
+                mainViewModel.updateRegistry(it.copy(id = registryToEdit.id))
+            } else {
+                mainViewModel.createRegistry(it)
+            }
+        },
+        existingRegistries = registries,
+        registryToEdit = registryToEdit
     )
 }
 
@@ -66,30 +77,50 @@ fun CreateRegistryScreen() {
 @Composable
 private fun CreateRegistryScreenContent(
     onBack: () -> Unit,
-    onCreateRegistry: (Registry) -> Unit,
-    existingRegistries: List<Registry> = emptyList()
+    onSaveRegistry: (Registry) -> Unit,
+    existingRegistries: List<Registry> = emptyList(),
+    registryToEdit: Registry? = null
 ) {
-    var registryName by remember { mutableStateOf("") }
+    var registryName by remember(registryToEdit) { mutableStateOf(registryToEdit?.name ?: "") }
 
-    var emojiState by remember { mutableStateOf(EmojiState("", "",
-        isEmojiMode = false,
-        showIconSelector = false
-    )) }
+    var emojiState by remember(registryToEdit) {
+        val isIcon: Boolean? = registryToEdit?.emoji?.startsWith(":")
+        mutableStateOf(EmojiState(
+            emoji = if (isIcon == false) registryToEdit.emoji else "",
+            icon = if (isIcon == true) registryToEdit.emoji else "",
+            isEmojiMode = isIcon == false,
+            showIconSelector = false
+        ))
+    }
     val setEmojiState = { it: EmojiState -> emojiState = it }
 
-    var unit1 by remember { mutableStateOf(MeasureUnitInput("", "", 1)) }
-    var unit2Enabled by remember { mutableStateOf(false) }
-    var unit2 by remember { mutableStateOf(MeasureUnitInput("", "", 1)) }
+    var unit1 by remember(registryToEdit) {
+        mutableStateOf(
+            registryToEdit?.unit1?.let { MeasureUnitInput(it.name, it.symbol, it.precision) }
+                ?: MeasureUnitInput("", "", 1)
+        )
+    }
+    var unit2Enabled by remember(registryToEdit) { mutableStateOf(registryToEdit?.unit2 != null) }
+    var unit2 by remember(registryToEdit) {
+        mutableStateOf(
+            registryToEdit?.unit2?.let { MeasureUnitInput(it.name, it.symbol, it.precision) }
+                ?: MeasureUnitInput("", "", 1)
+        )
+    }
     val setUnit1 = { it: MeasureUnitInput -> unit1 = it }
     val setUnit2 = { it: MeasureUnitInput -> unit2 = it }
 
-    var formula by remember { mutableStateOf("") }
+    var formula by remember(registryToEdit) { mutableStateOf(registryToEdit?.formula ?: "") }
 
-    val isDuplicateName = remember(registryName, existingRegistries) {
-        existingRegistries.any { it.name.equals(registryName.trim(), ignoreCase = true) }
+    val isDuplicateName = remember(registryName, existingRegistries, registryToEdit) {
+        existingRegistries.any {
+            it.id != registryToEdit?.id && it.name.equals(registryName.trim(), ignoreCase = true)
+        }
     }
-    val isDuplicateEmoji = remember(emojiState.getCurrentEmoji(), existingRegistries) {
-        existingRegistries.any { it.emoji == emojiState.getCurrentEmoji().trim() }
+    val isDuplicateEmoji = remember(emojiState.getCurrentEmoji(), existingRegistries, registryToEdit) {
+        existingRegistries.any {
+            it.id != registryToEdit?.id && it.emoji == emojiState.getCurrentEmoji().trim()
+        }
     }
 
     if (emojiState.showIconSelector && emojiState.icon.isEmpty()) {
@@ -105,9 +136,14 @@ private fun CreateRegistryScreenContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.create_registry)) },
+                title = {
+                    Text(
+                        if (registryToEdit != null) stringResource(R.string.edit_registry)
+                        else stringResource(R.string.create_registry)
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    if (existingRegistries.isNotEmpty()) IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -203,7 +239,7 @@ private fun CreateRegistryScreenContent(
                         unit2 = if (unit2Enabled) unit2.toMeasureUnit() else null,
                         formula = if (unit2Enabled) formula.trim() else null
                     )
-                    onCreateRegistry(registry)
+                    onSaveRegistry(registry)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = hasNoDuplicateData && hasValidUnits && registryName.isNotBlank() && emojiState.getCurrentEmoji().isNotBlank()
@@ -211,7 +247,10 @@ private fun CreateRegistryScreenContent(
             ) {
                 Icon(Icons.Default.Save, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.create_registry))
+                Text(
+                    if (registryToEdit != null) stringResource(R.string.save_changes)
+                    else stringResource(R.string.create_registry)
+                )
             }
         }
     }
@@ -247,7 +286,7 @@ fun CreateRegistryScreenPreview() {
     PersonalRegistryTheme {
         CreateRegistryScreenContent(
             onBack = {},
-            onCreateRegistry = {},
+            onSaveRegistry = {},
             existingRegistries = emptyList()
         )
     }

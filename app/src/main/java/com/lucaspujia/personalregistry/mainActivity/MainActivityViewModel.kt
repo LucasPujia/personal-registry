@@ -49,13 +49,13 @@ class MainActivityViewModel @Inject constructor(
     override var filtersOpened by mutableStateOf(false)
     override var viewTogglesOpened by mutableStateOf(false)
     override var settingsOpened by mutableStateOf(false)
-    override var createRegistryOpened by mutableStateOf(false)
+    override var registryEditorState by mutableStateOf<RegistryEditorState>(RegistryEditorState.Closed)
 
     init {
         allRegistries
             .onEach { registries ->
                 if (registries.isEmpty()) {
-                    createRegistryOpened = true
+                    registryEditorState = RegistryEditorState.New
                 } else if (activeRegistry == null) {
                     switchRegistry(registries.first())
                 }
@@ -105,7 +105,26 @@ class MainActivityViewModel @Inject constructor(
             val id = withContext(Dispatchers.IO) { model.insertRegistry(registry) }
             val newRegistry = registry.copy(id = id)
             switchRegistry(newRegistry)
-            createRegistryOpened = false
+            registryEditorState = RegistryEditorState.Closed
+        }
+    }
+
+    override fun updateRegistry(registry: Registry) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { model.updateRegistry(registry) }
+            activeRegistry = registry
+            registryEditorState = RegistryEditorState.Closed
+        }
+    }
+
+    override fun deleteRegistry(registry: Registry) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { model.deleteRegistry(registry) }
+            // Si eliminamos el activo, buscamos otro para mostrar o abrimos creación si no hay más
+            if (activeRegistry?.id == registry.id) {
+                activeRegistry = null
+                registryEditorState = RegistryEditorState.Closed
+            }
         }
     }
     /**
