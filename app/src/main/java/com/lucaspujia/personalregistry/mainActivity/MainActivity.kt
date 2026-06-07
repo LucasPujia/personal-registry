@@ -103,21 +103,17 @@ private fun PersonalRegistryAppContent(
 
         BottomSheetHandler()
 
-        // TODO: ver de simplificar, junto al createRegistryOpended
-        AnimatedVisibility(
-            visible = settingsOpened,
-            enter = slideInHorizontally { it },
-            exit = slideOutHorizontally { it },
-        ) {
-            SettingsScreen()
-        }
-
-        AnimatedVisibility(
-            visible = createRegistryOpened,
-            enter = slideInHorizontally { it },
-            exit = slideOutHorizontally { it },
-        ) {
-            CreateRegistryScreen()
+        listOf(
+            Pair(settingsOpened) @Composable{ SettingsScreen() },
+            Pair(createRegistryOpened) @Composable{ CreateRegistryScreen() }
+        ).forEach { (isOpened, screen) ->
+            AnimatedVisibility(
+                visible = isOpened,
+                enter = slideInHorizontally { it },
+                exit = slideOutHorizontally { it },
+            ) {
+                screen()
+            }
         }
     }
 }
