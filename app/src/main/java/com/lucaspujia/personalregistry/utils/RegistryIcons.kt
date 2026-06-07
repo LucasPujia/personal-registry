@@ -1,6 +1,7 @@
 package com.lucaspujia.personalregistry.utils
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AttachMoney
@@ -12,7 +13,6 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material.icons.filled.Favorite
@@ -74,8 +74,7 @@ object RegistryIcons {
         RegistryIconInfo("Health", Icons.Default.Favorite, IconCategory.HEALTH),
         RegistryIconInfo("Mental", Icons.Default.SelfImprovement, IconCategory.HEALTH),
         RegistryIconInfo("Sleep", Icons.Default.Hotel, IconCategory.HEALTH),
-        // TODO
-        RegistryIconInfo("Bike", Icons.Default.DirectionsBike, IconCategory.HEALTH),
+        RegistryIconInfo("Bike", Icons.AutoMirrored.Filled.DirectionsBike, IconCategory.HEALTH),
         RegistryIconInfo("Medication", Icons.Default.Medication, IconCategory.HEALTH),
         
         // Finanzas
@@ -119,9 +118,6 @@ object RegistryIcons {
     )
 
     private val iconMap = icons.associate { it.name to it.vector }
-
-    // TODO
-    val allIcons = icons.map { it.name }
 
     fun getIcon(name: String): ImageVector? = iconMap[name]
 }
