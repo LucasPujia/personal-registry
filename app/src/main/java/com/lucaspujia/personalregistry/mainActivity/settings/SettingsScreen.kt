@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.ImportExport
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -75,11 +74,6 @@ enum class SettingsOption(
     val category: SettingsCategory,
     val content: @Composable (notificationFrequency: NotificationFrequency, themeMode: ThemeMode) -> String
 ) {
-    MEASURE_UNIT(
-        Icons.Default.Scale,
-        R.string.measure_unit,
-        category = SettingsCategory.GENERAL,
-        content = { _, _ -> stringResource(MeasureUnit.METRIC.messageId) }),
     NOTIFICATIONS(
         Icons.Default.Notifications,
         R.string.notifications,
@@ -101,11 +95,6 @@ enum class SettingsOption(
         R.string.about,
         category = SettingsCategory.ABOUT,
         content = { _, _ -> "${stringResource(R.string.version)} ${stringResource(R.string.app_version)}" })
-}
-
-enum class MeasureUnit(val messageId: Int) {
-    METRIC(R.string.metric_kg_cm),
-    IMPERIAL(R.string.imperial_lb_in)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -141,7 +130,6 @@ private fun SettingsScreenContent(
     val showSettingDialog: MutableState<SettingsOption?> = remember { mutableStateOf(null) }
     val dismissDialog = { showSettingDialog.value = null }
     when (showSettingDialog.value) {
-        SettingsOption.MEASURE_UNIT -> {}
         SettingsOption.NOTIFICATIONS -> NotificationsDialog(dismissDialog = dismissDialog)
         SettingsOption.THEME -> ThemeSelectionDialog(dismissDialog = dismissDialog)
         SettingsOption.EXPORT_IMPORT -> ExportImportDialog(dismissDialog = dismissDialog)
