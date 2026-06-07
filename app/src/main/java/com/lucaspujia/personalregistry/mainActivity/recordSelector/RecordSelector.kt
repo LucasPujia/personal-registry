@@ -35,6 +35,7 @@ import androidx.compose.material3.setSelectedDate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -84,9 +85,8 @@ private fun RecordSelectorContent(
     registry: Registry,
     latestRecord: RecordItem?,
     isSelectableDate: (Long) -> Boolean,
-    onAddRecord: (Double, Double?, Long?) -> Unit = {_, _, _ -> }
+    onAddRecord: (Double, Double?, Long?) -> Unit = { _, _, _ -> }
 ) {
-    // TODO: checkk
     val step1 = remember(registry.unit1.precision) { (10.0).pow(-registry.unit1.precision) }
     val step2 = remember(registry.unit2?.precision) { registry.unit2?.let { (10.0).pow(-it.precision) } }
 
@@ -96,6 +96,8 @@ private fun RecordSelectorContent(
     var value2 by remember(latestRecord, registry.id) {
         mutableDoubleStateOf(latestRecord?.value2 ?: RECORD_DEFAULT_VALUE.toDouble())
     }
+
+    var focusedUnit by remember { mutableIntStateOf(1) }
 
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = todayForDatePicker(),
@@ -125,6 +127,8 @@ private fun RecordSelectorContent(
                     precision = registry.unit1.precision,
                     label = registry.unit1.name,
                     isSmall = isSmall,
+                    isFocused = focusedUnit == 1,
+                    onFocused = { focusedUnit = 1 },
                     modifier = Modifier
                         .weight(1f)
                         .height(if (isSmall) 90.dp else 120.dp)
@@ -139,6 +143,8 @@ private fun RecordSelectorContent(
                         precision = u2.precision,
                         label = u2.name,
                         isSmall = true,
+                        isFocused = focusedUnit == 2,
+                        onFocused = { focusedUnit = 2 },
                         modifier = Modifier
                             .weight(1f)
                             .height(90.dp)
@@ -153,15 +159,25 @@ private fun RecordSelectorContent(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 val buttonHeight = if (isSmall) 36.dp else 40.dp
+                val currentStep = if (focusedUnit == 1) step1 else (step2 ?: 0.0)
+                val decrementFocusedUnit = { if (focusedUnit == 1) value1 -= currentStep else value2 -= currentStep }
+                val incrementFocusedUnit = { if (focusedUnit == 1) value1 += currentStep else value2 += currentStep }
+
                 FilledIconButton(
-                    onClick = { value1 -= step1 },
-                    interactionSource = pressedInteractionSource { value1 -= step1 },
+                    onClick = decrementFocusedUnit,
+                    interactionSource = pressedInteractionSource(decrementFocusedUnit),
                     modifier = Modifier.size(buttonHeight)
                 ) {
                     Icon(imageVector = Icons.Default.Remove, contentDescription = "Decrease value 1", )
                 }
                 Button(
-                    onClick = { onAddRecord(value1, if (registry.unit2 != null) value2 else null, datePickerState.selectedDateMillis) },
+                    onClick = {
+                        onAddRecord(
+                            value1,
+                            if (registry.unit2 != null) value2 else null,
+                            datePickerState.selectedDateMillis
+                        )
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 16.dp)
@@ -175,8 +191,8 @@ private fun RecordSelectorContent(
                     )
                 }
                 FilledIconButton(
-                    onClick = { value1 += step1 },
-                    interactionSource = pressedInteractionSource { value1 += step1 },
+                    onClick = incrementFocusedUnit,
+                    interactionSource = pressedInteractionSource(incrementFocusedUnit),
                     modifier = Modifier.size(buttonHeight)
                 ) {
                     Icon(imageVector = Icons.Default.Add, contentDescription = "Increase value 1")

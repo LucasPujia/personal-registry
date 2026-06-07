@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -55,6 +56,7 @@ import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
+// TODO: simplificar parametros
 @Composable
 fun VerticalNumberPicker(
     value: Float,
@@ -68,6 +70,8 @@ fun VerticalNumberPicker(
     maxValue: Float = RECORD_MAX_VALUE,
     label: String = "",
     isSmall: Boolean = false,
+    isFocused: Boolean = false,
+    onFocused: () -> Unit = {},
 ) {
     val step = remember(precision) { (10.0).pow(-precision).toFloat() }
     val scope = rememberCoroutineScope()
@@ -106,12 +110,21 @@ fun VerticalNumberPicker(
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .clip(MaterialTheme.shapes.medium)
+            .shadow(
+                elevation = if (isFocused) 6.dp else 0.dp,
+                shape = MaterialTheme.shapes.medium,
+                ambientColor = MaterialTheme.colorScheme.primary,
+                spotColor = MaterialTheme.colorScheme.primary
+            )
             .background(MaterialTheme.colorScheme.surface)
+            .clip(MaterialTheme.shapes.medium)
             .draggable(
                 state = draggableState,
                 orientation = Orientation.Vertical,
-                onDragStarted = { isDragging = true },
+                onDragStarted = { 
+                    isDragging = true
+                    onFocused()
+                },
                 onDragStopped = {
                     isDragging = false
                     scope.launch {
@@ -189,6 +202,7 @@ fun VerticalNumberPicker(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
                 ) {
+                    onFocused()
                     showDialog.value = true
                 }
         )
