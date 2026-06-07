@@ -67,6 +67,7 @@ fun VerticalNumberPicker(
     minValue: Float = RECORD_MIN_VALUE,
     maxValue: Float = RECORD_MAX_VALUE,
     label: String = "",
+    isSmall: Boolean = false,
 ) {
     val step = remember(precision) { (10.0).pow(-precision).toFloat() }
     val scope = rememberCoroutineScope()
@@ -125,8 +126,8 @@ fun VerticalNumberPicker(
                 }
             ),
     ) {
-        val mainRecordHeight = 45.dp
-        val unitOffsetX = remember(valueTextWidthPx, density) { (valueTextWidthPx / (2f * density.density)).dp + 16.dp }
+        val mainRecordHeight = if (isSmall) 32.dp else 45.dp
+        val unitOffsetX = remember(valueTextWidthPx, density) { (valueTextWidthPx / (2f * density.density)).dp + (if (isSmall) 8.dp else 16.dp) }
 
         val centerIndexFloat = continuousValue.value / step
         val centerIndexInt = centerIndexFloat.roundToInt()
@@ -147,7 +148,7 @@ fun VerticalNumberPicker(
 
             Text(
                 text = "%.${precision}f".format(itemValue),
-                fontSize = MaterialTheme.typography.displayLarge.fontSize,
+                fontSize = if (isSmall) MaterialTheme.typography.displaySmall.fontSize else MaterialTheme.typography.displayLarge.fontSize,
                 fontWeight = if (isMainValue) FontWeight.Bold else FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary,
                 onTextLayout = { 
@@ -169,12 +170,12 @@ fun VerticalNumberPicker(
 
         Text(
             text = unit,
-            style = MaterialTheme.typography.headlineSmall,
+            style = if (isSmall) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Normal,
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
             modifier = Modifier
                 .align(Alignment.Center)
-                .offset(x = unitOffsetX, y = 8.dp),
+                .offset(x = unitOffsetX, y = if (isSmall) 4.dp else 8.dp),
         )
 
         val showDialog = remember { mutableStateOf(false) }
@@ -192,7 +193,7 @@ fun VerticalNumberPicker(
                 }
         )
 
-        ValueInputModal(showDialog, value.toString(), unit, label, onValueChange, minValue, maxValue)
+        ValueInputModal(showDialog, value.toString(), unit, label, onValueChange, minValue, maxValue, isSmall)
     }
 }
 
@@ -204,7 +205,8 @@ private fun ValueInputModal(
     label: String,
     onValueChange: (Float) -> Unit,
     minValue: Float,
-    maxValue: Float
+    maxValue: Float,
+    isSmall: Boolean
 ) {
     if (showDialog.value) {
         var editValue by remember { mutableStateOf(initialValue) }
@@ -238,7 +240,7 @@ private fun ValueInputModal(
                         ),
                         keyboardActions = KeyboardActions(onDone = { onConfirm() }),
                         singleLine = true,
-                        textStyle = MaterialTheme.typography.headlineLarge,
+                        textStyle = if (isSmall) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
                         modifier = Modifier.fillMaxWidth(),
                         isError = !successfulEdit,
                         colors = OutlinedTextFieldDefaults.colors(

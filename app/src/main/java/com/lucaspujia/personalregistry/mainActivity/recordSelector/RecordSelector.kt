@@ -48,6 +48,7 @@ import com.lucaspujia.personalregistry.database.registry.MeasureUnit
 import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
 import com.lucaspujia.personalregistry.mainActivity.RECORD_DEFAULT_VALUE
+import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
@@ -81,9 +82,9 @@ fun RecordSelector(
 private fun RecordSelectorContent(
     modifier: Modifier = Modifier,
     registry: Registry,
-    latestRecord: com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem?,
+    latestRecord: RecordItem?,
     isSelectableDate: (Long) -> Boolean,
-    onAddRecord: (Double, Double?, Long?) -> Unit
+    onAddRecord: (Double, Double?, Long?) -> Unit = {_, _, _ -> }
 ) {
     // TODO: checkk
     val step1 = remember(registry.unit1.precision) { (10.0).pow(-registry.unit1.precision) }
@@ -112,6 +113,7 @@ private fun RecordSelectorContent(
             datePickerState = datePickerState
         )
 
+        val isSmall = registry.unit2 != null
         Spacer(Modifier.height(8.dp))
 
         if (isSelectableDate(datePickerState.selectedDateMillis ?: nowMillis())) {
@@ -122,9 +124,10 @@ private fun RecordSelectorContent(
                     unit = registry.unit1.symbol,
                     precision = registry.unit1.precision,
                     label = registry.unit1.name,
+                    isSmall = isSmall,
                     modifier = Modifier
                         .weight(1f)
-                        .height(120.dp)
+                        .height(if (isSmall) 90.dp else 120.dp)
                 )
 
                 registry.unit2?.let { u2 ->
@@ -135,9 +138,10 @@ private fun RecordSelectorContent(
                         unit = u2.symbol,
                         precision = u2.precision,
                         label = u2.name,
+                        isSmall = true,
                         modifier = Modifier
                             .weight(1f)
-                            .height(120.dp)
+                            .height(90.dp)
                     )
                 }
             }
@@ -145,32 +149,37 @@ private fun RecordSelectorContent(
             Spacer(Modifier.height(8.dp))
 
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(),
             ) {
+                val buttonHeight = if (isSmall) 36.dp else 40.dp
                 FilledIconButton(
                     onClick = { value1 -= step1 },
-                    interactionSource = pressedInteractionSource { value1 -= step1 }
+                    interactionSource = pressedInteractionSource { value1 -= step1 },
+                    modifier = Modifier.size(buttonHeight)
                 ) {
-                    Icon(Icons.Default.Remove, contentDescription = "Decrease value 1")
+                    Icon(imageVector = Icons.Default.Remove, contentDescription = "Decrease value 1", )
                 }
                 Button(
                     onClick = { onAddRecord(value1, if (registry.unit2 != null) value2 else null, datePickerState.selectedDateMillis) },
                     modifier = Modifier
                         .weight(1f)
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .size(buttonHeight),
                     shape = RoundedCornerShape(28.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text(
                         text = "${stringResource(R.string.add)} ${registry.name}",
-                        style = MaterialTheme.typography.titleMedium
+                        style = if (isSmall) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium
                     )
                 }
                 FilledIconButton(
                     onClick = { value1 += step1 },
-                    interactionSource = pressedInteractionSource { value1 += step1 }
+                    interactionSource = pressedInteractionSource { value1 += step1 },
+                    modifier = Modifier.size(buttonHeight)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Increase value 1")
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Increase value 1")
                 }
             }
         } else {
@@ -180,24 +189,6 @@ private fun RecordSelectorContent(
                 style = MaterialTheme.typography.bodyMedium
             )
         }
-    }
-}
-
-@ThemePreviews
-@Composable
-fun RecordSelectorPreview() {
-    val registry = Registry(
-        name = "Peso",
-        emoji = "⚖️",
-        unit1 = MeasureUnit("Kilo", "kg", 1)
-    )
-    PersonalRegistryTheme {
-        RecordSelectorContent(
-            registry = registry,
-            latestRecord = null,
-            isSelectableDate = { true },
-            onAddRecord = { _, _, _ -> }
-        )
     }
 }
 
@@ -228,14 +219,14 @@ private fun FilterControlsContent(
         modifier = Modifier.fillMaxWidth(),
     ) {
         var openedDatePicker by remember { mutableStateOf(false) }
-        
+
         Text(
             text = resolveDatePickerText(datePickerState.selectedDateMillis),
             style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface),
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(end = 4.dp)
         )
-        
+
         Surface(
             onClick = { openedDatePicker = true },
             shape = RoundedCornerShape(8.dp),
@@ -321,5 +312,40 @@ private fun FilterControlsContent(
                 modifier = Modifier.size(20.dp)
             )
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+fun RecordSelectorPreview() {
+    val registry = Registry(
+        name = "Peso",
+        emoji = "⚖️",
+        unit1 = MeasureUnit("Kilo", "kg", 1)
+    )
+    PersonalRegistryTheme {
+        RecordSelectorContent(
+            registry = registry,
+            latestRecord = null,
+            isSelectableDate = { true },
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun TwoRecordSelectorsPreview() {
+    val registry = Registry(
+        name = "Money",
+        emoji = "Money",
+        unit1 = MeasureUnit("Dollar", "$", 1),
+        unit2 = MeasureUnit("Cent", "¢", 0)
+    )
+    PersonalRegistryTheme {
+        RecordSelectorContent(
+            registry = registry,
+            latestRecord = null,
+            isSelectableDate = { true },
+        )
     }
 }
