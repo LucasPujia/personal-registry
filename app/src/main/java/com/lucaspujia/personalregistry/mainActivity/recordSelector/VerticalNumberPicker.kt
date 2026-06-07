@@ -11,9 +11,9 @@ import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -51,6 +53,7 @@ import com.lucaspujia.personalregistry.mainActivity.RECORD_MAX_VALUE
 import com.lucaspujia.personalregistry.mainActivity.RECORD_MIN_VALUE
 import com.lucaspujia.personalregistry.mainActivity.RECORD_PIXELS_PER_UNIT
 import com.lucaspujia.personalregistry.mainActivity.RECORD_SCROLL_INVERTED
+import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.pow
@@ -140,7 +143,8 @@ fun VerticalNumberPicker(
             ),
     ) {
         val mainRecordHeight = if (isSmall) 32.dp else 45.dp
-        val unitOffsetX = remember(valueTextWidthPx, density) { (valueTextWidthPx / (2f * density.density)).dp + (if (isSmall) 8.dp else 16.dp) }
+        val baseOffset = if (isSmall) 4.dp else 8.dp
+        val unitOffsetX = remember(valueTextWidthPx, density) { (valueTextWidthPx / (2f * density.density)).dp + baseOffset }
 
         val centerIndexFloat = continuousValue.value / step
         val centerIndexInt = centerIndexFloat.roundToInt()
@@ -188,7 +192,15 @@ fun VerticalNumberPicker(
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
             modifier = Modifier
                 .align(Alignment.Center)
-                .offset(x = unitOffsetX, y = if (isSmall) 4.dp else 8.dp),
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+                    layout(0, 0) {
+                        placeable.place(
+                            x = unitOffsetX.roundToPx(),
+                            y = baseOffset.roundToPx() - placeable.height / 2
+                        )
+                    }
+                }
         )
 
         val showDialog = remember { mutableStateOf(false) }
@@ -281,6 +293,21 @@ private fun ValueInputModal(
                     Text(stringResource(R.string.cancel))
                 }
             }
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun VerticalNumberPickerPreview() {
+    var value by remember { mutableFloatStateOf(75f) }
+    Row(modifier = Modifier.fillMaxWidth()) {
+        VerticalNumberPicker(
+            value = value,
+            onValueChange = { },
+            unit = "kg",
+            label = "Weight",
+            modifier = Modifier.weight(1f).height(120.dp)
         )
     }
 }

@@ -53,6 +53,7 @@ import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
+import com.lucaspujia.personalregistry.utils.defaultWeightRegistry
 import com.lucaspujia.personalregistry.utils.now
 import com.lucaspujia.personalregistry.utils.nowMillis
 import com.lucaspujia.personalregistry.utils.pressedInteractionSource
@@ -334,14 +335,9 @@ private fun FilterControlsContent(
 @ThemePreviews
 @Composable
 fun RecordSelectorPreview() {
-    val registry = Registry(
-        name = "Peso",
-        emoji = "⚖️",
-        unit1 = MeasureUnit("Kilo", "kg", 1)
-    )
     PersonalRegistryTheme {
         RecordSelectorContent(
-            registry = registry,
+            registry = defaultWeightRegistry(),
             latestRecord = null,
             isSelectableDate = { true },
         )
@@ -354,8 +350,8 @@ fun TwoRecordSelectorsPreview() {
     val registry = Registry(
         name = "Money",
         emoji = "Money",
-        unit1 = MeasureUnit("Dollar", "$", 1),
-        unit2 = MeasureUnit("Cent", "¢", 0)
+        unit1 = MeasureUnit("Dollar", "USD", 1),
+        unit2 = MeasureUnit("Pesos", "ARS", 0)
     )
     PersonalRegistryTheme {
         RecordSelectorContent(
