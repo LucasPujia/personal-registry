@@ -3,11 +3,11 @@
     <string name="app_name">Registro Personal</string>
     <string name="today">Hoy</string>
     <string name="yesterday">Ayer</string>
-    <string name="add_weight">Añadir peso</string>
+    <string name="add_record">Añadir registro</string>
     <string name="view_graph">Ver gráfico</string>
     <string name="view_list">Ver lista</string>
     <string name="apply">Aplicar</string>
-    <string name="weight_goal">Peso objetivo</string>
+    <string name="goal_value">Valor objetivo</string>
     <string name="minimum">Mínimo</string>
     <string name="maximum">Máximo</string>
     <string name="graph">Gráfico</string>
@@ -23,12 +23,12 @@
     <string name="delete">Eliminar</string>
     <string name="cancel">Cancelar</string>
     <string name="history">Historial</string>
-    <string name="date_already_registered">La fecha seleccionada ya tiene un peso registrado</string>
+    <string name="date_already_registered">La fecha seleccionada ya tiene un valor registrado</string>
     <string name="warning">Advertencia</string>
     <string name="no_registry_error">No hay registros en el rango seleccionado.</string>
     <string name="no_range_selected">Sin rango seleccionado</string>
-    <string name="weight">Peso</string>
-    <string name="invalid_weight">Peso inválido</string>
+    <string name="record">Registro</string>
+    <string name="invalid_value">Valor inválido</string>
     <string name="close">Cerrar</string>
     <string name="theme_system">Predeterminado del sistema</string>
     <string name="theme_light">Claro</string>
@@ -57,16 +57,42 @@
     <string name="export">Exportar</string>
     <string name="import_data">Importar</string>
     <string name="import_error_title">Formato Inválido</string>
-    <string name="import_error_message">El JSON es inválido o está mal formado. Debe ser un array de objetos con las propiedades \"weight\" (número) y \"date\" (yyyy-MM-dd).</string>
+    <string name="import_error_message">El JSON es inválido o está mal formado. Debe ser un array de objetos con las propiedades \"value1\" (número) y \"date\" (yyyy-MM-dd).</string>
     <string name="import_confirmation_title">¿Sobrescribir datos?</string>
     <string name="import_confirmation_message">Tus datos actuales se perderán y serán sobrescritos por los registros importados. ¿Deseas continuar?</string>
     <string name="export_success">Datos exportados con éxito</string>
     <string name="import_success">Datos importados con éxito</string>
     <string name="success">Éxito</string>
     <string name="notification_channel_name">Recordatorios</string>
-    <string name="notification_channel_description">Notificaciones para recordarte registrar tu peso</string>
-    <string name="notification_title">¡Hora de registrar tu peso!</string>
-    <string name="notification_text">Sigue tu progreso registrando tu peso hoy.</string>
+<!-- TODO:
+Neutro
+
+Título: Recordatorio de registro
+Texto: No olvides registrar el valor de hoy.
+
+Amigable
+
+Título: ¿Ya lo registraste?
+Texto: Tomate un momento para registrar el valor de hoy.
+
+Breve
+
+Título: Registro pendiente
+Texto: Registrá el valor de hoy.
+
+Orientado al hábito
+
+Título: Mantené tu seguimiento al día
+Texto: Registrá el valor de hoy para mantener tu historial completo.
+
+Más personalizado
+
+Título: Es hora de actualizar tu registro
+Texto: Ingresá el valor de hoy para seguir viendo tu progreso.
+-->
+    <string name="notification_channel_description">Notificaciones para recordarte registrar tu progeso</string>
+    <string name="notification_title">¡No olvides tu registro!</string>
+    <string name="notification_text">Registra tu progreso hoy.</string>
     <string name="notification_time">Hora de notificación</string>
     <string name="monday">Lunes</string>
     <string name="tuesday">Martes</string>
@@ -83,4 +109,38 @@
     <string name="saturday_short">S</string>
     <string name="sunday_short">D</string>
     <string name="notification_day">Día de notificación</string>
+    <string name="add">Añadir</string>
+    <string name="name">Nombre</string>
+    <string name="emoji">Emoji</string>
+    <string name="unit">Unidad</string>
+    <string name="symbol">Símbolo</string>
+    <string name="precision">Precisión</string>
+    <string name="create_registry">Crear Registro</string>
+    <string name="edit_registry">Editar Registro</string>
+    <string name="save_changes">Guardar Cambios</string>
+    <string name="registry_name">Nombre del Registro</string>
+    <string name="registry_emoji">Emoji (Opcional)</string>
+    <string name="unit_name">Nombre de Unidad (ej: Kilogramo)</string>
+    <string name="unit_symbol">Símbolo de Unidad (ej: kg)</string>
+    <string name="unit2_enabled">¿Habilitar segunda unidad?</string>
+    <string name="formula_desc">Fórmula (ej: v1 / (v2*v2))</string>
+    <string name="suggested_registries">Registros sugeridos</string>
+    <string name="weight">Peso</string>
+    <string name="money">Dinero</string>
+    <string name="kilogram">Kilogramo</string>
+    <string name="currency">Moneda</string>
+    <string name="duplicate_name_error">Este nombre ya está en uso</string>
+    <string name="duplicate_icon_error">Este icono ya está en uso</string>
+    <string name="select_icon">Seleccionar Icono</string>
+    <string name="registry_icon">Icono del Registro</string>
+    <string name="search_icons">Buscar iconos…</string>
+    <string name="category_all">Todos</string>
+    <string name="category_health">Salud</string>
+    <string name="category_finance">Finanzas</string>
+    <string name="category_lifestyle">Estilo de vida</string>
+    <string name="category_work">Trabajo</string>
+    <string name="use_icon">Icono</string>
+    <string name="use_emoji">Emoji</string>
+    <string name="emoji_hint">Ingresa un solo emoji</string>
+    <string name="emoji_length_error">Por favor, ingresa solo un emoji</string>
 </resources>

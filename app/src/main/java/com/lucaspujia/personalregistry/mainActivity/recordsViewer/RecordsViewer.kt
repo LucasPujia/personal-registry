@@ -1,18 +1,17 @@
-package com.lucaspujia.personalregistry.mainActivity.weightsViewer
+package com.lucaspujia.personalregistry.mainActivity.recordsViewer
 
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -39,17 +38,18 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
+import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.ActiveFilters
 import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
 import com.lucaspujia.personalregistry.mainActivity.TimeRange
 import com.lucaspujia.personalregistry.mainActivity.ViewToggles
-import com.lucaspujia.personalregistry.mainActivity.weightItem.WeightCard
-import com.lucaspujia.personalregistry.mainActivity.weightItem.WeightItem
-import com.lucaspujia.personalregistry.ui.theme.DialogPreviews
+import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordCard
+import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
-import com.lucaspujia.personalregistry.utils.filtersFromFloats
+import com.lucaspujia.personalregistry.utils.defaultWeightRegistry
+import com.lucaspujia.personalregistry.utils.recordsFromFloats
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DotProperties
@@ -62,12 +62,15 @@ import ir.ehsannarmani.compose_charts.models.Line
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun WeightsViewer(
+fun RecordsViewer(
     modifier: Modifier = Modifier,
 ) {
     val viewModel = LocalMainActivityActions.current
-    WeightsViewerContent(
+    val registry = viewModel.activeRegistry ?: return
+
+    RecordsViewerContent(
         modifier = modifier,
+        registry = registry,
         viewToggles = viewModel.viewToggles,
         currentTimeRange = viewModel.currentTimeRange,
         filters = viewModel.filters,
@@ -75,29 +78,29 @@ fun WeightsViewer(
     )
 }
 
-// TODO: Modularizar
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun WeightsViewerContent(
+private fun RecordsViewerContent(
     modifier: Modifier = Modifier,
+    registry: Registry,
     viewToggles: ViewToggles,
     currentTimeRange: TimeRange?,
     filters: ActiveFilters,
     onRangeSelected: (TimeRange) -> Unit = {},
 ) {
     val isPreview = LocalInspectionMode.current
-    val deletionState = rememberWeightDeletionState()
+    val deletionState = rememberRecordDeletionState()
 
     ConfirmDeletionDialog(deletionState = deletionState)
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize().padding(horizontal = OUTER_PADDING)
     ) {
-        if (viewToggles.graph) {
+        if (viewToggles.graph && filters.records.size > 1) {
             Surface(
                 shape = RoundedCornerShape(OUTER_PADDING),
                 color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.padding(OUTER_PADDING)
+                modifier = Modifier.padding(top = OUTER_PADDING)
             ) {
                 Column(modifier = Modifier.padding(8.dp).padding(bottom = 16.dp)) {
                     Row(
@@ -119,7 +122,7 @@ private fun WeightsViewerContent(
                         data = remember(filters, primaryColor, secondaryColor) {
                             buildList {
                                 add(Line(
-                                    values = filters.weightsD,
+                                    values = filters.values1D,
                                     color = SolidColor(primaryColor),
                                     firstGradientFillColor = primaryColor.copy(alpha = .3f),
                                     secondGradientFillColor = primaryColor.copy(alpha = .0f),
@@ -128,17 +131,31 @@ private fun WeightsViewerContent(
                                     drawStyle = DrawStyle.Stroke(width = 2.dp),
                                     curvedEdges = true,
                                     dotProperties = DotProperties(
-                                        enabled = filters.weights.size < 32,
+                                        enabled = filters.records.size < 32,
                                         radius = 4.dp,
                                         color = SolidColor(primaryColor)
                                     )
                                 ))
-                                filters.goalWeight?.let { goal ->
+                                if (registry.unit2 != null) {
                                     add(Line(
-                                        values = filters.weights.map { goal.toDouble() },
+                                        values = filters.records.map { it.value2 ?: 0.0 },
                                         color = SolidColor(secondaryColor),
                                         strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
                                         drawStyle = DrawStyle.Stroke(width = 2.dp),
+                                        curvedEdges = true,
+                                        dotProperties = DotProperties(
+                                            enabled = filters.records.size < 32,
+                                            radius = 4.dp,
+                                            color = SolidColor(secondaryColor)
+                                        )
+                                    ))
+                                }
+                                filters.goalValue?.let { goal ->
+                                    add(Line(
+                                        values = filters.records.map { goal.toDouble() },
+                                        color = SolidColor(secondaryColor.copy(alpha = 0.5f)),
+                                        strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
+                                        drawStyle = DrawStyle.Stroke(width = 1.dp),
                                     ))
                                 }
                             }
@@ -180,19 +197,26 @@ private fun WeightsViewerContent(
         }
 
         if (viewToggles.list) {
-            HistorialHeader()
-            val weightsListReversed = remember(filters.weights) {
-                filters.weights.reversed()
-            }
-            LazyColumn(
-                contentPadding = PaddingValues(bottom = OUTER_PADDING)
-            ) {
-                itemsIndexed(
-                    items = weightsListReversed,
-                    key = { _, item -> item.dateKey }
-                ) { index, item ->
-                    val previousItem = if (index + 1 < weightsListReversed.size) weightsListReversed[index + 1] else null
-                    WeightCard(item, previousItem?.weight, deletionState)
+            Column(modifier = Modifier.padding(top = OUTER_PADDING)) {
+                HistorialHeader()
+                val recordsWithVariation = remember(filters.records) {
+                    filters.records.mapIndexed { index, record ->
+                        val previous = if (index > 0) filters.records[index - 1] else null
+                        record to record.calculateVariation(previous)
+                    }.reversed()
+                }
+                LazyColumn {
+                    items(
+                        items = recordsWithVariation,
+                        key = { (item, _) -> item.id }
+                    ) { (item, variation) ->
+                        RecordCard(
+                            recordItem = item,
+                            registry = registry,
+                            deletionState = deletionState,
+                            variation = variation
+                        )
+                    }
                 }
             }
         }
@@ -230,9 +254,7 @@ private fun QuickFilters(
 @Composable
 private fun HistorialHeader() {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -241,41 +263,26 @@ private fun HistorialHeader() {
             style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface),
             fontWeight = FontWeight.Bold
         )
-//        TextButton(onClick = { /* TODO */ }) {
-//            Row(verticalAlignment = Alignment.CenterVertically) {
-//                Text(
-//                    "Ver todo",
-//                    style = MaterialTheme.typography.labelLarge,
-//                    color = Color(0xFF6750A4)
-//                )
-//                Icon(
-//                    Icons.Default.ChevronRight,
-//                    contentDescription = null,
-//                    tint = Color(0xFF6750A4),
-//                    modifier = Modifier.size(16.dp)
-//                )
-//            }
-//        }
     }
 }
 
 @Composable
 fun ConfirmDeletionDialog(
-    deletionState: WeightDeletionState,
+    deletionState: RecordDeletionState,
 ) {
     val viewModel = LocalMainActivityActions.current
     ConfirmDeletionDialogContent(
         deletionState = deletionState,
-        onConfirm = { viewModel.removeWeight(it) }
+        onConfirm = { viewModel.removeRecord(it) }
     )
 }
 
 @Composable
 private fun ConfirmDeletionDialogContent(
-    deletionState: WeightDeletionState,
-    onConfirm: (WeightItem) -> Unit = {}
+    deletionState: RecordDeletionState,
+    onConfirm: (RecordItem) -> Unit = {}
 ) {
-    if (deletionState.weightToDelete == null) return
+    if (deletionState.recordToDelete == null) return
     AlertDialog(
         onDismissRequest = { deletionState.dismiss() },
         title = { Text(stringResource(R.string.confirm_deletion)) },
@@ -310,73 +317,65 @@ private fun ConfirmDeletionDialogContent(
 }
 
 @Composable
-fun rememberWeightDeletionState(): WeightDeletionState {
-    return rememberSaveable(saver = WeightDeletionState.Saver) {
-        WeightDeletionState()
+fun rememberRecordDeletionState(): RecordDeletionState {
+    return rememberSaveable(saver = RecordDeletionState.Saver) {
+        RecordDeletionState()
     }
 }
 
-class WeightDeletionState(
+class RecordDeletionState(
     initialDeletionCount: Int = 0,
     initialSkipConfirmation: Boolean = false
 ) {
-    var weightToDelete by mutableStateOf<WeightItem?>(null)
+    var recordToDelete by mutableStateOf<RecordItem?>(null)
     var deletionCount by mutableIntStateOf(initialDeletionCount)
     var skipConfirmation by mutableStateOf(initialSkipConfirmation)
     var dontAskAgainChecked by mutableStateOf(false)
     var openedItemKey by mutableStateOf<String?>(null)
 
-    fun askForDeletion(item: WeightItem, onRemoveWeight: (WeightItem) -> Unit) {
+    fun askForDeletion(item: RecordItem, onRemoveRecord: (RecordItem) -> Unit) {
         if (skipConfirmation) {
-            onRemoveWeight(item)
+            onRemoveRecord(item)
         } else {
             dontAskAgainChecked = false
-            weightToDelete = item
+            recordToDelete = item
         }
     }
 
-    fun confirmDeletion(onRemoveWeight: (WeightItem) -> Unit) {
-        weightToDelete?.let {
-            onRemoveWeight(it)
+    fun confirmDeletion(onRemoveRecord: (RecordItem) -> Unit) {
+        recordToDelete?.let {
+            onRemoveRecord(it)
             deletionCount++
             if (dontAskAgainChecked) skipConfirmation = true
         }
-        weightToDelete = null
+        recordToDelete = null
     }
 
     fun dismiss() {
-        weightToDelete = null
+        recordToDelete = null
     }
 
     companion object {
-        val Saver: Saver<WeightDeletionState, *> = listSaver(
+        val Saver: Saver<RecordDeletionState, *> = listSaver(
             save = { listOf(it.deletionCount, it.skipConfirmation) },
-            restore = { WeightDeletionState(it[0] as Int, it[1] as Boolean) }
+            restore = { RecordDeletionState(it[0] as Int, it[1] as Boolean) }
         )
     }
 }
+
 
 @ThemePreviews
 @Composable
-private fun WeightsViewerPreview() {
+fun RecordsViewerPreview() {
+    val filters = ActiveFilters(
+        records = recordsFromFloats(listOf(70.0f, 69.5f))
+    )
     PersonalRegistryTheme {
-        WeightsViewerContent(
-            viewToggles = ViewToggles(graph = true, list = true),
-            currentTimeRange = null,
-            filters = filtersFromFloats(listOf(25f, 30f, 35.5f, 32f, 28f, 29f)),
-        )
-
-    }
-}
-
-@DialogPreviews
-@Composable
-private fun ConfirmDeletionDialogPreview() {
-    PersonalRegistryTheme {
-        val deletionState = WeightDeletionState()
-        deletionState.weightToDelete = WeightItem(70.5, "2024-06-15")
-        ConfirmDeletionDialogContent(
-            deletionState = deletionState
+        RecordsViewerContent(
+            registry = defaultWeightRegistry(),
+            viewToggles = ViewToggles(),
+            currentTimeRange = TimeRange.MONTH_1,
+            filters = filters
         )
     }
 }

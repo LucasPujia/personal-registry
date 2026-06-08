@@ -12,27 +12,32 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.mainActivity.bottomSheet.BottomSheetHandler
+import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
+import com.lucaspujia.personalregistry.mainActivity.recordSelector.RecordSelector
+import com.lucaspujia.personalregistry.mainActivity.recordsViewer.RecordsViewer
+import com.lucaspujia.personalregistry.mainActivity.registry.CreateRegistryScreen
 import com.lucaspujia.personalregistry.mainActivity.settings.SettingsScreen
 import com.lucaspujia.personalregistry.mainActivity.settings.SettingsViewModel
-import com.lucaspujia.personalregistry.mainActivity.weightItem.WeightItem
-import com.lucaspujia.personalregistry.mainActivity.weightSelector.WeightSelector
-import com.lucaspujia.personalregistry.mainActivity.weightsViewer.WeightsViewer
 import com.lucaspujia.personalregistry.ui.theme.DarkPreviewWithSystemUI
 import com.lucaspujia.personalregistry.ui.theme.LightPreviewWithSystemUI
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
 import com.lucaspujia.personalregistry.utils.mockMainActivityViewModel
-import com.lucaspujia.personalregistry.utils.weightsFromFloats
+import com.lucaspujia.personalregistry.utils.recordsFromFloats
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -56,10 +61,19 @@ class MainActivity : ComponentActivity() {
 fun PersonalRegistryApp(
     viewModel: MainActivityViewModel = hiltViewModel()
 ) {
+    // TODO: Toasts para errores y éxitos
+    // TODO: Modal de confirmación genérico con un service, implementar para eliminar registro
+    // TODO: fórmula para 2 unidades
+    // TODO: Revisar notificaciones, creo que no se están encolando más de una a la vez
+    // TODO: Distintos textos para notificaciones
+    // TODO: Extraer strings.xml en distintos archivos
+    // TODO: ShowroomPreviews
     CompositionLocalProvider(LocalMainActivityActions provides viewModel) {
         PersonalRegistryAppContent(
-            weights = viewModel.filters.weights,
+            records = viewModel.filters.records,
             settingsOpened = viewModel.settingsOpened,
+            registryEditorState = viewModel.registryEditorState,
+            hasActiveRegistry = viewModel.activeRegistry != null
         )
     }
 }
@@ -67,30 +81,46 @@ fun PersonalRegistryApp(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PersonalRegistryAppContent(
-    weights: List<WeightItem>,
+    records: List<RecordItem>,
     settingsOpened: Boolean,
+    registryEditorState: RegistryEditorState,
+    hasActiveRegistry: Boolean = true
 ) {
     Box(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = MaterialTheme.colorScheme.background)
-                .statusBarsPadding(),
-        ) {
-            WeightSelector()
-            if (weights.isNotEmpty()) WeightsViewer(
-                modifier = Modifier.offset(y = -OUTER_PADDING),
+        if (hasActiveRegistry) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = MaterialTheme.colorScheme.background)
+                    .statusBarsPadding(),
+            ) {
+                RecordSelector()
+                if (records.isNotEmpty()) RecordsViewer(
+                    modifier = Modifier.offset(y = -OUTER_PADDING),
+                )
+            }
+
+            RegistryFAB(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .navigationBarsPadding()
+                    .padding(bottom = 32.dp, end = 32.dp)
             )
         }
 
         BottomSheetHandler()
 
-        AnimatedVisibility(
-            visible = settingsOpened,
-            enter = slideInHorizontally { it },
-            exit = slideOutHorizontally { it },
-        ) {
-            SettingsScreen()
+        listOf(
+            Pair(settingsOpened) @Composable { SettingsScreen() },
+            Pair(!registryEditorState.isClosed()) @Composable { CreateRegistryScreen() }
+        ).forEach { (isOpened, screen) ->
+            AnimatedVisibility(
+                visible = isOpened,
+                enter = slideInHorizontally { it },
+                exit = slideOutHorizontally { it },
+            ) {
+                screen()
+            }
         }
     }
 }
@@ -99,15 +129,14 @@ private fun PersonalRegistryAppContent(
 @DarkPreviewWithSystemUI
 @Composable
 fun PersonalRegistryAppPreview() {
-    val floatWeights = listOf(61f, 60f, 62f, 62f, 60f, 63f)
-    val weights = weightsFromFloats(floatWeights)
+    val floatValues = listOf(61f, 60f, 62f, 62f, 60.5f, 63f)
+    val records = recordsFromFloats(floatValues)
 
-    PersonalRegistryTheme(mainActivityViewModel = mockMainActivityViewModel(initialValues = floatWeights)) {
+    PersonalRegistryTheme(mainActivityViewModel = mockMainActivityViewModel(initialValues = floatValues)) {
         PersonalRegistryAppContent(
-            weights = weights,
+            records = records,
             settingsOpened = false,
+            registryEditorState = RegistryEditorState.Closed
         )
     }
 }
-
-

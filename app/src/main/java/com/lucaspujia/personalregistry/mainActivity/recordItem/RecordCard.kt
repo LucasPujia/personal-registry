@@ -1,6 +1,7 @@
-package com.lucaspujia.personalregistry.mainActivity.weightItem
+package com.lucaspujia.personalregistry.mainActivity.recordItem
 
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
@@ -38,34 +39,42 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.lucaspujia.personalregistry.database.registry.MeasureUnit
+import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
-import com.lucaspujia.personalregistry.mainActivity.weightsViewer.WeightDeletionState
+import com.lucaspujia.personalregistry.mainActivity.recordsViewer.RecordDeletionState
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.ui.theme.extendedColors
+import kotlin.math.abs
+import kotlin.math.pow
 
 enum class DragValue { Settled, Revealed }
 
 @Composable
-fun WeightCard(
-    item: WeightItem,
-    previousWeight: Double?,
-    deletionState: WeightDeletionState,
+fun RecordCard(
+    recordItem: RecordItem,
+    registry: Registry,
+    deletionState: RecordDeletionState,
+    variation: Double? = null,
 ) {
     val viewModel = LocalMainActivityActions.current
-    WeightCardContent(
-        item = item,
-        previousWeight = previousWeight,
+    RecordCardContent(
+        recordItem = recordItem,
+        registry = registry,
+        variation = variation,
         deletionState = deletionState,
-        onDeleteClick = { deletionState.askForDeletion(item, onRemoveWeight = { viewModel.removeWeight(it) }) }
+        onDeleteClick = { deletionState.askForDeletion(recordItem, onRemoveRecord = { viewModel.removeRecord(it) }) }
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun WeightCardContent(
-    item: WeightItem,
-    previousWeight: Double?,
-    deletionState: WeightDeletionState,
+private fun RecordCardContent(
+    recordItem: RecordItem,
+    registry: Registry,
+    variation: Double?,
+    deletionState: RecordDeletionState,
     onDeleteClick: () -> Unit
 ) {
     val receiver = LocalDensity.current
@@ -83,22 +92,22 @@ private fun WeightCardContent(
         snapshotFlow { state.targetValue }
             .collect { target ->
                 if (target == DragValue.Revealed) {
-                    deletionState.openedItemKey = item.dateKey
-                } else if ((deletionState.openedItemKey == item.dateKey) && (target == DragValue.Settled)) {
+                    deletionState.openedItemKey = recordItem.dateKey
+                } else if ((deletionState.openedItemKey == recordItem.dateKey) && (target == DragValue.Settled)) {
                     deletionState.openedItemKey = null
                 }
             }
     }
 
     LaunchedEffect(deletionState.openedItemKey) {
-        if (deletionState.openedItemKey != item.dateKey && state.currentValue == DragValue.Revealed) {
+        if (deletionState.openedItemKey != recordItem.dateKey && state.currentValue == DragValue.Revealed) {
             state.animateTo(DragValue.Settled)
         }
     }
 
     Box(modifier = Modifier
         .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 4.dp)) {
+        .padding(vertical = 4.dp)) {
         // Acción de eliminar (fondo)
         CloseButton(onDeleteClick)
 
@@ -146,12 +155,12 @@ private fun WeightCardContent(
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        item.getFullDateText(),
+                        recordItem.getFullDateText(),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        item.getDayOfWeekText(),
+                        recordItem.getDayOfWeekText(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -159,27 +168,49 @@ private fun WeightCardContent(
                 Column(horizontalAlignment = Alignment.End) {
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
-                            item.formattedWeight(),
+                            recordItem.formattedValue1(registry),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            "kg",
+                            registry.unit1.symbol,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 2.dp)
                         )
                     }
-                    val diff = item.getDifferenceString(previousWeight)
-                    if (diff.isNotEmpty()) {
+                    
+                    recordItem.formattedValue2(registry)?.let { v2 ->
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                v2,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                registry.unit2?.symbol ?: "",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 2.dp)
+                            )
+                        }
+                    }
+                    
+                    variation?.let { v ->
+                        val effectiveVar = if (abs(v) >= 10.0.pow(-registry.unit1.precision)) v else 0.0
+                        val color = when {
+                            effectiveVar > 0 -> MaterialTheme.extendedColors.trendIncrease
+                            effectiveVar < 0 -> MaterialTheme.extendedColors.trendDecrease
+                            else -> MaterialTheme.extendedColors.trendNeutral
+                        }
+
                         Text(
-                            text = diff,
-                            color = when {
-                                diff.startsWith("+") -> MaterialTheme.extendedColors.trendIncrease
-                                diff.startsWith("-") -> MaterialTheme.extendedColors.trendDecrease
-                                else -> MaterialTheme.extendedColors.trendNeutral
-                            },
+                            text = recordItem.formattedVariation(registry, effectiveVar) ?: "",
+                            color = color,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -217,18 +248,52 @@ private fun BoxScope.CloseButton(
 
 @ThemePreviews
 @Composable
-private fun WeightCardPreview() {
+private fun RecordCardPreview() {
+    val registry = Registry(
+        name = "Peso",
+        emoji = "⚖️",
+        unit1 = MeasureUnit("Kilo", "kg", 1)
+    )
+    val item = RecordItem(
+        value1 = 70.5,
+        dateKey = "2024-06-15"
+    )
     PersonalRegistryTheme {
-        val item = WeightItem(
-            weight = 70.5,
-            dateKey = "2024-06-15"
-        )
+        Box(modifier = Modifier.padding(16.dp)) {
+            RecordCardContent(
+                recordItem = item,
+                registry = registry,
+                variation = -0.5,
+                deletionState = RecordDeletionState(),
+                onDeleteClick = {}
+            )
+        }
+    }
+}
 
-        WeightCardContent(
-            item = item,
-            previousWeight = 71.0,
-            deletionState = WeightDeletionState(),
-            onDeleteClick = {}
-        )
+@ThemePreviews
+@Composable
+private fun RecordCardDoublePreview() {
+    val registry = Registry(
+        name = "Running",
+        emoji = "🏃",
+        unit1 = MeasureUnit("Distancia", "km", 2),
+        unit2 = MeasureUnit("Tiempo", "min", 0)
+    )
+    val item = RecordItem(
+        value1 = 5.23,
+        value2 = 25.0,
+        dateKey = "2024-06-15"
+    )
+    PersonalRegistryTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            RecordCardContent(
+                recordItem = item,
+                registry = registry,
+                variation = 0.01,
+                deletionState = RecordDeletionState(),
+                onDeleteClick = {}
+            )
+        }
     }
 }

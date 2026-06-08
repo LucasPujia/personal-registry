@@ -1,12 +1,13 @@
 <resources>
+<!--    TODO: separar en archivos distintos según uso/categorización -->
     <string name="app_name">Personal Registry</string>
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
-    <string name="add_weight">Add weight</string>
+    <string name="add_record">Add record</string>
     <string name="view_graph">View graph</string>
     <string name="view_list">View list</string>
     <string name="apply">Apply</string>
-    <string name="weight_goal">Weight goal</string>
+    <string name="goal_value">Goal value</string>
     <string name="minimum">Minimum</string>
     <string name="maximum">Maximum</string>
     <string name="graph">Graph</string>
@@ -22,12 +23,12 @@
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
     <string name="history">History</string>
-    <string name="date_already_registered">The selected date already has a weight registered</string>
+    <string name="date_already_registered">The selected date already has a record registered</string>
     <string name="warning">Warning</string>
     <string name="no_registry_error">There are no registries in the selected range.</string>
     <string name="no_range_selected">No range selected</string>
-    <string name="weight">Weight</string>
-    <string name="invalid_weight">Invalid Weight</string>
+    <string name="record">Record</string>
+    <string name="invalid_value">Invalid value</string>
     <string name="close">Close</string>
     <string name="theme_system">System default</string>
     <string name="theme_light">Light</string>
@@ -56,16 +57,47 @@
     <string name="export">Export</string>
     <string name="import_data">Import</string>
     <string name="import_error_title">Invalid Format</string>
-    <string name="import_error_message">The JSON is invalid or malformed. It must be an array of objects with \"weight\" (number) and \"date\" (yyyy-MM-dd) properties.</string>
+    <string name="import_error_message">The JSON is invalid or malformed. It must be an array of objects with \"value1\" (number) and \"date\" (yyyy-MM-dd) properties.</string>
     <string name="import_confirmation_title">Overwrite Data?</string>
     <string name="import_confirmation_message">Your current data will be lost and overwritten by the imported records. Do you want to continue?</string>
     <string name="export_success">Data exported successfully</string>
     <string name="import_success">Data imported successfully</string>
     <string name="success">Success</string>
     <string name="notification_channel_name">Reminders</string>
-    <string name="notification_channel_description">Notifications to remind you to record your weight</string>
-    <string name="notification_title">Time to record your weight!</string>
-    <string name="notification_text">Keep track of your progress by recording your weight today.</string>
+<!-- TODO:
+Neutral
+
+Title: Daily Reminder
+Text: Don't forget to log today's value.
+
+Friendly
+
+Title: Have you logged it yet?
+Text: Take a moment to log today's value.
+
+Short
+
+Title: Log Reminder
+Text: Log today's value.
+
+Habit-focused
+
+Title: Keep your tracking up to date
+Text: Log today's value to keep your history complete.
+
+Progress-focused
+
+Title: Time for an update
+Text: Enter today's value to keep tracking your progress.
+
+More natural for a generic tracking app
+
+Title: Don't miss today's entry
+Text: Add today's value to keep your records up to date.
+-->
+    <string name="notification_channel_description">Notifications to remind you to record your progress</string>
+    <string name="notification_title">Time to make a record!</string>
+    <string name="notification_text">Keep track of your progress by making a record today.</string>
     <string name="notification_time">Notification time</string>
     <string name="monday">Monday</string>
     <string name="tuesday">Tuesday</string>
@@ -82,4 +114,38 @@
     <string name="saturday_short">Sa</string>
     <string name="sunday_short">Su</string>
     <string name="notification_day">Notification day</string>
+    <string name="add">Add</string>
+    <string name="name">Name</string>
+    <string name="emoji">Emoji</string>
+    <string name="unit">Unit</string>
+    <string name="symbol">Symbol</string>
+    <string name="precision">Precision</string>
+    <string name="create_registry">Create Registry</string>
+    <string name="edit_registry">Edit Registry</string>
+    <string name="save_changes">Save Changes</string>
+    <string name="registry_name">Registry Name</string>
+    <string name="registry_emoji">Emoji (Optional)</string>
+    <string name="unit_name">Unit Name (e.g. Kilogram)</string>
+    <string name="unit_symbol">Unit Symbol (e.g. kg)</string>
+    <string name="unit2_enabled">Enable second unit?</string>
+    <string name="formula_desc">Formula (e.g. v1 / (v2*v2))</string>
+    <string name="suggested_registries">Suggested Registries</string>
+    <string name="weight">Weight</string>
+    <string name="money">Money</string>
+    <string name="kilogram">Kilogram</string>
+    <string name="currency">Currency</string>
+    <string name="duplicate_name_error">This name is already in use</string>
+    <string name="duplicate_icon_error">This icon is already in use</string>
+    <string name="select_icon">Select Icon</string>
+    <string name="registry_icon">Registry Icon</string>
+    <string name="search_icons">Search icons...</string>
+    <string name="category_all">All</string>
+    <string name="category_health">Health</string>
+    <string name="category_finance">Finance</string>
+    <string name="category_lifestyle">Lifestyle</string>
+    <string name="category_work">Work</string>
+    <string name="use_icon">Icon</string>
+    <string name="use_emoji">Emoji</string>
+    <string name="emoji_hint">Enter a single emoji</string>
+    <string name="emoji_length_error">Please enter only one emoji</string>
 </resources>

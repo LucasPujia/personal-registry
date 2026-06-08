@@ -1,9 +1,13 @@
 package com.lucaspujia.personalregistry
 
-import com.lucaspujia.personalregistry.database.weight.InMemoryWeightsStorage
-import com.lucaspujia.personalregistry.database.weight.WeightRecord
+import com.lucaspujia.personalregistry.database.registry.InMemoryRecordsStorage
+import com.lucaspujia.personalregistry.database.registry.InMemoryRegistriesStorage
+import com.lucaspujia.personalregistry.database.registry.MeasureUnit
+import com.lucaspujia.personalregistry.database.registry.Record
+import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.MainActivityModel
 import com.lucaspujia.personalregistry.mainActivity.MainActivityViewModel
+import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
 import com.lucaspujia.personalregistry.utils.dateKeyToLocalDate
 import com.lucaspujia.personalregistry.utils.forDatePicker
 import com.lucaspujia.personalregistry.utils.fromDatePicker
@@ -12,8 +16,10 @@ import com.lucaspujia.personalregistry.utils.resolveDatePickerMonthYearText
 import com.lucaspujia.personalregistry.utils.resolveDatePickerText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -89,10 +95,9 @@ class DateTimeZoneConsistencyTest {
 
     @Test
     fun formattedDate_isStableAcrossTimezones() {
-        val record = WeightRecord(
-            weight = 72f,
+        val record = RecordItem(
+            value1 = 72.0,
             dateKey = "2030-01-15",
-            createdAt = forDatePicker(LocalDate.of(2030, 1, 15)),
         )
 
         withTimeZone("America/Los_Angeles") { assertEquals("15/01", record.formattedDate()) }
@@ -103,31 +108,37 @@ class DateTimeZoneConsistencyTest {
     // ─── isSelectableDate compara contra dateKey, no timestamps ───────────────
 
     @Test
-    fun isSelectableDate_returnsFalse_whenDateKeyMatches() {
+    fun isSelectableDate_returnsFalse_whenDateKeyMatches() = runTest {
         withTimeZone("America/Los_Angeles") {
             val date = LocalDate.of(2030, 1, 15)
-            val storage = InMemoryWeightsStorage(
-                listOf(WeightRecord(weight = 71f, dateKey = "2030-01-15")),
-            )
-            val viewModel = MainActivityViewModel(MainActivityModel(storage))
+            val registry = Registry(id = 1, name = "Test", emoji = "⚖️", unit1 = MeasureUnit("kg", "kg"))
+            
+            val registriesStorage = InMemoryRegistriesStorage(listOf(registry))
+            val recordsStorage = InMemoryRecordsStorage(listOf(
+                Record(registryId = 1, value1 = 71.0, dateKey = "2030-01-15")
+            ))
+
+            val viewModel = MainActivityViewModel(MainActivityModel(registriesStorage, recordsStorage))
 
             assertFalse(viewModel.isSelectableDate(forDatePicker(date)))
         }
     }
 
     @Test
-    fun isSelectableDate_returnsTrue_afterTravelingToAnotherTimezone() {
+    fun isSelectableDate_returnsTrue_afterTravelingToAnotherTimezone() = runTest {
         // El usuario guardó un registro ayer estando en LA.
         // Al día siguiente viaja a Tokyo: ayer sigue siendo ayer (dateKey).
         val yesterday = nowTZ().minusDays(1)
         val today = nowTZ()
 
-        val storage = InMemoryWeightsStorage(
-            listOf(WeightRecord(weight = 70f, dateKey = localDateToDateKey(yesterday)))
-        )
+        val registry = Registry(id = 1, name = "Test", emoji = "⚖️", unit1 = MeasureUnit("kg", "kg"))
+        val registriesStorage = InMemoryRegistriesStorage(listOf(registry))
+        val recordsStorage = InMemoryRecordsStorage(listOf(
+            Record(registryId = 1, value1 = 70.0, dateKey = localDateToDateKey(yesterday))
+        ))
 
         withTimeZone("Asia/Tokyo") {
-            val viewModel = MainActivityViewModel(MainActivityModel(storage))
+            val viewModel = MainActivityViewModel(MainActivityModel(registriesStorage, recordsStorage))
 
             // ayer sigue ocupado — no importa la zona
             assertFalse(viewModel.isSelectableDate(forDatePicker(yesterday)))
@@ -139,15 +150,16 @@ class DateTimeZoneConsistencyTest {
     // ─── Filtrado por rango usa dateKey ────────────────────────────────────────
 
     @Test
-    fun filterByRange_includesRecordsByDateKey() {
-        val storage = InMemoryWeightsStorage(
-            listOf(
-                WeightRecord(weight = 70f, dateKey = "2030-01-14"),
-                WeightRecord(weight = 71f, dateKey = "2030-01-15"),
-                WeightRecord(weight = 72f, dateKey = "2030-01-16"),
-            )
-        )
-        val viewModel = MainActivityViewModel(MainActivityModel(storage))
+    fun filterByRange_includesRecordsByDateKey() = runTest {
+        val registry = Registry(id = 1, name = "Test", emoji = "⚖️", unit1 = MeasureUnit("kg", "kg"))
+        val registriesStorage = InMemoryRegistriesStorage(listOf(registry))
+        val recordsStorage = InMemoryRecordsStorage(listOf(
+            Record(registryId = 1, value1 = 70.0, dateKey = "2030-01-14"),
+            Record(registryId = 1, value1 = 71.0, dateKey = "2030-01-15"),
+            Record(registryId = 1, value1 = 72.0, dateKey = "2030-01-16"),
+        ))
+
+        val viewModel = MainActivityViewModel(MainActivityModel(registriesStorage, recordsStorage))
 
         viewModel.applyFilters(
             minViewValue = 0,
@@ -156,43 +168,47 @@ class DateTimeZoneConsistencyTest {
                         forDatePicker(LocalDate.of(2030, 1, 15))
         )
 
-        assertEquals(listOf(70.0, 71.0), viewModel.filters.weightsD)
+        assertEquals(listOf(70.0, 71.0), viewModel.filters.values1D)
     }
 
     @Test
-    fun filterByRange_isStableAcrossTimezones() {
-        val storage = InMemoryWeightsStorage(
-            listOf(
-                WeightRecord(weight = 70f, dateKey = "2030-01-14"),
-                WeightRecord(weight = 71f, dateKey = "2030-01-15"),
-            )
-        )
+    fun filterByRange_isStableAcrossTimezones() = runTest {
+        val registry = Registry(id = 1, name = "Test", emoji = "⚖️", unit1 = MeasureUnit("kg", "kg"))
+        val registriesStorage = InMemoryRegistriesStorage(listOf(registry))
+        val recordsStorage = InMemoryRecordsStorage(listOf(
+            Record(registryId = 1, value1 = 70.0, dateKey = "2030-01-14"),
+            Record(registryId = 1, value1 = 71.0, dateKey = "2030-01-15"),
+        ))
+
         val range = forDatePicker(LocalDate.of(2030, 1, 15)) to
                     forDatePicker(LocalDate.of(2030, 1, 15))
 
         listOf("America/Los_Angeles", "Asia/Tokyo", "UTC").forEach { tz ->
             withTimeZone(tz) {
-                val viewModel = MainActivityViewModel(MainActivityModel(storage))
+                val viewModel = MainActivityViewModel(MainActivityModel(registriesStorage, recordsStorage))
                 viewModel.applyFilters(minViewValue = 0, maxViewValue = 100, dateRange = range)
-                assertEquals("Fallo en zona $tz", listOf(71.0), viewModel.filters.weightsD)
+                assertEquals("Fallo en zona $tz", listOf(71.0), viewModel.filters.values1D)
             }
         }
     }
 
-    // ─── addWeight sin fecha explícita guarda el día local correcto ────────────
+    // ─── addRecord sin fecha explícita guarda el día local correcto ────────────
 
     @Test
-    fun addWeight_noDate_storesLocalTodayDateKey() {
+    fun addRecord_noDate_storesLocalTodayDateKey() = runTest {
         withTimeZone("Asia/Tokyo") {
-            val today = nowTZ()
-            val storage = InMemoryWeightsStorage(
-                listOf(WeightRecord(weight = 68f, dateKey = localDateToDateKey(today.minusDays(1)))),
-            )
-            val model = MainActivityModel(storage)
-            model.addWeight(69f, today)
-
-            val storedKey = storage.readWeights().last().dateKey
-            assertEquals(localDateToDateKey(today), storedKey)
+            val todayInTokyo = nowTZ()
+            val registryId = 1L
+            val registriesStorage = InMemoryRegistriesStorage()
+            val recordsStorage = InMemoryRecordsStorage()
+            val model = MainActivityModel(registriesStorage, recordsStorage)
+            
+            runBlocking { 
+                model.addRecord(registryId, 69.0, null, todayInTokyo)
+                val records = recordsStorage.getRecordsByRegistry(registryId)
+                assertEquals(1, records.size)
+                assertEquals(localDateToDateKey(todayInTokyo), records.first().dateKey)
+            }
         }
     }
 

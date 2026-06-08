@@ -7,57 +7,22 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lucaspujia.personalregistry.R
-import com.lucaspujia.personalregistry.mainActivity.weightItem.WeightItem
+import com.lucaspujia.personalregistry.database.registry.Registry
+import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
 import com.lucaspujia.personalregistry.utils.forDatePicker
 import com.lucaspujia.personalregistry.utils.fromDatePicker
-import com.lucaspujia.personalregistry.utils.lastMonthRange
 import com.lucaspujia.personalregistry.utils.localDateToDateKey
 import com.lucaspujia.personalregistry.utils.now
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.math.roundToInt
-
-enum class TimeRange(val label: String, val apply: (LocalDate) -> LocalDate) {
-    DAYS_7("7D", { it.minusDays(7) }),
-    DAYS_15("15D", { it.minusDays(15) }),
-    MONTH_1("1M", { it.minusMonths(1) }),
-    MONTH_3("3M", { it.minusMonths(3) }),
-    MONTH_6("6M", { it.minusMonths(6) }),
-    YEAR_1("1A", { it.minusYears(1) })
-}
-
-data class ViewToggles(
-    val graph: Boolean = true,
-    val list: Boolean = true,
-)
-
-// TODO: Ver de moverlo a un viewModel-Model o símil
-interface MainActivityActions {
-    val filters: ActiveFilters
-    val viewToggles: ViewToggles
-    val currentTimeRange: TimeRange?
-    var filtersOpened: Boolean
-    var viewTogglesOpened: Boolean
-    var settingsOpened: Boolean
-
-    fun addWeight(weight: Float, pickerMillis: Long?)
-    fun removeWeight(weightItem: WeightItem)
-    fun isSelectableDate(utcTimeMillis: Long): Boolean
-    fun applyFilters(
-        minViewValue: Int? = null,
-        maxViewValue: Int? = null,
-        goalWeight: Int? = null,
-        dateRange: Pair<Long, Long>? = lastMonthRange(),
-    ): Int?
-    fun applyViewToggles(showGraph: Boolean, showList: Boolean)
-    fun updateTimeRange(range: TimeRange)
-}
 
 val LocalMainActivityActions = staticCompositionLocalOf<MainActivityActions> {
     error("No MainActivityActions provided")
@@ -68,8 +33,12 @@ class MainActivityViewModel @Inject constructor(
     private val model: MainActivityModel,
 ) : ViewModel(), MainActivityActions {
 
-    private var allWeights: List<WeightItem> = emptyList()
+    override var activeRegistry by mutableStateOf<Registry?>(null); private set
+    override val allRegistries: Flow<List<Registry>> = model.registriesFlow
+
+    private var allRecords: List<RecordItem> = emptyList()
     private var registeredDateKeys: Set<String> = emptySet()
+    private var recordsJob: Job? = null
 
     // Data filters
     override var filters by mutableStateOf(ActiveFilters()); private set
@@ -80,17 +49,32 @@ class MainActivityViewModel @Inject constructor(
     override var filtersOpened by mutableStateOf(false)
     override var viewTogglesOpened by mutableStateOf(false)
     override var settingsOpened by mutableStateOf(false)
+    override var registryEditorState by mutableStateOf<RegistryEditorState>(RegistryEditorState.Closed)
 
     init {
-        model.weightsFlow
-            .onEach { updatedWeights ->
-                syncWeights(updatedWeights)
+        allRegistries
+            .onEach { registries ->
+                if (registries.isEmpty()) {
+                    registryEditorState = RegistryEditorState.New
+                } else if (activeRegistry == null) {
+                    switchRegistry(registries.first())
+                }
+            }
+            .launchIn(viewModelScope)
+    }
 
-                if (updatedWeights.isNotEmpty() && filters.weights.isEmpty()) {
-                    val weightValues = updatedWeights.map { it.weight }
+    override fun switchRegistry(registry: Registry) {
+        activeRegistry = registry
+        recordsJob?.cancel()
+        recordsJob = model.getRecordsFlow(registry.id)
+            .onEach { updatedRecords ->
+                syncRecords(updatedRecords)
+
+                if (updatedRecords.isNotEmpty() && filters.records.isEmpty()) {
+                    val values = updatedRecords.map { it.value1 }
                     applyFilters(
-                        minViewValue = weightValues.min().roundToInt() - 2,
-                        maxViewValue = weightValues.max().roundToInt() + 2,
+                        minViewValue = values.min().roundToInt() - 2,
+                        maxViewValue = values.max().roundToInt() + 2,
                     )
                 } else {
                     reapplyFilters()
@@ -98,24 +82,51 @@ class MainActivityViewModel @Inject constructor(
             }
             .launchIn(viewModelScope)
     }
-
     /**
      * [pickerMillis] son los milisegundos UTC-midnight provenientes del DatePicker.
      * Se convierten a LocalDate y dateKey justo aquí; no viajan como Long al modelo.
      */
-    override fun addWeight(weight: Float, pickerMillis: Long?) {
+    override fun addRecord(value1: Double, value2: Double?, pickerMillis: Long?) {
+        val registryId = activeRegistry?.id ?: return
         viewModelScope.launch {
             val date = pickerMillis?.let { fromDatePicker(it) } ?: now()
-            withContext(Dispatchers.IO) { model.addWeight(weight, date) }
+            withContext(Dispatchers.IO) { model.addRecord(registryId, value1, value2, date) }
         }
     }
 
-    override fun removeWeight(weightItem: WeightItem) {
+    override fun removeRecord(recordItem: RecordItem) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) { model.removeWeight(weightItem) }
+            withContext(Dispatchers.IO) { model.removeRecord(recordItem) }
         }
     }
 
+    override fun createRegistry(registry: Registry) {
+        viewModelScope.launch {
+            val id = withContext(Dispatchers.IO) { model.insertRegistry(registry) }
+            val newRegistry = registry.copy(id = id)
+            switchRegistry(newRegistry)
+            registryEditorState = RegistryEditorState.Closed
+        }
+    }
+
+    override fun updateRegistry(registry: Registry) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { model.updateRegistry(registry) }
+            activeRegistry = registry
+            registryEditorState = RegistryEditorState.Closed
+        }
+    }
+
+    override fun deleteRegistry(registry: Registry) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { model.deleteRegistry(registry) }
+            // Si eliminamos el activo, buscamos otro para mostrar o abrimos creación si no hay más
+            if (activeRegistry?.id == registry.id) {
+                activeRegistry = null
+                registryEditorState = RegistryEditorState.Closed
+            }
+        }
+    }
     /**
      * [utcTimeMillis] proviene del DatePicker (UTC-midnight del día seleccionado).
      * La comparación de unicidad se hace contra el dateKey almacenado, no contra timestamps.
@@ -124,31 +135,31 @@ class MainActivityViewModel @Inject constructor(
         val selectedDate = fromDatePicker(utcTimeMillis)
         val selectedDateKey = localDateToDateKey(selectedDate)
 
-        val hasWeightThisDay = registeredDateKeys.contains(selectedDateKey)
+        val hasRecordThisDay = registeredDateKeys.contains(selectedDateKey)
 
-        return !hasWeightThisDay && !selectedDate.isAfter(now())
+        return !hasRecordThisDay && !selectedDate.isAfter(now())
     }
 
     override fun applyFilters(
         minViewValue: Int?,
         maxViewValue: Int?,
-        goalWeight: Int?,
+        goalValue: Int?,
         dateRange: Pair<Long, Long>?,
     ): Int? {
-        if (allWeights.isEmpty()) filters = filters.copy(weights = emptyList(), dateLabels = emptyList())
-        val newWeights = getWeightsFilteredByDate(dateRange)
+        if (allRecords.isEmpty()) filters = filters.copy(records = emptyList(), dateLabels = emptyList())
+        val newRecords = getRecordsFilteredByDate(dateRange)
 
-        if (newWeights.isEmpty()) return R.string.no_registry_error
+        if (newRecords.isEmpty()) return R.string.no_registry_error
 
         val max = listOfNotNull(
-            newWeights.maxOf { it.weight }.toInt() + 2,
-            goalWeight?.plus(2),
+            newRecords.maxOf { it.value1 }.toInt() + 2,
+            goalValue?.plus(2),
             maxViewValue
         ).maxOrNull() ?: filters.maxViewValue
 
         val min = listOfNotNull(
-            newWeights.minOf { it.weight }.toInt() - 2,
-            goalWeight?.minus(2),
+            newRecords.minOf { it.value1 }.toInt() - 2,
+            goalValue?.minus(2),
             minViewValue
         ).minOrNull() ?: filters.minViewValue
 
@@ -156,10 +167,10 @@ class MainActivityViewModel @Inject constructor(
             minViewValue = min,
             maxViewValue = max,
             dateRange = dateRange ?: filters.dateRange,
-            goalWeight = goalWeight,
-            weights = newWeights,
-            shouldAnimate = dateRange != filters.dateRange || goalWeight != filters.goalWeight,
-            dateLabels = resolveDateLabels(newWeights),
+            goalValue = goalValue,
+            records = newRecords,
+            shouldAnimate = dateRange != filters.dateRange || goalValue != filters.goalValue,
+            dateLabels = resolveDateLabels(newRecords),
         )
         return null
     }
@@ -174,7 +185,7 @@ class MainActivityViewModel @Inject constructor(
         val startDate = range.apply(endDate)
 
         applyFilters(
-            goalWeight = filters.goalWeight,
+            goalValue = filters.goalValue,
             dateRange = Pair(forDatePicker(startDate), forDatePicker(endDate))
         )
     }
@@ -183,14 +194,14 @@ class MainActivityViewModel @Inject constructor(
         applyFilters(
             minViewValue = filters.minViewValue,
             maxViewValue = filters.maxViewValue,
-            goalWeight = filters.goalWeight,
+            goalValue = filters.goalValue,
             dateRange = filters.dateRange,
         )
     }
 
-    private fun syncWeights(weights: List<WeightItem>) {
-        allWeights = weights
-        registeredDateKeys = weights.map { it.dateKey }.toSet()
+    private fun syncRecords(records: List<RecordItem>) {
+        allRecords = records
+        registeredDateKeys = records.map { it.dateKey }.toSet()
     }
 
     /**
@@ -198,32 +209,19 @@ class MainActivityViewModel @Inject constructor(
      * Los extremos del rango provienen del DatePicker (UTC-midnight) y se convierten a LocalDate.
      * Así no importa en qué zona horaria fue guardado el registro original.
      */
-    private fun getWeightsFilteredByDate(dateRange: Pair<Long, Long>?): List<WeightItem> {
-        dateRange ?: return allWeights
+    private fun getRecordsFilteredByDate(dateRange: Pair<Long, Long>?): List<RecordItem> {
+        dateRange ?: return allRecords
 
         val startDate = fromDatePicker(dateRange.first)
         val endDate = fromDatePicker(dateRange.second)
-        return allWeights.filter { it.localDate() in startDate..endDate }
+        return allRecords.filter { it.localDate() in startDate..endDate }
     }
 }
 
-data class ActiveFilters(
-    val minViewValue: Int = 0,
-    val maxViewValue: Int = 100,
-    val weights: List<WeightItem> = emptyList(),
-    val dateLabels: List<String> = emptyList(),
-    val goalWeight: Int? = null,
-    val dateRange: Pair<Long, Long>? = null,
-    val shouldAnimate: Boolean = true,
-) {
-    val weightsF: List<Float> by lazy { weights.map { it.weight.toFloat() } }
-    val weightsD: List<Double> by lazy { weights.map { it.weight } }
-}
-
-fun resolveDateLabels(newWeights: List<WeightItem>): List<String> {
-    val size = newWeights.size
-    return if (size < 6) newWeights.map { it.date } else {
-        newWeights.slice(listOf(0, size / 4, size / 2, (size * 3) / 4, size - 1))
+fun resolveDateLabels(newRecords: List<RecordItem>): List<String> {
+    val size = newRecords.size
+    return if (size < 6) newRecords.map { it.date } else {
+        newRecords.slice(listOf(0, size / 4, size / 2, (size * 3) / 4, size - 1))
             .map { it.date }
     }
 }

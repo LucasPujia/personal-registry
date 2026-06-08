@@ -1,39 +1,54 @@
-package com.lucaspujia.personalregistry.mainActivity.weightItem
+package com.lucaspujia.personalregistry.mainActivity.recordItem
 
 import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import com.lucaspujia.personalregistry.R
+import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.extensionFunctions.capitalize
-import com.lucaspujia.personalregistry.mainActivity.WEIGHT_DECIMAL_PRECISION
 import com.lucaspujia.personalregistry.utils.dateKeyToLocalDate
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-data class WeightItem(
-    val weight: Double,
+data class RecordItem(
+    val id: Long = 0,
+    val value1: Double,
+    val value2: Double? = null,
     val dateKey: String, // yyyy-MM-dd
 ) {
     val date: String
         get() = dateKey.split("-", limit = 2)[1].replace("-","/")
 
+    fun formattedDate(): String = localDate().format(DateTimeFormatter.ofPattern("dd/MM"))
+
     fun localDate(): LocalDate = dateKeyToLocalDate(dateKey)
 
-    fun formattedWeight(decimalPrecision: Int = WEIGHT_DECIMAL_PRECISION): String {
-        return "%.${decimalPrecision}f".format(weight)
+    fun formattedValue1(registry: Registry): String {
+        return "%.${registry.unit1.precision}f".format(value1)
     }
 
-    fun getDifferenceString(previousWeight: Double?): String {
-        previousWeight ?: return ""
-        val diffKg = (weight*1000).toInt() - (previousWeight*1000).toInt()
-        if (diffKg == 0) return "="
-        return if (diffKg > 0) "+${diffKg}g" else "${diffKg}g"
+    fun formattedValue2(registry: Registry): String? {
+        val u2 = registry.unit2 ?: return null
+        val v2 = value2 ?: return null
+        return "%.${u2.precision}f".format(v2)
+    }
+
+    fun calculateVariation(previous: RecordItem?): Double? {
+        if (previous == null) return null
+        return value1 - previous.value1
+    }
+
+    fun formattedVariation(registry: Registry, variation: Double?): String? {
+        if (variation == null) return null
+        if (variation == 0.0) return "="
+        val sign = if (variation >= 0) "+" else ""
+        return "$sign%.${registry.unit1.precision}f ${registry.unit1.symbol}".format(variation)
     }
 }
 
 @Composable
-fun WeightItem.getFullDateText(): String {
+fun RecordItem.getFullDateText(): String {
     val date = localDate()
     val now = LocalDate.now()
     val locale = LocalConfiguration.current.locales[0]
@@ -51,7 +66,7 @@ fun WeightItem.getFullDateText(): String {
 }
 
 @Composable
-fun WeightItem.getDayOfWeekText(): String {
+fun RecordItem.getDayOfWeekText(): String {
     val locale = LocalConfiguration.current.locales[0]
     // Formato de día de la semana localizado (ej: "lunes", "Monday")
     val formatter = DateTimeFormatter.ofPattern("EEEE", locale)
