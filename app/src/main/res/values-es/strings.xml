@@ -143,4 +143,8 @@ Texto: Ingresá el valor de hoy para seguir viendo tu progreso.
     <string name="use_emoji">Emoji</string>
     <string name="emoji_hint">Ingresa un solo emoji</string>
     <string name="emoji_length_error">Por favor, ingresa solo un emoji</string>
+    <string name="done">Listo</string>
+    <string name="formula_preview_empty">Esperando fórmula…</string>
+    <string name="formula_preview_result">Si %2$s=%1$.1f y %4$s=%3$.1f, el resultado es %5$.2f</string>
+    <string name="formula_invalid">Fórmula inválida</string>
 </resources>

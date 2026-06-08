@@ -148,4 +148,8 @@ Text: Add today's value to keep your records up to date.
     <string name="use_emoji">Emoji</string>
     <string name="emoji_hint">Enter a single emoji</string>
     <string name="emoji_length_error">Please enter only one emoji</string>
+    <string name="done">Done</string>
+    <string name="formula_preview_empty">Waiting for formula...</string>
+    <string name="formula_preview_result">If %2$s=%1$.1f and %4$s=%3$.1f, result is %5$.2f</string>
+    <string name="formula_invalid">Invalid formula</string>
 </resources>
