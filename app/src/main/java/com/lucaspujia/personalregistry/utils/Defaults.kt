@@ -12,6 +12,7 @@ import com.lucaspujia.personalregistry.database.registry.MeasureUnit
 import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.ActiveFilters
 import com.lucaspujia.personalregistry.mainActivity.MainActivityActions
+import com.lucaspujia.personalregistry.mainActivity.RegistryEditorState
 import com.lucaspujia.personalregistry.mainActivity.TimeRange
 import com.lucaspujia.personalregistry.mainActivity.ViewToggles
 import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
@@ -101,7 +102,7 @@ fun mockMainActivityViewModel(initialValues: List<Float> = listOf(25f, 30f, 35.5
         override var filtersOpened = false
         override var viewTogglesOpened = false
         override var settingsOpened = false
-        override var createRegistryOpened = false
+        override var registryEditorState: RegistryEditorState = RegistryEditorState.Closed
         override fun switchRegistry(registry: Registry) {}
         override fun addRecord(value1: Double, value2: Double?, pickerMillis: Long?) {}
         override fun removeRecord(recordItem: RecordItem) {}
@@ -110,6 +111,8 @@ fun mockMainActivityViewModel(initialValues: List<Float> = listOf(25f, 30f, 35.5
         override fun applyViewToggles(showGraph: Boolean, showList: Boolean) {}
         override fun updateTimeRange(range: TimeRange) {}
         override fun createRegistry(registry: Registry) {}
+        override fun updateRegistry(registry: Registry) {}
+        override fun deleteRegistry(registry: Registry) {}
     }
 }
 val OUTER_PADDING = 16.dp
