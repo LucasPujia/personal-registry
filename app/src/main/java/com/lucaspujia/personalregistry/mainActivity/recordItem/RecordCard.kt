@@ -105,7 +105,7 @@ private fun RecordCardContent(
 
     Box(modifier = Modifier
         .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 4.dp)) {
+        .padding(vertical = 4.dp)) {
         // Acción de eliminar (fondo)
         CloseButton(onDeleteClick)
 
@@ -199,13 +199,12 @@ private fun RecordCardContent(
                     }
                     
                     variation?.let { v ->
-                        val color = if (v > 0) {
-                            MaterialTheme.extendedColors.trendIncrease
-                        } else if (v < 0) {
-                            MaterialTheme.extendedColors.trendDecrease
-                        } else {
-                            MaterialTheme.extendedColors.trendNeutral
+                        val color = when {
+                            v > 0 -> MaterialTheme.extendedColors.trendIncrease
+                            v < 0 -> MaterialTheme.extendedColors.trendDecrease
+                            else -> MaterialTheme.extendedColors.trendNeutral
                         }
+
                         Text(
                             text = recordItem.formattedVariation(registry, v) ?: "",
                             color = color,
@@ -257,13 +256,15 @@ private fun RecordCardPreview() {
         dateKey = "2024-06-15"
     )
     PersonalRegistryTheme {
-        RecordCardContent(
-            recordItem = item,
-            registry = registry,
-            variation = -0.5,
-            deletionState = RecordDeletionState(),
-            onDeleteClick = {}
-        )
+        Box(modifier = Modifier.padding(16.dp)) {
+            RecordCardContent(
+                recordItem = item,
+                registry = registry,
+                variation = -0.5,
+                deletionState = RecordDeletionState(),
+                onDeleteClick = {}
+            )
+        }
     }
 }
 
@@ -282,12 +283,14 @@ private fun RecordCardDoublePreview() {
         dateKey = "2024-06-15"
     )
     PersonalRegistryTheme {
-        RecordCardContent(
-            recordItem = item,
-            registry = registry,
-            variation = 0.1,
-            deletionState = RecordDeletionState(),
-            onDeleteClick = {}
-        )
+        Box(modifier = Modifier.padding(16.dp)) {
+            RecordCardContent(
+                recordItem = item,
+                registry = registry,
+                variation = 0.1,
+                deletionState = RecordDeletionState(),
+                onDeleteClick = {}
+            )
+        }
     }
 }

@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,7 +38,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
-import com.lucaspujia.personalregistry.database.registry.MeasureUnit
 import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.ActiveFilters
 import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
@@ -50,6 +48,8 @@ import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
+import com.lucaspujia.personalregistry.utils.defaultWeightRegistry
+import com.lucaspujia.personalregistry.utils.recordsFromFloats
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DotProperties
@@ -94,13 +94,13 @@ private fun RecordsViewerContent(
     ConfirmDeletionDialog(deletionState = deletionState)
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize().padding(horizontal = OUTER_PADDING)
     ) {
-        if (viewToggles.graph) {
+        if (viewToggles.graph && filters.records.size > 1) {
             Surface(
                 shape = RoundedCornerShape(OUTER_PADDING),
                 color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.padding(OUTER_PADDING)
+                modifier = Modifier.padding(top = OUTER_PADDING)
             ) {
                 Column(modifier = Modifier.padding(8.dp).padding(bottom = 16.dp)) {
                     Row(
@@ -197,53 +197,29 @@ private fun RecordsViewerContent(
         }
 
         if (viewToggles.list) {
-            HistorialHeader()
-            val recordsWithVariation = remember(filters.records) {
-                filters.records.mapIndexed { index, record ->
-                    val previous = if (index > 0) filters.records[index - 1] else null
-                    record to record.calculateVariation(previous)
-                }.reversed()
-            }
-            LazyColumn(
-                contentPadding = PaddingValues(bottom = OUTER_PADDING)
-            ) {
-                items(
-                    items = recordsWithVariation,
-                    key = { (item, _) -> item.id }
-                ) { (item, variation) ->
-                    RecordCard(
-                        recordItem = item,
-                        registry = registry,
-                        deletionState = deletionState,
-                        variation = variation
-                    )
+            Column(modifier = Modifier.padding(top = OUTER_PADDING)) {
+                HistorialHeader()
+                val recordsWithVariation = remember(filters.records) {
+                    filters.records.mapIndexed { index, record ->
+                        val previous = if (index > 0) filters.records[index - 1] else null
+                        record to record.calculateVariation(previous)
+                    }.reversed()
+                }
+                LazyColumn {
+                    items(
+                        items = recordsWithVariation,
+                        key = { (item, _) -> item.id }
+                    ) { (item, variation) ->
+                        RecordCard(
+                            recordItem = item,
+                            registry = registry,
+                            deletionState = deletionState,
+                            variation = variation
+                        )
+                    }
                 }
             }
         }
-    }
-}
-
-@ThemePreviews
-@Composable
-fun RecordsViewerPreview() {
-    val registry = Registry(
-        name = "Peso",
-        emoji = "⚖️",
-        unit1 = MeasureUnit("Kilo", "kg", 1)
-    )
-    val filters = ActiveFilters(
-        records = listOf(
-            RecordItem(value1 = 70.0, dateKey = "2024-03-19"),
-            RecordItem(value1 = 69.5, dateKey = "2024-03-20")
-        )
-    )
-    PersonalRegistryTheme {
-        RecordsViewerContent(
-            registry = registry,
-            viewToggles = ViewToggles(),
-            currentTimeRange = TimeRange.MONTH_1,
-            filters = filters
-        )
     }
 }
 
@@ -278,9 +254,7 @@ private fun QuickFilters(
 @Composable
 private fun HistorialHeader() {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -385,6 +359,23 @@ class RecordDeletionState(
         val Saver: Saver<RecordDeletionState, *> = listSaver(
             save = { listOf(it.deletionCount, it.skipConfirmation) },
             restore = { RecordDeletionState(it[0] as Int, it[1] as Boolean) }
+        )
+    }
+}
+
+
+@ThemePreviews
+@Composable
+fun RecordsViewerPreview() {
+    val filters = ActiveFilters(
+        records = recordsFromFloats(listOf(70.0f, 69.5f))
+    )
+    PersonalRegistryTheme {
+        RecordsViewerContent(
+            registry = defaultWeightRegistry(),
+            viewToggles = ViewToggles(),
+            currentTimeRange = TimeRange.MONTH_1,
+            filters = filters
         )
     }
 }
