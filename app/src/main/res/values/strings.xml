@@ -128,7 +128,7 @@ Text: Add today's value to keep your records up to date.
     <string name="unit_name">Unit Name (e.g. Kilogram)</string>
     <string name="unit_symbol">Unit Symbol (e.g. kg)</string>
     <string name="unit2_enabled">Enable second unit?</string>
-    <string name="formula_desc">Formula (e.g. v1 / (v2*v2))</string>
+    <string name="formula_desc">Formula (e.g. 3*v1 / (v2*v2))</string>
     <string name="suggested_registries">Suggested Registries</string>
     <string name="weight">Weight</string>
     <string name="money">Money</string>

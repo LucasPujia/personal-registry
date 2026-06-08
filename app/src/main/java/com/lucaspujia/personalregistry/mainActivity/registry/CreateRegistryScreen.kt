@@ -41,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -109,6 +110,7 @@ private fun CreateRegistryScreenContent(
     // Estado de la fórmula (manejado vía teclado personalizado)
     var formulaValue by remember(registryToEdit) { mutableStateOf(TextFieldValue(registryToEdit?.formula ?: "")) }
     var showFormulaKeyboard by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
 
     val isDuplicateName = existingRegistries.any { it.id != registryToEdit?.id && it.name.equals(registryName.trim(), ignoreCase = true) }
     val isDuplicateEmoji = existingRegistries.any { it.id != registryToEdit?.id && it.emoji == emojiState.getCurrentEmoji().trim() }
@@ -188,7 +190,10 @@ private fun CreateRegistryScreenContent(
                         value = formulaValue,
                         u1Symbol = unit1.symbol,
                         u2Symbol = unit2.symbol,
-                        onClick = { showFormulaKeyboard = true }
+                        onClick = { 
+                            showFormulaKeyboard = true
+                            focusManager.clearFocus() 
+                        }
                     )
                 }
 
@@ -215,8 +220,6 @@ private fun CreateRegistryScreenContent(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(if (registryToEdit != null) R.string.save_changes else R.string.create_registry))
                 }
-                
-                Spacer(modifier = Modifier.height(if (showFormulaKeyboard) 300.dp else 0.dp))
             }
         }
 
@@ -226,8 +229,7 @@ private fun CreateRegistryScreenContent(
             onValueChange = { formulaValue = it },
             onClose = { showFormulaKeyboard = false },
             unit1Symbol = unit1.symbol,
-            unit2Symbol = unit2.symbol,
-            modifier = Modifier.align(Alignment.BottomCenter)
+            unit2Symbol = unit2.symbol
         )
     }
 }

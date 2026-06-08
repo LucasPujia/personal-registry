@@ -1,5 +1,6 @@
 package com.lucaspujia.personalregistry.mainActivity.registry
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,38 +33,40 @@ fun MeasureUnitForm(
     setUnit1: (MeasureUnitInput) -> Unit,
     unitNumber: Int
 ) {
-    Text(
-        "${stringResource(R.string.unit)} $unitNumber",
-        style = MaterialTheme.typography.titleMedium
-    )
-
-    OutlinedTextField(
-        value = unit1.name,
-        onValueChange = { setUnit1(unit1.copy(name = it)) },
-        label = { Text(stringResource(R.string.unit_name)) },
-        modifier = Modifier.fillMaxWidth()
-    )
-
-    Row(modifier = Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = unit1.symbol,
-            onValueChange = { setUnit1(unit1.copy(symbol = it)) },
-            label = { Text(stringResource(R.string.symbol)) },
-            modifier = Modifier.weight(1f)
+    Column {
+        Text(
+            "${stringResource(R.string.unit)} $unitNumber",
+            style = MaterialTheme.typography.titleMedium
         )
-        Spacer(modifier = Modifier.width(8.dp))
+
         OutlinedTextField(
-            value = unit1.precision.toString(),
-            onValueChange = {
-                if (it.all { c -> c.isDigit() }) setUnit1(
-                    unit1.copy(
-                        precision = it.toIntOrNull() ?: 1
+            value = unit1.name,
+            onValueChange = { setUnit1(unit1.copy(name = it)) },
+            label = { Text(stringResource(R.string.unit_name)) },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = unit1.symbol,
+                onValueChange = { setUnit1(unit1.copy(symbol = it)) },
+                label = { Text(stringResource(R.string.symbol)) },
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            OutlinedTextField(
+                value = unit1.precision.toString(),
+                onValueChange = {
+                    if (it.all { c -> c.isDigit() }) setUnit1(
+                        unit1.copy(
+                            precision = it.toIntOrNull() ?: 1
+                        )
                     )
-                )
-            },
-            label = { Text(stringResource(R.string.precision)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.weight(1f)
-        )
+                },
+                label = { Text(stringResource(R.string.precision)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }

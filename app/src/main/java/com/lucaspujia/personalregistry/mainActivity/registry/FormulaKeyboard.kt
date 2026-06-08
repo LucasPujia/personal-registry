@@ -1,7 +1,5 @@
 package com.lucaspujia.personalregistry.mainActivity.registry
 
-import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -9,10 +7,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,13 +25,15 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.surfaceColorAtElevation
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -63,9 +59,9 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /**
- * Contenedor animado para el teclado de fórmulas.
- * Maneja la visibilidad, la animación de entrada/salida y el botón físico 'atrás'.
+ * Contenedor BottomSheet para el teclado de fórmulas.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FormulaKeyboardWrapper(
     visible: Boolean,
@@ -76,61 +72,37 @@ fun FormulaKeyboardWrapper(
     unit2Symbol: String,
     modifier: Modifier = Modifier
 ) {
-    BackHandler(enabled = visible) { onClose() }
+    val sheetState = rememberModalBottomSheetState()
 
-    AnimatedVisibility(
-        visible = visible,
-        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-        exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-        modifier = modifier
-    ) {
-        FormulaKeyboard(
-            value = value,
-            onValueChange = onValueChange,
-            onClose = onClose,
-            unit1Symbol = unit1Symbol,
-            unit2Symbol = unit2Symbol
-        )
-    }
-}
-
-/**
- * Componente principal del teclado de la calculadora.
- */
-@Composable
-private fun FormulaKeyboard(
-    value: TextFieldValue,
-    onValueChange: (TextFieldValue) -> Unit,
-    onClose: () -> Unit,
-    unit1Symbol: String,
-    unit2Symbol: String
-) {
-    val u1Label = unit1Symbol.ifBlank { "v1" }
-    val u2Label = unit2Symbol.ifBlank { "v2" }
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        color = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp),
-        tonalElevation = 8.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(12.dp)
-                .navigationBarsPadding()
+    if (visible) {
+        ModalBottomSheet(
+            onDismissRequest = onClose,
+            sheetState = sheetState,
+            modifier = modifier
         ) {
-            // Visualización de la fórmula y resultado de ejemplo
-            FormulaPreview(value.text, u1Label, u2Label, value.selection.start)
+            val u1Label = unit1Symbol.ifBlank { "v1" }
+            val u2Label = unit2Symbol.ifBlank { "v2" }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp, start = 12.dp, end = 12.dp)
+                    .navigationBarsPadding()
+            ) {
+                FormulaPreview(value.text, u1Label, u2Label, value.selection.start)
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // Fila de controles de navegación y acciones rápidas
-            ControlRow(value, onValueChange, onClose)
+                ControlRow(value = value, onValueChange = onValueChange, onClose = onClose)
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // Rejilla de botones de la calculadora
-            KeyboardGrid(value, onValueChange, u1Label, u2Label)
+                KeyboardGrid(
+                    value = value,
+                    onValueChange = onValueChange,
+                    u1Label = u1Label,
+                    u2Label = u2Label
+                )
+            }
         }
     }
 }
@@ -180,10 +152,10 @@ private fun KeyboardGrid(
     u2Label: String
 ) {
     val buttons = listOf(
-        listOf("7", "8", "9", "/", "v1"),
-        listOf("4", "5", "6", "*", "v2"),
-        listOf("1", "2", "3", "-", "("),
-        listOf(".", "0", "^", "+", ")")
+        listOf("7", "8", "9", "+", "v1"),
+        listOf("4", "5", "6", "-", "v2"),
+        listOf("1", "2", "3", "(", ")"),
+        listOf(".", "0", "^", "/", "*")
     )
 
     buttons.forEachIndexed { rowIndex, row ->

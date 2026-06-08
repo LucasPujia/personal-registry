@@ -123,7 +123,7 @@ Texto: Ingresá el valor de hoy para seguir viendo tu progreso.
     <string name="unit_name">Nombre de Unidad (ej: Kilogramo)</string>
     <string name="unit_symbol">Símbolo de Unidad (ej: kg)</string>
     <string name="unit2_enabled">¿Habilitar segunda unidad?</string>
-    <string name="formula_desc">Fórmula (ej: v1 / (v2*v2))</string>
+    <string name="formula_desc">Fórmula (ej: 3*v1 / (v2*v2))</string>
     <string name="suggested_registries">Registros sugeridos</string>
     <string name="weight">Peso</string>
     <string name="money">Dinero</string>
