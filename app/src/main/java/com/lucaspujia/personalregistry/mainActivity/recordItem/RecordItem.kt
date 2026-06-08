@@ -41,6 +41,7 @@ data class RecordItem(
 
     fun formattedVariation(registry: Registry, variation: Double?): String? {
         if (variation == null) return null
+        if (variation == 0.0) return "="
         val sign = if (variation >= 0) "+" else ""
         return "$sign%.${registry.unit1.precision}f ${registry.unit1.symbol}".format(variation)
     }

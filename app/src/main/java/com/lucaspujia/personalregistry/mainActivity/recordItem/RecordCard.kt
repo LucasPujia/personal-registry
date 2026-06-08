@@ -46,6 +46,8 @@ import com.lucaspujia.personalregistry.mainActivity.recordsViewer.RecordDeletion
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.ui.theme.extendedColors
+import kotlin.math.abs
+import kotlin.math.pow
 
 enum class DragValue { Settled, Revealed }
 
@@ -199,14 +201,15 @@ private fun RecordCardContent(
                     }
                     
                     variation?.let { v ->
+                        val effectiveVar = if (abs(v) >= 10.0.pow(-registry.unit1.precision)) v else 0.0
                         val color = when {
-                            v > 0 -> MaterialTheme.extendedColors.trendIncrease
-                            v < 0 -> MaterialTheme.extendedColors.trendDecrease
+                            effectiveVar > 0 -> MaterialTheme.extendedColors.trendIncrease
+                            effectiveVar < 0 -> MaterialTheme.extendedColors.trendDecrease
                             else -> MaterialTheme.extendedColors.trendNeutral
                         }
 
                         Text(
-                            text = recordItem.formattedVariation(registry, v) ?: "",
+                            text = recordItem.formattedVariation(registry, effectiveVar) ?: "",
                             color = color,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
@@ -287,7 +290,7 @@ private fun RecordCardDoublePreview() {
             RecordCardContent(
                 recordItem = item,
                 registry = registry,
-                variation = 0.1,
+                variation = 0.01,
                 deletionState = RecordDeletionState(),
                 onDeleteClick = {}
             )
