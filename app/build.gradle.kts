@@ -7,16 +7,12 @@ plugins {
 
 android {
     namespace = "com.lucaspujia.personalregistry"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.lucaspujia.personalregistry"
         minSdk = 33
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -78,6 +74,8 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    // Necesario para compatibilidad de Hilt con Kotlin 2.4.0, borrar cuando se actualice Hilt
+    ksp(libs.jetbrains.kotlin.metadata.jvm)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)

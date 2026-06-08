@@ -2,7 +2,7 @@
 agp = "9.2.1"
 composeCharts = "0.2.5"
 kotlin = "2.4.0"
-ksp = "2.3.7"
+ksp = "2.3.9"
 coreKtx = "1.19.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -22,6 +22,8 @@ androidxHiltNavigationCompose = "1.3.0"
 mockk = "1.14.11"
 kotlinx-coroutines-test = "1.11.0"
 exp4j = "0.4.8"
+# Necesario para compatibilidad de Hilt con Kotlin 2.4.0, borrar cuando se actualice Hilt
+kotlinMetadataJvm = "2.4.0"
 
 [libraries]
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
@@ -51,6 +53,7 @@ androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", vers
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines-test" }
 exp4j = { group = "net.objecthunter", name = "exp4j", version.ref = "exp4j" }
+jetbrains-kotlin-metadata-jvm = { group = "org.jetbrains.kotlin", name = "kotlin-metadata-jvm", version.ref = "kotlinMetadataJvm" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
