@@ -199,10 +199,10 @@ private fun RecordsViewerContent(
         if (viewToggles.list) {
             Column(modifier = Modifier.padding(top = OUTER_PADDING)) {
                 HistorialHeader()
-                val recordsWithVariation = remember(filters.records) {
+                val recordsWithVariation = remember(filters.records, registry) {
                     filters.records.mapIndexed { index, record ->
                         val previous = if (index > 0) filters.records[index - 1] else null
-                        record to record.calculateVariation(previous)
+                        record to record.calculateVariation(registry, previous)
                     }.reversed()
                 }
                 LazyColumn {

@@ -64,8 +64,9 @@ data class ActiveFilters(
     val goalValue: Int? = null,
     val dateRange: Pair<Long, Long>? = null,
     val shouldAnimate: Boolean = true,
+    val calculatedValues: List<Double> = emptyList()
 ) {
-    val values1F: List<Float> by lazy { records.map { it.value1.toFloat() } }
-    val values1D: List<Double> by lazy { records.map { it.value1 } }
+    val values1F: List<Float> by lazy { calculatedValues.map { it.toFloat() } }
+    val values1D: List<Double> by lazy { calculatedValues }
     val values2F: List<Float> by lazy { records.mapNotNull { it.value2?.toFloat() } }
 }

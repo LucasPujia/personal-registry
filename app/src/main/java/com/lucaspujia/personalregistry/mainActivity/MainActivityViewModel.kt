@@ -71,7 +71,7 @@ class MainActivityViewModel @Inject constructor(
                 syncRecords(updatedRecords)
 
                 if (updatedRecords.isNotEmpty() && filters.records.isEmpty()) {
-                    val values = updatedRecords.map { it.value1 }
+                    val values = updatedRecords.map { it.calculatedValue(registry) }
                     applyFilters(
                         minViewValue = values.min().roundToInt() - 2,
                         maxViewValue = values.max().roundToInt() + 2,
@@ -151,14 +151,17 @@ class MainActivityViewModel @Inject constructor(
 
         if (newRecords.isEmpty()) return R.string.no_registry_error
 
+        val registry = activeRegistry ?: return null
+        val calculatedValues = newRecords.map { it.calculatedValue(registry) }
+
         val max = listOfNotNull(
-            newRecords.maxOf { it.value1 }.toInt() + 2,
+            calculatedValues.maxOrNull()?.toInt()?.plus(2),
             goalValue?.plus(2),
             maxViewValue
         ).maxOrNull() ?: filters.maxViewValue
 
         val min = listOfNotNull(
-            newRecords.minOf { it.value1 }.toInt() - 2,
+            calculatedValues.minOrNull()?.toInt()?.minus(2),
             goalValue?.minus(2),
             minViewValue
         ).minOrNull() ?: filters.minViewValue
@@ -171,6 +174,7 @@ class MainActivityViewModel @Inject constructor(
             records = newRecords,
             shouldAnimate = dateRange != filters.dateRange || goalValue != filters.goalValue,
             dateLabels = resolveDateLabels(newRecords),
+            calculatedValues = calculatedValues
         )
         return null
     }

@@ -83,6 +83,7 @@ dependencies {
     ksp(libs.androidx.hilt.compiler)
     implementation (libs.compose.charts)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.exp4j)
     ksp(libs.androidx.room.compiler)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
