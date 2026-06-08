@@ -61,6 +61,13 @@ class MainActivity : ComponentActivity() {
 fun PersonalRegistryApp(
     viewModel: MainActivityViewModel = hiltViewModel()
 ) {
+    // TODO: Toasts para errores y éxitos
+    // TODO: Modal de confirmación genérico con un service, implementar para eliminar registro
+    // TODO: fórmula para 2 unidades
+    // TODO: Revisar notificaciones, creo que no se están encolando más de una a la vez
+    // TODO: Distintos textos para notificaciones
+    // TODO: Extraer strings.xml en distintos archivos
+    // TODO: ShowroomPreviews
     CompositionLocalProvider(LocalMainActivityActions provides viewModel) {
         PersonalRegistryAppContent(
             records = viewModel.filters.records,
@@ -122,7 +129,7 @@ private fun PersonalRegistryAppContent(
 @DarkPreviewWithSystemUI
 @Composable
 fun PersonalRegistryAppPreview() {
-    val floatValues = listOf(61f, 60f, 62f, 62f, 60f, 63f)
+    val floatValues = listOf(61f, 60f, 62f, 62f, 60.5f, 63f)
     val records = recordsFromFloats(floatValues)
 
     PersonalRegistryTheme(mainActivityViewModel = mockMainActivityViewModel(initialValues = floatValues)) {
