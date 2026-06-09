@@ -136,20 +136,6 @@ private fun RecordsViewerContent(
                                         color = SolidColor(primaryColor)
                                     )
                                 ))
-                                if (registry.unit2 != null) {
-                                    add(Line(
-                                        values = filters.records.map { it.value2 ?: 0.0 },
-                                        color = SolidColor(secondaryColor),
-                                        strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
-                                        drawStyle = DrawStyle.Stroke(width = 2.dp),
-                                        curvedEdges = true,
-                                        dotProperties = DotProperties(
-                                            enabled = filters.records.size < 32,
-                                            radius = 4.dp,
-                                            color = SolidColor(secondaryColor)
-                                        )
-                                    ))
-                                }
                                 filters.goalValue?.let { goal ->
                                     add(Line(
                                         values = filters.records.map { goal.toDouble() },
@@ -368,7 +354,7 @@ class RecordDeletionState(
 @Composable
 fun RecordsViewerPreview() {
     val filters = ActiveFilters(
-        records = recordsFromFloats(listOf(70.0f, 69.5f))
+        records = recordsFromFloats(listOf(70.0f, 69.5f, 69.5f, 71f, 71f))
     )
     PersonalRegistryTheme {
         RecordsViewerContent(

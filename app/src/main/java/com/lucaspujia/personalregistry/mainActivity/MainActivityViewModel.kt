@@ -75,9 +75,16 @@ class MainActivityViewModel @Inject constructor(
                     applyFilters(
                         minViewValue = values.min().roundToInt() - 2,
                         maxViewValue = values.max().roundToInt() + 2,
+                        goalValue = null,
+                        dateRange = filters.dateRange
                     )
                 } else {
-                    reapplyFilters()
+                    applyFilters(
+                        minViewValue = null,
+                        maxViewValue = null,
+                        goalValue = null,
+                        dateRange = filters.dateRange,
+                    )
                 }
             }
             .launchIn(viewModelScope)
@@ -194,14 +201,6 @@ class MainActivityViewModel @Inject constructor(
         )
     }
 
-    private fun reapplyFilters() {
-        applyFilters(
-            minViewValue = filters.minViewValue,
-            maxViewValue = filters.maxViewValue,
-            goalValue = filters.goalValue,
-            dateRange = filters.dateRange,
-        )
-    }
 
     private fun syncRecords(records: List<RecordItem>) {
         allRecords = records
