@@ -162,13 +162,13 @@ class DateTimeZoneConsistencyTest {
         val viewModel = MainActivityViewModel(MainActivityModel(registriesStorage, recordsStorage))
 
         viewModel.applyFilters(
-            minViewValue = 0,
-            maxViewValue = 100,
+            minViewValue = 0.0,
+            maxViewValue = 100.0,
             dateRange = forDatePicker(LocalDate.of(2030, 1, 14)) to
                         forDatePicker(LocalDate.of(2030, 1, 15))
         )
 
-        assertEquals(listOf(70.0, 71.0), viewModel.filters.values1D)
+        assertEquals(listOf(70.0, 71.0), viewModel.filters.calculatedValues)
     }
 
     @Test
@@ -186,8 +186,8 @@ class DateTimeZoneConsistencyTest {
         listOf("America/Los_Angeles", "Asia/Tokyo", "UTC").forEach { tz ->
             withTimeZone(tz) {
                 val viewModel = MainActivityViewModel(MainActivityModel(registriesStorage, recordsStorage))
-                viewModel.applyFilters(minViewValue = 0, maxViewValue = 100, dateRange = range)
-                assertEquals("Fallo en zona $tz", listOf(71.0), viewModel.filters.values1D)
+                viewModel.applyFilters(minViewValue = 0.0, maxViewValue = 100.0, dateRange = range)
+                assertEquals("Fallo en zona $tz", listOf(71.0), viewModel.filters.calculatedValues)
             }
         }
     }

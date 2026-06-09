@@ -63,11 +63,11 @@ fun FiltersContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FiltersContentImpl(
-    initialMinViewValue: Int,
-    initialMaxViewValue: Int,
-    initialGoalValue: Int?,
+    initialMinViewValue: Double,
+    initialMaxViewValue: Double,
+    initialGoalValue: Double?,
     initialDateRange: Pair<Long, Long>?,
-    onApplyFilters: (Int?, Int?, Int?, Pair<Long, Long>?) -> Int?,
+    onApplyFilters: (Double?, Double?, Double?, Pair<Long, Long>?) -> Int?,
     onDismissRequest: () -> Unit = {},
 ) {
     var minVal by remember { mutableStateOf(initialMinViewValue.toString()) }
@@ -190,16 +190,16 @@ private fun AcceptButton(
     maxVal: String,
     goalValue: String,
     dateRangePickerState: DateRangePickerState,
-    onApplyFilters: (Int?, Int?, Int?, Pair<Long, Long>?) -> Int?,
+    onApplyFilters: (Double?, Double?, Double?, Pair<Long, Long>?) -> Int?,
     onDismissRequest: () -> Unit = {},
 ) {
     val responseMessage = remember { mutableStateOf<Int?>(null) }
     Button(
         onClick = {
             val response = onApplyFilters(
-                minVal.toIntOrNull(),
-                maxVal.toIntOrNull(),
-                goalValue.toIntOrNull(),
+                minVal.toDoubleOrNull(),
+                maxVal.toDoubleOrNull(),
+                goalValue.toDoubleOrNull(),
                 dateRangePickerState.selectedDateRange()
             )
             if (response != null) {
@@ -239,9 +239,9 @@ private fun AcceptButton(
 private fun FiltersContentPreview() {
     PersonalRegistryTheme {
         FiltersContentImpl(
-            initialMinViewValue = 60,
-            initialMaxViewValue = 80,
-            initialGoalValue = 70,
+            initialMinViewValue = 60.0,
+            initialMaxViewValue = 80.0,
+            initialGoalValue = 70.0,
             initialDateRange = null,
             onApplyFilters = { _, _, _, _ -> null }
         )

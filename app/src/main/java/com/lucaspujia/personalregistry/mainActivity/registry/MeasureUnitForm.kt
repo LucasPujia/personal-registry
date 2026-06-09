@@ -16,6 +16,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.database.registry.MeasureUnit
+import com.lucaspujia.personalregistry.mainActivity.RECORD_DECIMAL_PRECISION
 
 data class MeasureUnitInput(
     val name: String,
@@ -59,7 +60,7 @@ fun MeasureUnitForm(
                 onValueChange = {
                     if (it.all { c -> c.isDigit() }) setUnit1(
                         unit1.copy(
-                            precision = it.toIntOrNull() ?: 1
+                            precision = it.toIntOrNull() ?: RECORD_DECIMAL_PRECISION
                         )
                     )
                 },

@@ -25,6 +25,8 @@ import com.lucaspujia.personalregistry.mainActivity.settings.SettingOption
 import com.lucaspujia.personalregistry.mainActivity.settings.SettingsActions
 import com.lucaspujia.personalregistry.mainActivity.settings.ThemeMode
 import kotlinx.coroutines.flow.flowOf
+import kotlin.math.max
+import kotlin.math.min
 
 fun lastMonthRange() = Pair(forDatePicker(now().minusMonths(1)), todayForDatePicker())
 
@@ -45,22 +47,24 @@ fun defaultDatePickerFormatter(): DatePickerFormatter {
     }
 }
 
-fun filtersFromFloats(records: List<Float>, goal: Int? = null): ActiveFilters {
-    val recordsFromFloats = recordsFromFloats(records)
+fun filtersFromDoubles(records: List<Double>, goal: Double? = null): ActiveFilters {
+    val recordItems = recordsFromDoubles(records)
+    val minViewValue = min(if (records.isEmpty()) 0.0 else records.min(), goal ?: Double.MAX_VALUE) * 0.9
+    val maxViewValue = max(if (records.isEmpty()) 100.0 else records.max(), goal ?: Double.MIN_VALUE) * 1.1
     return ActiveFilters(
-        minViewValue = if (records.isEmpty()) 0 else records.min().toInt() - 2,
-        maxViewValue = if (records.isEmpty()) 100 else records.max().toInt() + 2,
+        minViewValue = minViewValue,
+        maxViewValue = maxViewValue,
         goalValue = goal,
-        records = recordsFromFloats,
-        dateLabels = resolveDateLabels(recordsFromFloats)
+        records = recordItems,
+        dateLabels = resolveDateLabels(recordItems)
     )
 }
 
-fun recordsFromFloats(values: List<Float>): List<RecordItem> {
-    return values.mapIndexed { index, f ->
+fun recordsFromDoubles(values: List<Double>): List<RecordItem> {
+    return values.mapIndexed { index, v ->
         RecordItem(
             id = (index + 1).toLong(),
-            value1 = f.toDouble(),
+            value1 = v,
             dateKey = "2026-10-0${index + 1}"
         )
     }
@@ -91,12 +95,12 @@ val mockSettingsViewModel = object : SettingsActions {
 }
 
 @Composable
-fun mockMainActivityViewModel(initialValues: List<Float> = listOf(25f, 30f, 35.5f, 32f, 28f, 29f)): MainActivityActions {
+fun mockMainActivityViewModel(initialValues: List<Double> = listOf(25.0, 30.0, 35.5, 32.0, 28.0, 29.0)): MainActivityActions {
     return object : MainActivityActions {
         val defaultWeightRegistry = defaultWeightRegistry()
         override val activeRegistry = defaultWeightRegistry
         override val allRegistries = flowOf(listOf(defaultWeightRegistry))
-        override val filters = filtersFromFloats(initialValues)
+        override val filters = filtersFromDoubles(initialValues)
         override val viewToggles = ViewToggles()
         override val currentTimeRange = TimeRange.MONTH_1
         override var filtersOpened = false
@@ -107,7 +111,7 @@ fun mockMainActivityViewModel(initialValues: List<Float> = listOf(25f, 30f, 35.5
         override fun addRecord(value1: Double, value2: Double?, pickerMillis: Long?) {}
         override fun removeRecord(recordItem: RecordItem) {}
         override fun isSelectableDate(utcTimeMillis: Long) = true
-        override fun applyFilters(minViewValue: Int?, maxViewValue: Int?, goalValue: Int?, dateRange: Pair<Long, Long>?) = null
+        override fun applyFilters(minViewValue: Double?, maxViewValue: Double?, goalValue: Double?, dateRange: Pair<Long, Long>?) = null
         override fun applyViewToggles(showGraph: Boolean, showList: Boolean) {}
         override fun updateTimeRange(range: TimeRange) {}
         override fun createRegistry(registry: Registry) {}

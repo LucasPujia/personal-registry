@@ -29,7 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,7 +48,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
-import com.lucaspujia.personalregistry.extensionFunctions.isFloat
+import com.lucaspujia.personalregistry.extensionFunctions.isDouble
 import com.lucaspujia.personalregistry.mainActivity.RECORD_MAX_VALUE
 import com.lucaspujia.personalregistry.mainActivity.RECORD_MIN_VALUE
 import com.lucaspujia.personalregistry.mainActivity.RECORD_PIXELS_PER_UNIT
@@ -57,35 +57,36 @@ import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.pow
-import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 // TODO: simplificar parametros
 @Composable
 fun VerticalNumberPicker(
-    value: Float,
-    onValueChange: (Float) -> Unit,
+    value: Double,
+    onValueChange: (Double) -> Unit,
     unit: String,
     modifier: Modifier = Modifier,
     precision: Int = 1,
     pixelsPerUnit: Float = RECORD_PIXELS_PER_UNIT,
     isScrollInverted: Boolean = RECORD_SCROLL_INVERTED,
-    minValue: Float = RECORD_MIN_VALUE,
-    maxValue: Float = RECORD_MAX_VALUE,
+    minValue: Double = RECORD_MIN_VALUE,
+    maxValue: Double = RECORD_MAX_VALUE,
     label: String = "",
     isSmall: Boolean = false,
     isFocused: Boolean = false,
     onFocused: () -> Unit = {},
 ) {
-    val step = remember(precision) { (10.0).pow(-precision).toFloat() }
+    val step = remember(precision) { (10.0).pow(-precision) }
     val scope = rememberCoroutineScope()
-    
-    val continuousValue = remember { Animatable(value) }
+
+    // Animatable solo acepta floats
+    val continuousValue = remember { Animatable(value.toFloat()) }
     var isDragging by remember { mutableStateOf(false) }
 
     LaunchedEffect(value) {
-        if (!isDragging && abs(continuousValue.value - value) > 0.0001f) {
+        if (!isDragging && abs(continuousValue.value - value) > 0.0001) {
             continuousValue.animateTo(
-                targetValue = value,
+                targetValue = value.toFloat(),
                 animationSpec = spring(stiffness = Spring.StiffnessLow)
             )
         }
@@ -94,14 +95,14 @@ fun VerticalNumberPicker(
     val draggableState = rememberDraggableState { delta ->
         val directionMultiplier = if (isScrollInverted) 1f else -1f
         val deltaUnits = directionMultiplier * delta / pixelsPerUnit
-        val newValue = (continuousValue.value + deltaUnits).coerceIn(minValue, maxValue)
+        val newValue = (continuousValue.value + deltaUnits).toDouble().coerceIn(minValue, maxValue)
         
         scope.launch {
-            continuousValue.snapTo(newValue)
+            continuousValue.snapTo(newValue.toFloat())
         }
         
         val factor = (10.0).pow(precision)
-        val snapped = ((newValue * factor).roundToInt() / factor).toFloat()
+        val snapped = ((newValue * factor).roundToLong() / factor)
         if (snapped != value) {
             onValueChange(snapped)
         }
@@ -132,7 +133,7 @@ fun VerticalNumberPicker(
                     isDragging = false
                     scope.launch {
                         continuousValue.animateTo(
-                            targetValue = value,
+                            targetValue = value.toFloat(),
                             animationSpec = spring(
                                 dampingRatio = Spring.DampingRatioMediumBouncy,
                                 stiffness = Spring.StiffnessLow
@@ -146,14 +147,14 @@ fun VerticalNumberPicker(
         val baseOffset = if (isSmall) 4.dp else 8.dp
         val unitOffsetX = remember(valueTextWidthPx, density) { (valueTextWidthPx / (2f * density.density)).dp + baseOffset }
 
-        val centerIndexFloat = continuousValue.value / step
-        val centerIndexInt = centerIndexFloat.roundToInt()
+        val centerIndexFloat = (continuousValue.value / step).toFloat()
+        val centerIndexInt = (continuousValue.value / step).roundToLong().toInt()
         val startIndex = centerIndexInt - 2
         val endIndex = centerIndexInt + 2
 
         for (i in startIndex..endIndex) {
             val itemValue = i * step
-            if (itemValue < minValue - 0.0001f || itemValue > maxValue + 0.0001f) continue
+            if (itemValue < minValue - 0.0001 || itemValue > maxValue + 0.0001) continue
 
             val distanceFromCenter = centerIndexFloat - i
             val absDistance = abs(distanceFromCenter)
@@ -229,18 +230,18 @@ private fun ValueInputModal(
     initialValue: String,
     unit: String,
     label: String,
-    onValueChange: (Float) -> Unit,
-    minValue: Float,
-    maxValue: Float,
+    onValueChange: (Double) -> Unit,
+    minValue: Double,
+    maxValue: Double,
     isSmall: Boolean
 ) {
     if (showDialog.value) {
         var editValue by remember { mutableStateOf(initialValue) }
-        var successfulEdit by remember { mutableStateOf(initialValue.isFloat()) }
+        var successfulEdit by remember { mutableStateOf(initialValue.isDouble()) }
 
         val closeDialog = { showDialog.value = false }
         val onConfirm = {
-            val parsed = editValue.replace(',', '.').toFloatOrNull()
+            val parsed = editValue.replace(',', '.').toDoubleOrNull()
             if (parsed != null) {
                 onValueChange(parsed.coerceIn(minValue, maxValue))
                 closeDialog()
@@ -255,7 +256,7 @@ private fun ValueInputModal(
                 Column {
                     OutlinedTextField(
                         value = editValue,
-                        onValueChange = { if (it.isFloat()) {
+                        onValueChange = { if (it.isDouble()) {
                             editValue = it
                             successfulEdit = true
                         } },
@@ -300,7 +301,7 @@ private fun ValueInputModal(
 @ThemePreviews
 @Composable
 fun VerticalNumberPickerPreview() {
-    var value by remember { mutableFloatStateOf(75f) }
+    var value by remember { mutableDoubleStateOf(75.0) }
     Row(modifier = Modifier.fillMaxWidth()) {
         VerticalNumberPicker(
             value = value,

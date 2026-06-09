@@ -37,7 +37,7 @@ import com.lucaspujia.personalregistry.ui.theme.LightPreviewWithSystemUI
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
 import com.lucaspujia.personalregistry.utils.mockMainActivityViewModel
-import com.lucaspujia.personalregistry.utils.recordsFromFloats
+import com.lucaspujia.personalregistry.utils.recordsFromDoubles
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -129,10 +129,10 @@ private fun PersonalRegistryAppContent(
 @DarkPreviewWithSystemUI
 @Composable
 fun PersonalRegistryAppPreview() {
-    val floatValues = listOf(61f, 60f, 62f, 62f, 60.5f, 63f)
-    val records = recordsFromFloats(floatValues)
+    val doubleValues = listOf(61.0, 60.0, 62.0, 62.0, 60.5, 63.0)
+    val records = recordsFromDoubles(doubleValues)
 
-    PersonalRegistryTheme(mainActivityViewModel = mockMainActivityViewModel(initialValues = floatValues)) {
+    PersonalRegistryTheme(mainActivityViewModel = mockMainActivityViewModel(initialValues = doubleValues)) {
         PersonalRegistryAppContent(
             records = records,
             settingsOpened = false,

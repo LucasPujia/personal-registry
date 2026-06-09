@@ -92,10 +92,10 @@ private fun RecordSelectorContent(
     val step2 = remember(registry.unit2?.precision) { registry.unit2?.let { (10.0).pow(-it.precision) } }
 
     var value1 by remember(latestRecord, registry.id) {
-        mutableDoubleStateOf(latestRecord?.value1 ?: RECORD_DEFAULT_VALUE.toDouble())
+        mutableDoubleStateOf(latestRecord?.value1 ?: RECORD_DEFAULT_VALUE)
     }
     var value2 by remember(latestRecord, registry.id) {
-        mutableDoubleStateOf(latestRecord?.value2 ?: RECORD_DEFAULT_VALUE.toDouble())
+        mutableDoubleStateOf(latestRecord?.value2 ?: RECORD_DEFAULT_VALUE)
     }
 
     var focusedUnit by remember { mutableIntStateOf(1) }
@@ -122,8 +122,8 @@ private fun RecordSelectorContent(
         if (isSelectableDate(datePickerState.selectedDateMillis ?: nowMillis())) {
             Row(modifier = Modifier.fillMaxWidth()) {
                 VerticalNumberPicker(
-                    value = value1.toFloat(),
-                    onValueChange = { value1 = it.toDouble() },
+                    value = value1,
+                    onValueChange = { value1 = it },
                     unit = registry.unit1.symbol,
                     precision = registry.unit1.precision,
                     label = registry.unit1.name,
@@ -138,8 +138,8 @@ private fun RecordSelectorContent(
                 registry.unit2?.let { u2 ->
                     Spacer(Modifier.width(8.dp))
                     VerticalNumberPicker(
-                        value = value2.toFloat(),
-                        onValueChange = { value2 = it.toDouble() },
+                        value = value2,
+                        onValueChange = { value2 = it },
                         unit = u2.symbol,
                         precision = u2.precision,
                         label = u2.name,

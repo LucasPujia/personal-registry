@@ -49,7 +49,7 @@ import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
 import com.lucaspujia.personalregistry.utils.defaultWeightRegistry
-import com.lucaspujia.personalregistry.utils.recordsFromFloats
+import com.lucaspujia.personalregistry.utils.filtersFromDoubles
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DotProperties
@@ -122,7 +122,7 @@ private fun RecordsViewerContent(
                         data = remember(filters, primaryColor, secondaryColor) {
                             buildList {
                                 add(Line(
-                                    values = filters.values1D,
+                                    values = filters.calculatedValues,
                                     color = SolidColor(primaryColor),
                                     firstGradientFillColor = primaryColor.copy(alpha = .3f),
                                     secondGradientFillColor = primaryColor.copy(alpha = .0f),
@@ -138,7 +138,7 @@ private fun RecordsViewerContent(
                                 ))
                                 filters.goalValue?.let { goal ->
                                     add(Line(
-                                        values = filters.records.map { goal.toDouble() },
+                                        values = filters.records.map { goal },
                                         color = SolidColor(secondaryColor.copy(alpha = 0.5f)),
                                         strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
                                         drawStyle = DrawStyle.Stroke(width = 1.dp),
@@ -153,8 +153,8 @@ private fun RecordsViewerContent(
                             enabled = true,
                             labelCountPerLine = 5,
                         ),
-                        minValue = filters.minViewValue.toDouble(),
-                        maxValue = filters.maxViewValue.toDouble(),
+                        minValue = filters.minViewValue,
+                        maxValue = filters.maxViewValue,
                         labelProperties = LabelProperties(
                             enabled = true,
                             textStyle = MaterialTheme.typography.labelSmall.copy(color = textColor),
@@ -353,15 +353,16 @@ class RecordDeletionState(
 @ThemePreviews
 @Composable
 fun RecordsViewerPreview() {
-    val filters = ActiveFilters(
-        records = recordsFromFloats(listOf(70.0f, 69.5f, 69.5f, 71f, 71f))
+    val filters2 = filtersFromDoubles(
+        records = listOf(70.0, 69.5, 69.5, 71.0, 71.0),
+        goal = 68.0
     )
     PersonalRegistryTheme {
         RecordsViewerContent(
             registry = defaultWeightRegistry(),
             viewToggles = ViewToggles(),
             currentTimeRange = TimeRange.MONTH_1,
-            filters = filters
+            filters = filters2
         )
     }
 }

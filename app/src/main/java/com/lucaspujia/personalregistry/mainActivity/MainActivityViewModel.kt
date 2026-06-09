@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 val LocalMainActivityActions = staticCompositionLocalOf<MainActivityActions> {
     error("No MainActivityActions provided")
@@ -73,8 +72,8 @@ class MainActivityViewModel @Inject constructor(
                 if (updatedRecords.isNotEmpty() && filters.records.isEmpty()) {
                     val values = updatedRecords.map { it.calculatedValue(registry) }
                     applyFilters(
-                        minViewValue = values.min().roundToInt() - 2,
-                        maxViewValue = values.max().roundToInt() + 2,
+                        minViewValue = values.min() * 0.9,
+                        maxViewValue = values.max() * 1.1,
                         goalValue = registry.goalValue,
                         dateRange = filters.dateRange
                     )
@@ -148,8 +147,8 @@ class MainActivityViewModel @Inject constructor(
     }
 
     override fun applyFilters(
-        minViewValue: Int?,
-        maxViewValue: Int?,
+        minViewValue: Double?,
+        maxViewValue: Double?,
         goalValue: Double?,
         dateRange: Pair<Long, Long>?,
     ): Int? {
@@ -170,17 +169,17 @@ class MainActivityViewModel @Inject constructor(
 
         val calculatedValues = newRecords.map { it.calculatedValue(registry) }
 
-        val max = listOfNotNull(
-            calculatedValues.maxOrNull()?.toInt()?.plus(2),
-            goalValue?.plus(2),
-            maxViewValue
-        ).maxOrNull() ?: filters.maxViewValue
-
         val min = listOfNotNull(
-            calculatedValues.minOrNull()?.toInt()?.minus(2),
-            goalValue?.minus(2),
+            calculatedValues.minOrNull()?.times(0.9),
+            goalValue?.times(0.9),
             minViewValue
         ).minOrNull() ?: filters.minViewValue
+
+        val max = listOfNotNull(
+            calculatedValues.maxOrNull()?.times(1.1),
+            goalValue?.times(1.1),
+            maxViewValue
+        ).maxOrNull() ?: filters.maxViewValue
 
         filters = ActiveFilters(
             minViewValue = min,
