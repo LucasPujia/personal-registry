@@ -56,7 +56,8 @@ fun filtersFromDoubles(records: List<Double>, goal: Double? = null): ActiveFilte
         maxViewValue = maxViewValue,
         goalValue = goal,
         records = recordItems,
-        dateLabels = resolveDateLabels(recordItems)
+        dateLabels = resolveDateLabels(recordItems),
+        calculatedValues = records
     )
 }
 

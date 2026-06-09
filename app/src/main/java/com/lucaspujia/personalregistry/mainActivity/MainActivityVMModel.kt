@@ -66,5 +66,5 @@ data class ActiveFilters(
     val shouldAnimate: Boolean = true,
     val calculatedValues: List<Double> = emptyList()
 ) {
-    val calculatedFloats: List<Float> by lazy { calculatedValues.map { it.toFloat() } }
+//    val calculatedFloats: List<Float> by lazy { calculatedValues.map { it.toFloat() } }
 }
