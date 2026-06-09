@@ -13,7 +13,7 @@ import com.lucaspujia.personalregistry.database.registry.RegistryDao
 
 @Database(
     entities = [Registry::class, Record::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(RegistryConverters::class)

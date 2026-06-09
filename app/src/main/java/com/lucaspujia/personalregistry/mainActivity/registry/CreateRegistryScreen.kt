@@ -210,7 +210,8 @@ private fun CreateRegistryScreenContent(
                             emoji = emojiState.getCurrentEmoji().trim(),
                             unit1 = unit1.toMeasureUnit(),
                             unit2 = if (unit2Enabled) unit2.toMeasureUnit() else null,
-                            formula = if (unit2Enabled) formulaValue.text.trim() else null
+                            formula = if (unit2Enabled) formulaValue.text.trim() else null,
+                            goalValue = registryToEdit?.goalValue
                         ))
                     },
                     modifier = Modifier.fillMaxWidth(),

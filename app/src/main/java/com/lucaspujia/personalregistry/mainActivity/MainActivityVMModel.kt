@@ -46,7 +46,7 @@ interface MainActivityActions {
     fun applyFilters(
         minViewValue: Int? = null,
         maxViewValue: Int? = null,
-        goalValue: Int? = null,
+        goalValue: Double? = null,
         dateRange: Pair<Long, Long>? = lastMonthRange(),
     ): Int?
     fun applyViewToggles(showGraph: Boolean, showList: Boolean)
@@ -61,7 +61,7 @@ data class ActiveFilters(
     val maxViewValue: Int = 100,
     val records: List<RecordItem> = emptyList(),
     val dateLabels: List<String> = emptyList(),
-    val goalValue: Int? = null,
+    val goalValue: Double? = null,
     val dateRange: Pair<Long, Long>? = null,
     val shouldAnimate: Boolean = true,
     val calculatedValues: List<Double> = emptyList()

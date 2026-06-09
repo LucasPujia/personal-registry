@@ -75,14 +75,14 @@ class MainActivityViewModel @Inject constructor(
                     applyFilters(
                         minViewValue = values.min().roundToInt() - 2,
                         maxViewValue = values.max().roundToInt() + 2,
-                        goalValue = null,
+                        goalValue = registry.goalValue,
                         dateRange = filters.dateRange
                     )
                 } else {
                     applyFilters(
                         minViewValue = null,
                         maxViewValue = null,
-                        goalValue = null,
+                        goalValue = registry.goalValue,
                         dateRange = filters.dateRange,
                     )
                 }
@@ -150,15 +150,24 @@ class MainActivityViewModel @Inject constructor(
     override fun applyFilters(
         minViewValue: Int?,
         maxViewValue: Int?,
-        goalValue: Int?,
+        goalValue: Double?,
         dateRange: Pair<Long, Long>?,
     ): Int? {
+        val registry = activeRegistry ?: return null
+
+        if (goalValue != filters.goalValue) {
+            viewModelScope.launch {
+                val updatedRegistry = registry.copy(goalValue = goalValue)
+                withContext(Dispatchers.IO) { model.updateRegistry(updatedRegistry) }
+                activeRegistry = updatedRegistry
+            }
+        }
+
         if (allRecords.isEmpty()) filters = filters.copy(records = emptyList(), dateLabels = emptyList())
         val newRecords = getRecordsFilteredByDate(dateRange)
 
         if (newRecords.isEmpty()) return R.string.no_registry_error
 
-        val registry = activeRegistry ?: return null
         val calculatedValues = newRecords.map { it.calculatedValue(registry) }
 
         val max = listOfNotNull(
