@@ -52,6 +52,7 @@ import com.lucaspujia.personalregistry.mainActivity.RegistryEditorState
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.RegistryIcon
+import com.lucaspujia.personalregistry.utils.RegistryIcons
 import com.lucaspujia.personalregistry.utils.defaultMoneyRegistry
 import com.lucaspujia.personalregistry.utils.defaultWeightRegistry
 
@@ -90,7 +91,9 @@ private fun CreateRegistryScreenContent(
     var registryName by remember(registryToEdit) { mutableStateOf(registryToEdit?.name ?: "") }
     
     var emojiState by remember(registryToEdit) {
-        val isIcon = registryToEdit?.emoji?.startsWith(":") == true
+        val isIcon = registryToEdit?.emoji?.let {
+            RegistryIcons.getIcon(it) != null || it.startsWith(":")
+        } == true
         mutableStateOf(EmojiState(
             emoji = if (!isIcon) registryToEdit?.emoji ?: "" else "",
             icon = if (isIcon) registryToEdit?.emoji ?: "" else "",
