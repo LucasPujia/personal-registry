@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
@@ -46,6 +47,7 @@ import com.lucaspujia.personalregistry.mainActivity.recordsViewer.RecordDeletion
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.ui.theme.extendedColors
+import com.lucaspujia.personalregistry.utils.rememberNumberFormatter
 import kotlin.math.abs
 import kotlin.math.pow
 
@@ -78,6 +80,10 @@ private fun RecordCardContent(
     onDeleteClick: () -> Unit
 ) {
     val receiver = LocalDensity.current
+    val locale = LocalConfiguration.current.locales[0]
+    val formatter = rememberNumberFormatter(registry.unit1.precision, locale)
+    val formatter2 = registry.unit2?.let { rememberNumberFormatter(it.precision, locale) }
+
     val state = remember {
         AnchoredDraggableState(
             initialValue = DragValue.Settled,
@@ -168,7 +174,7 @@ private fun RecordCardContent(
                 Column(horizontalAlignment = Alignment.End) {
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
-                            recordItem.formattedValue1(registry),
+                            formatter.format(recordItem.value1),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -182,17 +188,17 @@ private fun RecordCardContent(
                         )
                     }
                     
-                    recordItem.formattedValue2(registry)?.let { v2 ->
+                    if (registry.unit2 != null && recordItem.value2 != null && formatter2 != null) {
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
-                                v2,
+                                formatter2.format(recordItem.value2),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.secondary
                             )
                             Spacer(Modifier.width(4.dp))
                             Text(
-                                registry.unit2?.symbol ?: "",
+                                registry.unit2.symbol,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(bottom = 2.dp)
@@ -208,8 +214,16 @@ private fun RecordCardContent(
                             else -> MaterialTheme.extendedColors.trendNeutral
                         }
 
+                        val varText = when {
+                            effectiveVar == 0.0 -> "="
+                            else -> {
+                                val sign = if (effectiveVar >= 0) "+" else ""
+                                "$sign${formatter.format(effectiveVar)} ${registry.unit1.symbol}"
+                            }
+                        }
+
                         Text(
-                            text = recordItem.formattedVariation(registry, effectiveVar) ?: "",
+                            text = varText,
                             color = color,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold

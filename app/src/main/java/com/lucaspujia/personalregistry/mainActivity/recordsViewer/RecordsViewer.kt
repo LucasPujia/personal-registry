@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -50,6 +51,7 @@ import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
 import com.lucaspujia.personalregistry.utils.defaultWeightRegistry
 import com.lucaspujia.personalregistry.utils.filtersFromDoubles
+import com.lucaspujia.personalregistry.utils.format
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DotProperties
@@ -89,6 +91,7 @@ private fun RecordsViewerContent(
     onRangeSelected: (TimeRange) -> Unit = {},
 ) {
     val isPreview = LocalInspectionMode.current
+    val locale = LocalConfiguration.current.locales[0]
     val deletionState = rememberRecordDeletionState()
 
     ConfirmDeletionDialog(deletionState = deletionState)
@@ -167,7 +170,10 @@ private fun RecordsViewerContent(
                         ),
                         indicatorProperties = HorizontalIndicatorProperties(
                             textStyle = TextStyle.Default.copy(color = textColor),
-                            padding = 16.dp
+                            padding = 16.dp,
+                            contentBuilder = { value ->
+                                value.format(registry.unit1.precision, locale)
+                            }
                         ),
                         gridProperties = GridProperties(
                             enabled = true,

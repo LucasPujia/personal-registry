@@ -9,8 +9,10 @@ import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.extensionFunctions.capitalize
 import com.lucaspujia.personalregistry.utils.FormulaEvaluator
 import com.lucaspujia.personalregistry.utils.dateKeyToLocalDate
+import com.lucaspujia.personalregistry.utils.format
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * Representa un elemento de registro (Record) optimizado para la interfaz de usuario.
@@ -29,20 +31,21 @@ data class RecordItem(
 
     fun localDate(): LocalDate = dateKeyToLocalDate(dateKey)
 
+    // TODO: Revisar su uso respecto al nuevo NumberUtils
     /**
      * Retorna el valor de la unidad 1 formateado según la precisión definida.
      */
-    fun formattedValue1(registry: Registry): String {
-        return "%.${registry.unit1.precision}f".format(value1)
+    fun formattedValue1(registry: Registry, locale: Locale = Locale.getDefault()): String {
+        return value1.format(registry.unit1.precision, locale)
     }
 
     /**
      * Retorna el valor de la unidad 2 formateado, si existe.
      */
-    fun formattedValue2(registry: Registry): String? {
+    fun formattedValue2(registry: Registry, locale: Locale = Locale.getDefault()): String? {
         val u2 = registry.unit2 ?: return null
         val v2 = value2 ?: return null
-        return "%.${u2.precision}f".format(v2)
+        return v2.format(u2.precision, locale)
     }
 
     /**
@@ -64,11 +67,11 @@ data class RecordItem(
     /**
      * Retorna la variación formateada con signo y unidad.
      */
-    fun formattedVariation(registry: Registry, variation: Double?): String? {
+    fun formattedVariation(registry: Registry, variation: Double?, locale: Locale = Locale.getDefault()): String? {
         if (variation == null) return null
         if (variation == 0.0) return "="
         val sign = if (variation >= 0) "+" else ""
-        return "$sign%.${registry.unit1.precision}f ${registry.unit1.symbol}".format(variation)
+        return "$sign${variation.format(registry.unit1.precision, locale)} ${registry.unit1.symbol}"
     }
 }
 
