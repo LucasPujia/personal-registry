@@ -36,7 +36,7 @@ class MainActivityViewModel @Inject constructor(
     override val allRegistries: Flow<List<Registry>> = model.registriesFlow
 
     private var allRecords: List<RecordItem> = emptyList()
-    private var registeredDateKeys: Set<String> = emptySet()
+    private var registeredDateKeys by mutableStateOf<Set<String>>(emptySet())
     private var recordsJob: Job? = null
 
     // Data filters
@@ -64,6 +64,7 @@ class MainActivityViewModel @Inject constructor(
 
     override fun switchRegistry(registry: Registry) {
         activeRegistry = registry
+        registeredDateKeys = emptySet()
         recordsJob?.cancel()
         recordsJob = model.getRecordsFlow(registry.id)
             .onEach { updatedRecords ->
@@ -94,8 +95,13 @@ class MainActivityViewModel @Inject constructor(
      */
     override fun addRecord(value1: Double, value2: Double?, pickerMillis: Long?) {
         val registryId = activeRegistry?.id ?: return
+        val date = pickerMillis?.let { fromDatePicker(it) } ?: now()
+        val dateKey = localDateToDateKey(date)
+
+        // Actualización optimista para que la UI responda instantáneamente
+        registeredDateKeys = registeredDateKeys + dateKey
+
         viewModelScope.launch {
-            val date = pickerMillis?.let { fromDatePicker(it) } ?: now()
             withContext(Dispatchers.IO) { model.addRecord(registryId, value1, value2, date) }
         }
     }
