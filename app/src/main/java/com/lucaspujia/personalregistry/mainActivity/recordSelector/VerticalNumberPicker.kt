@@ -45,13 +45,9 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.RECORD_MAX_VALUE
@@ -59,6 +55,8 @@ import com.lucaspujia.personalregistry.mainActivity.RECORD_MIN_VALUE
 import com.lucaspujia.personalregistry.mainActivity.RECORD_PIXELS_PER_UNIT
 import com.lucaspujia.personalregistry.mainActivity.RECORD_SCROLL_INVERTED
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
+import com.lucaspujia.personalregistry.utils.DecimalVisualTransformation
+import com.lucaspujia.personalregistry.utils.rememberNumberFormatter
 import kotlinx.coroutines.launch
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -141,6 +139,8 @@ fun VerticalNumberPicker(
 
     var valueTextWidthPx by remember { mutableIntStateOf(500) }
     val density = LocalDensity.current
+    val locale = LocalConfiguration.current.locales[0]
+    val formatter = rememberNumberFormatter(precision, locale)
 
     Box(
         contentAlignment = Alignment.Center,
@@ -185,7 +185,7 @@ fun VerticalNumberPicker(
         val startIndex = centerIndexInt - 2
         val endIndex = centerIndexInt + 2
 
-        val currentTextValue = "%.${precision}f".format(value)
+        val currentTextValue = formatter.format(value)
         val baseFontSize = if (isSmall) MaterialTheme.typography.displaySmall.fontSize else MaterialTheme.typography.displayLarge.fontSize
         val adjustedFontSize = if (currentTextValue.length > 6) {
             baseFontSize * (6.5f / currentTextValue.length).coerceIn(0.4f, 1f)
@@ -206,7 +206,7 @@ fun VerticalNumberPicker(
             val yOffset = distanceFromCenter * mainRecordHeight.value
 
             Text(
-                text = "%.${precision}f".format(itemValue),
+                text = formatter.format(itemValue),
                 fontSize = adjustedFontSize,
                 fontWeight = if (isMainValue) FontWeight.Bold else FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary,
@@ -283,7 +283,7 @@ private fun ValueInputModal(
         
         // Estado interno simple: siempre usa punto decimal y sin separadores de miles
         var rawText by remember { 
-            mutableStateOf(String.format(Locale.getDefault(), "%.${precision}f", value))
+            mutableStateOf(String.format(Locale.US, "%.${precision}f", value))
         }
         var successfulEdit by remember { mutableStateOf(true) }
 
@@ -343,60 +343,6 @@ private fun ValueInputModal(
                 TextButton(onClick = { showDialog.value = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
-    }
-}
-
-private class DecimalVisualTransformation(private val symbols: DecimalFormatSymbols) : VisualTransformation {
-    override fun filter(text: AnnotatedString): TransformedText {
-        val original = text.text
-        if (original.isEmpty()) return TransformedText(text, OffsetMapping.Identity)
-
-        val parts = original.split('.')
-        val intPart = parts[0]
-        val decPart = if (parts.size > 1) symbols.decimalSeparator + parts[1] else ""
-
-        val formattedInt = StringBuilder()
-        for (i in intPart.indices) {
-            formattedInt.append(intPart[i])
-            val remaining = intPart.length - i - 1
-            if (remaining > 0 && remaining % 3 == 0) {
-                formattedInt.append(symbols.groupingSeparator)
-            }
-        }
-
-        val transformed = formattedInt.toString() + decPart
-        
-        val offsetMapping = object : OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int {
-                var o = 0
-                var t = 0
-                while (o < offset && o < original.length) {
-                    if (t < transformed.length && transformed[t] == symbols.groupingSeparator) {
-                        t++
-                        continue
-                    }
-                    o++
-                    t++
-                }
-                return t
-            }
-
-            override fun transformedToOriginal(offset: Int): Int {
-                var o = 0
-                var t = 0
-                while (t < offset && t < transformed.length) {
-                    if (transformed[t] == symbols.groupingSeparator) {
-                        t++
-                        continue
-                    }
-                    o++
-                    t++
-                }
-                return o
-            }
-        }
-
-        return TransformedText(AnnotatedString(transformed), offsetMapping)
     }
 }
 
