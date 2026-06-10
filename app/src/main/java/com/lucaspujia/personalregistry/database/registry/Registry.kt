@@ -11,5 +11,6 @@ data class Registry(
     val emoji: String,
     val unit1: MeasureUnit,
     val unit2: MeasureUnit? = null,
-    val formula: String? = null
+    val formula: String? = null,
+    val goalValue: Double? = null
 )

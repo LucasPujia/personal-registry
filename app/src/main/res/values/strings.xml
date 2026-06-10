@@ -128,7 +128,7 @@ Text: Add today's value to keep your records up to date.
     <string name="unit_name">Unit Name (e.g. Kilogram)</string>
     <string name="unit_symbol">Unit Symbol (e.g. kg)</string>
     <string name="unit2_enabled">Enable second unit?</string>
-    <string name="formula_desc">Formula (e.g. v1 / (v2*v2))</string>
+    <string name="formula_desc">Formula (e.g. 3*v1 / (v2*v2))</string>
     <string name="suggested_registries">Suggested Registries</string>
     <string name="weight">Weight</string>
     <string name="money">Money</string>
@@ -148,4 +148,8 @@ Text: Add today's value to keep your records up to date.
     <string name="use_emoji">Emoji</string>
     <string name="emoji_hint">Enter a single emoji</string>
     <string name="emoji_length_error">Please enter only one emoji</string>
+    <string name="done">Done</string>
+    <string name="formula_preview_empty">Waiting for formula...</string>
+    <string name="formula_preview_result">If %2$s=%1$.1f and %4$s=%3$.1f, result is %5$.2f</string>
+    <string name="formula_invalid">Invalid formula</string>
 </resources>

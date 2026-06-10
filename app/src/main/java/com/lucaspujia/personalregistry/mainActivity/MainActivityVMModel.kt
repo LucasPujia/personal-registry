@@ -44,9 +44,9 @@ interface MainActivityActions {
     fun removeRecord(recordItem: RecordItem)
     fun isSelectableDate(utcTimeMillis: Long): Boolean
     fun applyFilters(
-        minViewValue: Int? = null,
-        maxViewValue: Int? = null,
-        goalValue: Int? = null,
+        minViewValue: Double? = null,
+        maxViewValue: Double? = null,
+        goalValue: Double? = null,
         dateRange: Pair<Long, Long>? = lastMonthRange(),
     ): Int?
     fun applyViewToggles(showGraph: Boolean, showList: Boolean)
@@ -57,15 +57,14 @@ interface MainActivityActions {
 }
 
 data class ActiveFilters(
-    val minViewValue: Int = 0,
-    val maxViewValue: Int = 100,
+    val minViewValue: Double = 0.0,
+    val maxViewValue: Double = 100.0,
     val records: List<RecordItem> = emptyList(),
     val dateLabels: List<String> = emptyList(),
-    val goalValue: Int? = null,
+    val goalValue: Double? = null,
     val dateRange: Pair<Long, Long>? = null,
     val shouldAnimate: Boolean = true,
+    val calculatedValues: List<Double> = emptyList()
 ) {
-    val values1F: List<Float> by lazy { records.map { it.value1.toFloat() } }
-    val values1D: List<Double> by lazy { records.map { it.value1 } }
-    val values2F: List<Float> by lazy { records.mapNotNull { it.value2?.toFloat() } }
+//    val calculatedFloats: List<Float> by lazy { calculatedValues.map { it.toFloat() } }
 }

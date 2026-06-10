@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -49,7 +50,8 @@ import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.OUTER_PADDING
 import com.lucaspujia.personalregistry.utils.defaultWeightRegistry
-import com.lucaspujia.personalregistry.utils.recordsFromFloats
+import com.lucaspujia.personalregistry.utils.filtersFromDoubles
+import com.lucaspujia.personalregistry.utils.format
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.models.AnimationMode
 import ir.ehsannarmani.compose_charts.models.DotProperties
@@ -89,6 +91,7 @@ private fun RecordsViewerContent(
     onRangeSelected: (TimeRange) -> Unit = {},
 ) {
     val isPreview = LocalInspectionMode.current
+    val locale = LocalConfiguration.current.locales[0]
     val deletionState = rememberRecordDeletionState()
 
     ConfirmDeletionDialog(deletionState = deletionState)
@@ -122,7 +125,7 @@ private fun RecordsViewerContent(
                         data = remember(filters, primaryColor, secondaryColor) {
                             buildList {
                                 add(Line(
-                                    values = filters.values1D,
+                                    values = filters.calculatedValues,
                                     color = SolidColor(primaryColor),
                                     firstGradientFillColor = primaryColor.copy(alpha = .3f),
                                     secondGradientFillColor = primaryColor.copy(alpha = .0f),
@@ -136,23 +139,9 @@ private fun RecordsViewerContent(
                                         color = SolidColor(primaryColor)
                                     )
                                 ))
-                                if (registry.unit2 != null) {
-                                    add(Line(
-                                        values = filters.records.map { it.value2 ?: 0.0 },
-                                        color = SolidColor(secondaryColor),
-                                        strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
-                                        drawStyle = DrawStyle.Stroke(width = 2.dp),
-                                        curvedEdges = true,
-                                        dotProperties = DotProperties(
-                                            enabled = filters.records.size < 32,
-                                            radius = 4.dp,
-                                            color = SolidColor(secondaryColor)
-                                        )
-                                    ))
-                                }
                                 filters.goalValue?.let { goal ->
                                     add(Line(
-                                        values = filters.records.map { goal.toDouble() },
+                                        values = filters.records.map { goal },
                                         color = SolidColor(secondaryColor.copy(alpha = 0.5f)),
                                         strokeAnimationSpec = tween(2000, easing = EaseInOutCubic),
                                         drawStyle = DrawStyle.Stroke(width = 1.dp),
@@ -167,8 +156,8 @@ private fun RecordsViewerContent(
                             enabled = true,
                             labelCountPerLine = 5,
                         ),
-                        minValue = filters.minViewValue.toDouble(),
-                        maxValue = filters.maxViewValue.toDouble(),
+                        minValue = filters.minViewValue,
+                        maxValue = filters.maxViewValue,
                         labelProperties = LabelProperties(
                             enabled = true,
                             textStyle = MaterialTheme.typography.labelSmall.copy(color = textColor),
@@ -181,7 +170,10 @@ private fun RecordsViewerContent(
                         ),
                         indicatorProperties = HorizontalIndicatorProperties(
                             textStyle = TextStyle.Default.copy(color = textColor),
-                            padding = 16.dp
+                            padding = 16.dp,
+                            contentBuilder = { value ->
+                                value.format(registry.unit1.precision, locale)
+                            }
                         ),
                         gridProperties = GridProperties(
                             enabled = true,
@@ -199,10 +191,10 @@ private fun RecordsViewerContent(
         if (viewToggles.list) {
             Column(modifier = Modifier.padding(top = OUTER_PADDING)) {
                 HistorialHeader()
-                val recordsWithVariation = remember(filters.records) {
+                val recordsWithVariation = remember(filters.records, registry) {
                     filters.records.mapIndexed { index, record ->
                         val previous = if (index > 0) filters.records[index - 1] else null
-                        record to record.calculateVariation(previous)
+                        record to record.calculateVariation(registry, previous)
                     }.reversed()
                 }
                 LazyColumn {
@@ -367,15 +359,16 @@ class RecordDeletionState(
 @ThemePreviews
 @Composable
 fun RecordsViewerPreview() {
-    val filters = ActiveFilters(
-        records = recordsFromFloats(listOf(70.0f, 69.5f))
+    val filters2 = filtersFromDoubles(
+        records = listOf(70.0, 69.5, 69.5, 71.0, 71.0),
+        goal = 68.0
     )
     PersonalRegistryTheme {
         RecordsViewerContent(
             registry = defaultWeightRegistry(),
             viewToggles = ViewToggles(),
             currentTimeRange = TimeRange.MONTH_1,
-            filters = filters
+            filters = filters2
         )
     }
 }

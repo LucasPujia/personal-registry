@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -39,8 +40,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,44 +52,51 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
-import com.lucaspujia.personalregistry.extensionFunctions.isFloat
 import com.lucaspujia.personalregistry.mainActivity.RECORD_MAX_VALUE
 import com.lucaspujia.personalregistry.mainActivity.RECORD_MIN_VALUE
 import com.lucaspujia.personalregistry.mainActivity.RECORD_PIXELS_PER_UNIT
 import com.lucaspujia.personalregistry.mainActivity.RECORD_SCROLL_INVERTED
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
+import com.lucaspujia.personalregistry.utils.DecimalVisualTransformation
+import com.lucaspujia.personalregistry.utils.rememberNumberFormatter
 import kotlinx.coroutines.launch
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.pow
-import kotlin.math.roundToInt
+import kotlin.math.roundToLong
+import kotlin.math.sign
 
 // TODO: simplificar parametros
 @Composable
 fun VerticalNumberPicker(
-    value: Float,
-    onValueChange: (Float) -> Unit,
+    value: Double,
+    onValueChange: (Double) -> Unit,
     unit: String,
     modifier: Modifier = Modifier,
     precision: Int = 1,
     pixelsPerUnit: Float = RECORD_PIXELS_PER_UNIT,
     isScrollInverted: Boolean = RECORD_SCROLL_INVERTED,
-    minValue: Float = RECORD_MIN_VALUE,
-    maxValue: Float = RECORD_MAX_VALUE,
+    minValue: Double = RECORD_MIN_VALUE,
+    maxValue: Double = RECORD_MAX_VALUE,
     label: String = "",
     isSmall: Boolean = false,
     isFocused: Boolean = false,
     onFocused: () -> Unit = {},
 ) {
-    val step = remember(precision) { (10.0).pow(-precision).toFloat() }
+    val step = remember(precision) { (10.0).pow(-precision) }
     val scope = rememberCoroutineScope()
-    
-    val continuousValue = remember { Animatable(value) }
+
+    // Animatable solo acepta floats
+    val continuousValue = remember { Animatable(value.toFloat()) }
     var isDragging by remember { mutableStateOf(false) }
+    var startDraggingValue by remember { mutableFloatStateOf(0f) }
+    var totalDragOffset by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(value) {
-        if (!isDragging && abs(continuousValue.value - value) > 0.0001f) {
+        if (!isDragging && abs(continuousValue.value - value) > 0.0001) {
             continuousValue.animateTo(
-                targetValue = value,
+                targetValue = value.toFloat(),
                 animationSpec = spring(stiffness = Spring.StiffnessLow)
             )
         }
@@ -93,15 +104,35 @@ fun VerticalNumberPicker(
 
     val draggableState = rememberDraggableState { delta ->
         val directionMultiplier = if (isScrollInverted) 1f else -1f
-        val deltaUnits = directionMultiplier * delta / pixelsPerUnit
-        val newValue = (continuousValue.value + deltaUnits).coerceIn(minValue, maxValue)
+        totalDragOffset += delta * directionMultiplier
+        
+        val offsetUnits = totalDragOffset / pixelsPerUnit
+        val absOffsetUnits = abs(offsetUnits)
+        val valueSensitivity = 1f + (abs(startDraggingValue) / 10000f)
+
+        val result = when {
+            absOffsetUnits < 1f -> absOffsetUnits // Tramo 1: Lineal y lento (precisión máxima)
+            absOffsetUnits < 2f -> absOffsetUnits * 1.5f // Tramo 1bis: Lineal y rápido
+            absOffsetUnits < 3f -> {
+                val quadraticPart = (absOffsetUnits - 1f).pow(1.5f) * valueSensitivity
+                absOffsetUnits + quadraticPart // Tramo 2: Cuadrático + Sensibilidad por valor
+            }
+            else -> {
+                val quadraticPart = (absOffsetUnits - 1f).pow(1.5f) * valueSensitivity
+                val exponentialPart = (absOffsetUnits - 2f).pow(3.0f) * valueSensitivity
+                absOffsetUnits + quadraticPart + exponentialPart // Tramo 3: Exponencial
+            }
+        }
+        val acceleratedUnits = result * sign(offsetUnits)
+        
+        val newValue = (startDraggingValue + acceleratedUnits).toDouble().coerceIn(minValue, maxValue)
         
         scope.launch {
-            continuousValue.snapTo(newValue)
+            continuousValue.snapTo(newValue.toFloat())
         }
         
         val factor = (10.0).pow(precision)
-        val snapped = ((newValue * factor).roundToInt() / factor).toFloat()
+        val snapped = ((newValue * factor).roundToLong() / factor)
         if (snapped != value) {
             onValueChange(snapped)
         }
@@ -109,6 +140,8 @@ fun VerticalNumberPicker(
 
     var valueTextWidthPx by remember { mutableIntStateOf(500) }
     val density = LocalDensity.current
+    val locale = LocalConfiguration.current.locales[0]
+    val formatter = rememberNumberFormatter(precision, locale)
 
     Box(
         contentAlignment = Alignment.Center,
@@ -126,13 +159,15 @@ fun VerticalNumberPicker(
                 orientation = Orientation.Vertical,
                 onDragStarted = { 
                     isDragging = true
+                    startDraggingValue = continuousValue.value
+                    totalDragOffset = 0f
                     onFocused()
                 },
                 onDragStopped = {
                     isDragging = false
                     scope.launch {
                         continuousValue.animateTo(
-                            targetValue = value,
+                            targetValue = value.toFloat(),
                             animationSpec = spring(
                                 dampingRatio = Spring.DampingRatioMediumBouncy,
                                 stiffness = Spring.StiffnessLow
@@ -146,14 +181,22 @@ fun VerticalNumberPicker(
         val baseOffset = if (isSmall) 4.dp else 8.dp
         val unitOffsetX = remember(valueTextWidthPx, density) { (valueTextWidthPx / (2f * density.density)).dp + baseOffset }
 
-        val centerIndexFloat = continuousValue.value / step
-        val centerIndexInt = centerIndexFloat.roundToInt()
+        val centerIndexFloat = (continuousValue.value / step).toFloat()
+        val centerIndexInt = (continuousValue.value / step).roundToLong().toInt()
         val startIndex = centerIndexInt - 2
         val endIndex = centerIndexInt + 2
 
+        val currentTextValue = formatter.format(value)
+        val baseFontSize = if (isSmall) MaterialTheme.typography.displaySmall.fontSize else MaterialTheme.typography.displayLarge.fontSize
+        val adjustedFontSize = if (currentTextValue.length > 6) {
+            baseFontSize * (6.5f / currentTextValue.length).coerceIn(0.4f, 1f)
+        } else {
+            baseFontSize
+        }
+
         for (i in startIndex..endIndex) {
             val itemValue = i * step
-            if (itemValue < minValue - 0.0001f || itemValue > maxValue + 0.0001f) continue
+            if (itemValue < minValue - 0.0001 || itemValue > maxValue + 0.0001) continue
 
             val distanceFromCenter = centerIndexFloat - i
             val absDistance = abs(distanceFromCenter)
@@ -164,8 +207,8 @@ fun VerticalNumberPicker(
             val yOffset = distanceFromCenter * mainRecordHeight.value
 
             Text(
-                text = "%.${precision}f".format(itemValue),
-                fontSize = if (isSmall) MaterialTheme.typography.displaySmall.fontSize else MaterialTheme.typography.displayLarge.fontSize,
+                text = formatter.format(itemValue),
+                fontSize = adjustedFontSize,
                 fontWeight = if (isMainValue) FontWeight.Bold else FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary,
                 onTextLayout = { 
@@ -219,46 +262,64 @@ fun VerticalNumberPicker(
                 }
         )
 
-        ValueInputModal(showDialog, value.toString(), unit, label, onValueChange, minValue, maxValue, isSmall)
+        ValueInputModal(showDialog, value, precision, unit, label, onValueChange, minValue, maxValue, isSmall)
     }
 }
 
 @Composable
 private fun ValueInputModal(
     showDialog: MutableState<Boolean>,
-    initialValue: String,
+    value: Double,
+    precision: Int,
     unit: String,
     label: String,
-    onValueChange: (Float) -> Unit,
-    minValue: Float,
-    maxValue: Float,
+    onValueChange: (Double) -> Unit,
+    minValue: Double,
+    maxValue: Double,
     isSmall: Boolean
 ) {
     if (showDialog.value) {
-        var editValue by remember { mutableStateOf(initialValue) }
-        var successfulEdit by remember { mutableStateOf(initialValue.isFloat()) }
+        val configuration = LocalConfiguration.current
+        val symbols = remember(configuration) { DecimalFormatSymbols(configuration.locales[0]) }
+        val focusRequester = remember { FocusRequester() }
 
-        val closeDialog = { showDialog.value = false }
+        // Estado interno simple: siempre usa punto decimal y sin separadores de miles
+        var rawText by remember { 
+            mutableStateOf(String.format(Locale.US, "%.${precision}f", value))
+        }
+        var successfulEdit by remember { mutableStateOf(true) }
+
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+        }
+
         val onConfirm = {
-            val parsed = editValue.replace(',', '.').toFloatOrNull()
+            val parsed = rawText.toDoubleOrNull()
             if (parsed != null) {
                 onValueChange(parsed.coerceIn(minValue, maxValue))
-                closeDialog()
+                showDialog.value = false
             } else {
                 successfulEdit = false
             }
         }
 
         AlertDialog(
-            onDismissRequest = closeDialog,
+            onDismissRequest = { showDialog.value = false },
             text = {
                 Column {
                     OutlinedTextField(
-                        value = editValue,
-                        onValueChange = { if (it.isFloat()) {
-                            editValue = it
-                            successfulEdit = true
-                        } },
+                        value = rawText,
+                        onValueChange = { input ->
+                            // Aceptamos el separador del locale pero lo guardamos como punto internamente
+                            val text = input.replace(symbols.decimalSeparator, '.')
+                            val filtered = text.filter { it.isDigit() || it == '.' }
+                            
+                            if (filtered.isEmpty() || filtered.toDoubleOrNull() != null || filtered == ".") {
+                                rawText = filtered
+                                successfulEdit = true
+                            }
+                        },
+                        visualTransformation = remember(symbols) { DecimalVisualTransformation(symbols) },
                         label = { Text("$label ($unit)") },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Decimal,
@@ -267,11 +328,9 @@ private fun ValueInputModal(
                         keyboardActions = KeyboardActions(onDone = { onConfirm() }),
                         singleLine = true,
                         textStyle = if (isSmall) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                         isError = !successfulEdit,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            errorBorderColor = MaterialTheme.colorScheme.error,
-                        )
+                        colors = OutlinedTextFieldDefaults.colors(errorBorderColor = MaterialTheme.colorScheme.error)
                     )
                     if (!successfulEdit) {
                         Text(
@@ -284,14 +343,10 @@ private fun ValueInputModal(
                 }
             },
             confirmButton = {
-                Button(onClick = onConfirm) {
-                    Text(stringResource(R.string.accept))
-                }
+                Button(onClick = onConfirm) { Text(stringResource(R.string.accept)) }
             },
             dismissButton = {
-                TextButton(onClick = closeDialog) {
-                    Text(stringResource(R.string.cancel))
-                }
+                TextButton(onClick = { showDialog.value = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -300,7 +355,7 @@ private fun ValueInputModal(
 @ThemePreviews
 @Composable
 fun VerticalNumberPickerPreview() {
-    var value by remember { mutableFloatStateOf(75f) }
+    var value by remember { mutableDoubleStateOf(75.0) }
     Row(modifier = Modifier.fillMaxWidth()) {
         VerticalNumberPicker(
             value = value,

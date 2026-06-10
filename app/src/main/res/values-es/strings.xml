@@ -123,7 +123,7 @@ Texto: Ingresá el valor de hoy para seguir viendo tu progreso.
     <string name="unit_name">Nombre de Unidad (ej: Kilogramo)</string>
     <string name="unit_symbol">Símbolo de Unidad (ej: kg)</string>
     <string name="unit2_enabled">¿Habilitar segunda unidad?</string>
-    <string name="formula_desc">Fórmula (ej: v1 / (v2*v2))</string>
+    <string name="formula_desc">Fórmula (ej: 3*v1 / (v2*v2))</string>
     <string name="suggested_registries">Registros sugeridos</string>
     <string name="weight">Peso</string>
     <string name="money">Dinero</string>
@@ -143,4 +143,8 @@ Texto: Ingresá el valor de hoy para seguir viendo tu progreso.
     <string name="use_emoji">Emoji</string>
     <string name="emoji_hint">Ingresa un solo emoji</string>
     <string name="emoji_length_error">Por favor, ingresa solo un emoji</string>
+    <string name="done">Listo</string>
+    <string name="formula_preview_empty">Esperando fórmula…</string>
+    <string name="formula_preview_result">Si %2$s=%1$.1f y %4$s=%3$.1f, el resultado es %5$.2f</string>
+    <string name="formula_invalid">Fórmula inválida</string>
 </resources>

@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 val LocalMainActivityActions = staticCompositionLocalOf<MainActivityActions> {
     error("No MainActivityActions provided")
@@ -37,7 +36,7 @@ class MainActivityViewModel @Inject constructor(
     override val allRegistries: Flow<List<Registry>> = model.registriesFlow
 
     private var allRecords: List<RecordItem> = emptyList()
-    private var registeredDateKeys: Set<String> = emptySet()
+    private var registeredDateKeys by mutableStateOf<Set<String>>(emptySet())
     private var recordsJob: Job? = null
 
     // Data filters
@@ -65,19 +64,27 @@ class MainActivityViewModel @Inject constructor(
 
     override fun switchRegistry(registry: Registry) {
         activeRegistry = registry
+        registeredDateKeys = emptySet()
         recordsJob?.cancel()
         recordsJob = model.getRecordsFlow(registry.id)
             .onEach { updatedRecords ->
                 syncRecords(updatedRecords)
 
                 if (updatedRecords.isNotEmpty() && filters.records.isEmpty()) {
-                    val values = updatedRecords.map { it.value1 }
+                    val values = updatedRecords.map { it.calculatedValue(registry) }
                     applyFilters(
-                        minViewValue = values.min().roundToInt() - 2,
-                        maxViewValue = values.max().roundToInt() + 2,
+                        minViewValue = values.min() * 0.9,
+                        maxViewValue = values.max() * 1.1,
+                        goalValue = registry.goalValue,
+                        dateRange = filters.dateRange
                     )
                 } else {
-                    reapplyFilters()
+                    applyFilters(
+                        minViewValue = null,
+                        maxViewValue = null,
+                        goalValue = registry.goalValue,
+                        dateRange = filters.dateRange,
+                    )
                 }
             }
             .launchIn(viewModelScope)
@@ -88,8 +95,13 @@ class MainActivityViewModel @Inject constructor(
      */
     override fun addRecord(value1: Double, value2: Double?, pickerMillis: Long?) {
         val registryId = activeRegistry?.id ?: return
+        val date = pickerMillis?.let { fromDatePicker(it) } ?: now()
+        val dateKey = localDateToDateKey(date)
+
+        // Actualización optimista para que la UI responda instantáneamente
+        registeredDateKeys = registeredDateKeys + dateKey
+
         viewModelScope.launch {
-            val date = pickerMillis?.let { fromDatePicker(it) } ?: now()
             withContext(Dispatchers.IO) { model.addRecord(registryId, value1, value2, date) }
         }
     }
@@ -141,27 +153,39 @@ class MainActivityViewModel @Inject constructor(
     }
 
     override fun applyFilters(
-        minViewValue: Int?,
-        maxViewValue: Int?,
-        goalValue: Int?,
+        minViewValue: Double?,
+        maxViewValue: Double?,
+        goalValue: Double?,
         dateRange: Pair<Long, Long>?,
     ): Int? {
+        val registry = activeRegistry ?: return null
+
+        if (goalValue != filters.goalValue) {
+            viewModelScope.launch {
+                val updatedRegistry = registry.copy(goalValue = goalValue)
+                withContext(Dispatchers.IO) { model.updateRegistry(updatedRegistry) }
+                activeRegistry = updatedRegistry
+            }
+        }
+
         if (allRecords.isEmpty()) filters = filters.copy(records = emptyList(), dateLabels = emptyList())
         val newRecords = getRecordsFilteredByDate(dateRange)
 
         if (newRecords.isEmpty()) return R.string.no_registry_error
 
-        val max = listOfNotNull(
-            newRecords.maxOf { it.value1 }.toInt() + 2,
-            goalValue?.plus(2),
-            maxViewValue
-        ).maxOrNull() ?: filters.maxViewValue
+        val calculatedValues = newRecords.map { it.calculatedValue(registry) }
 
         val min = listOfNotNull(
-            newRecords.minOf { it.value1 }.toInt() - 2,
-            goalValue?.minus(2),
+            calculatedValues.minOrNull()?.times(0.9),
+            goalValue?.times(0.9),
             minViewValue
         ).minOrNull() ?: filters.minViewValue
+
+        val max = listOfNotNull(
+            calculatedValues.maxOrNull()?.times(1.1),
+            goalValue?.times(1.1),
+            maxViewValue
+        ).maxOrNull() ?: filters.maxViewValue
 
         filters = ActiveFilters(
             minViewValue = min,
@@ -171,6 +195,7 @@ class MainActivityViewModel @Inject constructor(
             records = newRecords,
             shouldAnimate = dateRange != filters.dateRange || goalValue != filters.goalValue,
             dateLabels = resolveDateLabels(newRecords),
+            calculatedValues = calculatedValues
         )
         return null
     }
@@ -190,14 +215,6 @@ class MainActivityViewModel @Inject constructor(
         )
     }
 
-    private fun reapplyFilters() {
-        applyFilters(
-            minViewValue = filters.minViewValue,
-            maxViewValue = filters.maxViewValue,
-            goalValue = filters.goalValue,
-            dateRange = filters.dateRange,
-        )
-    }
 
     private fun syncRecords(records: List<RecordItem>) {
         allRecords = records
