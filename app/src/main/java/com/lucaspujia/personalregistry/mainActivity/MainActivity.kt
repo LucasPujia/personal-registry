@@ -113,8 +113,6 @@ private fun PersonalRegistryAppContent(
 
         BottomSheetHandler()
 
-        ToastHandler(toasts)
-
         listOf(
             Pair(settingsOpened) @Composable { SettingsScreen() },
             Pair(!registryEditorState.isClosed()) @Composable { CreateRegistryScreen() }
@@ -127,6 +125,8 @@ private fun PersonalRegistryAppContent(
                 screen()
             }
         }
+
+        ToastHandler(toasts)
     }
 }
 

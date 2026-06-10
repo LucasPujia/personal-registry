@@ -31,6 +31,8 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun ToastHandler(toasts: List<RegistryToast>) {
+    if (toasts.isEmpty()) return
+
     val maxVisible = 3
     // Obtenemos los 3 más antiguos para procesarlos primero (FIFO)
     val oldestToasts = remember(toasts) { toasts.takeLast(maxVisible) }
@@ -38,27 +40,37 @@ fun ToastHandler(toasts: List<RegistryToast>) {
     val visibleToasts = remember(oldestToasts) { oldestToasts.reversed() }
     val enqueuedCount = toasts.size - oldestToasts.size
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .navigationBarsPadding(),
-        contentAlignment = Alignment.BottomCenter
+    Popup(
+        alignment = Alignment.BottomCenter,
+        properties = PopupProperties(
+            focusable = false,
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            reverseLayout = false
+        Box(
+            modifier = Modifier
+                .navigationBarsPadding()
+                .padding(bottom = 16.dp),
+            contentAlignment = Alignment.BottomCenter
         ) {
-            if (enqueuedCount > 0) {
-                item(key = "hint") {
-                    ToastHint(
-                        count = enqueuedCount,
-                        modifier = Modifier.animateItem()
-                    )
+            LazyColumn(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .wrapContentSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                reverseLayout = false,
+                userScrollEnabled = false
+            ) {
+                if (enqueuedCount > 0) {
+                    item(key = "hint") {
+                        ToastHint(
+                            count = enqueuedCount,
+                            modifier = Modifier.animateItem()
+                        )
+                    }
                 }
-            }
 
             items(visibleToasts, key = { it.id }) { toast ->
                 // Un toast es "nuevo/encolado" si no era parte de los 3 que estarían visibles
