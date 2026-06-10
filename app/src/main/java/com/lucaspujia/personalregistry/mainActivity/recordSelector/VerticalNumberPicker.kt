@@ -328,9 +328,7 @@ private fun ValueInputModal(
                         keyboardActions = KeyboardActions(onDone = { onConfirm() }),
                         singleLine = true,
                         textStyle = if (isSmall) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester),
+                        modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                         isError = !successfulEdit,
                         colors = OutlinedTextFieldDefaults.colors(errorBorderColor = MaterialTheme.colorScheme.error)
                     )
