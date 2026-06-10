@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,23 +42,30 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
-import com.lucaspujia.personalregistry.extensionFunctions.isDouble
 import com.lucaspujia.personalregistry.mainActivity.RECORD_MAX_VALUE
 import com.lucaspujia.personalregistry.mainActivity.RECORD_MIN_VALUE
 import com.lucaspujia.personalregistry.mainActivity.RECORD_PIXELS_PER_UNIT
 import com.lucaspujia.personalregistry.mainActivity.RECORD_SCROLL_INVERTED
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import kotlinx.coroutines.launch
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.roundToLong
+import kotlin.math.sign
 
 // TODO: simplificar parametros
 @Composable
@@ -82,6 +90,8 @@ fun VerticalNumberPicker(
     // Animatable solo acepta floats
     val continuousValue = remember { Animatable(value.toFloat()) }
     var isDragging by remember { mutableStateOf(false) }
+    var startDraggingValue by remember { mutableFloatStateOf(0f) }
+    var totalDragOffset by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(value) {
         if (!isDragging && abs(continuousValue.value - value) > 0.0001) {
@@ -94,8 +104,29 @@ fun VerticalNumberPicker(
 
     val draggableState = rememberDraggableState { delta ->
         val directionMultiplier = if (isScrollInverted) 1f else -1f
-        val deltaUnits = directionMultiplier * delta / pixelsPerUnit
-        val newValue = (continuousValue.value + deltaUnits).toDouble().coerceIn(minValue, maxValue)
+        totalDragOffset += delta * directionMultiplier
+        
+        val offsetUnits = totalDragOffset / pixelsPerUnit
+        val x = abs(offsetUnits)
+        val valueSensitivity = 1f + (abs(startDraggingValue) / 10000f)
+
+        val result = when {
+            x < 0.5f -> x * 0.5f // Tramo 1: Lineal y lento (precisión máxima)
+            x < 1.5f -> {
+                val linearPart = 0.5f * 0.5f
+                val quadraticPart = (x - 0.5f).pow(2.0f) * 5f * valueSensitivity
+                linearPart + quadraticPart // Tramo 2: Cuadrático + Sensibilidad por valor
+            }
+            else -> {
+                val linearPart = 0.5f * 0.5f
+                val quadraticPart = (1.5f - 0.5f).pow(2.0f) * 5f * valueSensitivity
+                val exponentialPart = (x - 1.5f).pow(3.0f) * 15f * valueSensitivity
+                linearPart + quadraticPart + exponentialPart // Tramo 3: Exponencial
+            }
+        }
+        val acceleratedUnits = result * sign(offsetUnits)
+        
+        val newValue = (startDraggingValue + acceleratedUnits).toDouble().coerceIn(minValue, maxValue)
         
         scope.launch {
             continuousValue.snapTo(newValue.toFloat())
@@ -127,6 +158,8 @@ fun VerticalNumberPicker(
                 orientation = Orientation.Vertical,
                 onDragStarted = { 
                     isDragging = true
+                    startDraggingValue = continuousValue.value
+                    totalDragOffset = 0f
                     onFocused()
                 },
                 onDragStopped = {
@@ -152,6 +185,14 @@ fun VerticalNumberPicker(
         val startIndex = centerIndexInt - 2
         val endIndex = centerIndexInt + 2
 
+        val currentTextValue = "%.${precision}f".format(value)
+        val baseFontSize = if (isSmall) MaterialTheme.typography.displaySmall.fontSize else MaterialTheme.typography.displayLarge.fontSize
+        val adjustedFontSize = if (currentTextValue.length > 6) {
+            baseFontSize * (6.5f / currentTextValue.length).coerceIn(0.4f, 1f)
+        } else {
+            baseFontSize
+        }
+
         for (i in startIndex..endIndex) {
             val itemValue = i * step
             if (itemValue < minValue - 0.0001 || itemValue > maxValue + 0.0001) continue
@@ -166,7 +207,7 @@ fun VerticalNumberPicker(
 
             Text(
                 text = "%.${precision}f".format(itemValue),
-                fontSize = if (isSmall) MaterialTheme.typography.displaySmall.fontSize else MaterialTheme.typography.displayLarge.fontSize,
+                fontSize = adjustedFontSize,
                 fontWeight = if (isMainValue) FontWeight.Bold else FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary,
                 onTextLayout = { 
@@ -220,14 +261,15 @@ fun VerticalNumberPicker(
                 }
         )
 
-        ValueInputModal(showDialog, value.toString(), unit, label, onValueChange, minValue, maxValue, isSmall)
+        ValueInputModal(showDialog, value, precision, unit, label, onValueChange, minValue, maxValue, isSmall)
     }
 }
 
 @Composable
 private fun ValueInputModal(
     showDialog: MutableState<Boolean>,
-    initialValue: String,
+    value: Double,
+    precision: Int,
     unit: String,
     label: String,
     onValueChange: (Double) -> Unit,
@@ -236,30 +278,42 @@ private fun ValueInputModal(
     isSmall: Boolean
 ) {
     if (showDialog.value) {
-        var editValue by remember { mutableStateOf(initialValue) }
-        var successfulEdit by remember { mutableStateOf(initialValue.isDouble()) }
+        val configuration = LocalConfiguration.current
+        val symbols = remember(configuration) { DecimalFormatSymbols(configuration.locales[0]) }
+        
+        // Estado interno simple: siempre usa punto decimal y sin separadores de miles
+        var rawText by remember { 
+            mutableStateOf(String.format(Locale.getDefault(), "%.${precision}f", value))
+        }
+        var successfulEdit by remember { mutableStateOf(true) }
 
-        val closeDialog = { showDialog.value = false }
         val onConfirm = {
-            val parsed = editValue.replace(',', '.').toDoubleOrNull()
+            val parsed = rawText.toDoubleOrNull()
             if (parsed != null) {
                 onValueChange(parsed.coerceIn(minValue, maxValue))
-                closeDialog()
+                showDialog.value = false
             } else {
                 successfulEdit = false
             }
         }
 
         AlertDialog(
-            onDismissRequest = closeDialog,
+            onDismissRequest = { showDialog.value = false },
             text = {
                 Column {
                     OutlinedTextField(
-                        value = editValue,
-                        onValueChange = { if (it.isDouble()) {
-                            editValue = it
-                            successfulEdit = true
-                        } },
+                        value = rawText,
+                        onValueChange = { input ->
+                            // Aceptamos el separador del locale pero lo guardamos como punto internamente
+                            val text = input.replace(symbols.decimalSeparator, '.')
+                            val filtered = text.filter { it.isDigit() || it == '.' }
+                            
+                            if (filtered.isEmpty() || filtered.toDoubleOrNull() != null || filtered == ".") {
+                                rawText = filtered
+                                successfulEdit = true
+                            }
+                        },
+                        visualTransformation = remember(symbols) { DecimalVisualTransformation(symbols) },
                         label = { Text("$label ($unit)") },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Decimal,
@@ -270,9 +324,7 @@ private fun ValueInputModal(
                         textStyle = if (isSmall) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
                         modifier = Modifier.fillMaxWidth(),
                         isError = !successfulEdit,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            errorBorderColor = MaterialTheme.colorScheme.error,
-                        )
+                        colors = OutlinedTextFieldDefaults.colors(errorBorderColor = MaterialTheme.colorScheme.error)
                     )
                     if (!successfulEdit) {
                         Text(
@@ -285,16 +337,66 @@ private fun ValueInputModal(
                 }
             },
             confirmButton = {
-                Button(onClick = onConfirm) {
-                    Text(stringResource(R.string.accept))
-                }
+                Button(onClick = onConfirm) { Text(stringResource(R.string.accept)) }
             },
             dismissButton = {
-                TextButton(onClick = closeDialog) {
-                    Text(stringResource(R.string.cancel))
-                }
+                TextButton(onClick = { showDialog.value = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
+    }
+}
+
+private class DecimalVisualTransformation(private val symbols: DecimalFormatSymbols) : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val original = text.text
+        if (original.isEmpty()) return TransformedText(text, OffsetMapping.Identity)
+
+        val parts = original.split('.')
+        val intPart = parts[0]
+        val decPart = if (parts.size > 1) symbols.decimalSeparator + parts[1] else ""
+
+        val formattedInt = StringBuilder()
+        for (i in intPart.indices) {
+            formattedInt.append(intPart[i])
+            val remaining = intPart.length - i - 1
+            if (remaining > 0 && remaining % 3 == 0) {
+                formattedInt.append(symbols.groupingSeparator)
+            }
+        }
+
+        val transformed = formattedInt.toString() + decPart
+        
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                var o = 0
+                var t = 0
+                while (o < offset && o < original.length) {
+                    if (t < transformed.length && transformed[t] == symbols.groupingSeparator) {
+                        t++
+                        continue
+                    }
+                    o++
+                    t++
+                }
+                return t
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                var o = 0
+                var t = 0
+                while (t < offset && t < transformed.length) {
+                    if (transformed[t] == symbols.groupingSeparator) {
+                        t++
+                        continue
+                    }
+                    o++
+                    t++
+                }
+                return o
+            }
+        }
+
+        return TransformedText(AnnotatedString(transformed), offsetMapping)
     }
 }
 
