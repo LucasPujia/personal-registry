@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.lucaspujia.personalregistry.mainActivity.bottomSheet.BottomSheetHandler
+import com.lucaspujia.personalregistry.mainActivity.bottomSheet.ToastHandler
 import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
 import com.lucaspujia.personalregistry.mainActivity.recordSelector.RecordSelector
 import com.lucaspujia.personalregistry.mainActivity.recordsViewer.RecordsViewer
@@ -73,7 +74,8 @@ fun PersonalRegistryApp(
             records = viewModel.filters.records,
             settingsOpened = viewModel.settingsOpened,
             registryEditorState = viewModel.registryEditorState,
-            hasActiveRegistry = viewModel.activeRegistry != null
+            hasActiveRegistry = viewModel.activeRegistry != null,
+            toasts = viewModel.toasts
         )
     }
 }
@@ -84,7 +86,8 @@ private fun PersonalRegistryAppContent(
     records: List<RecordItem>,
     settingsOpened: Boolean,
     registryEditorState: RegistryEditorState,
-    hasActiveRegistry: Boolean = true
+    hasActiveRegistry: Boolean = true,
+    toasts: List<RegistryToast> = emptyList()
 ) {
     Box(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
         if (hasActiveRegistry) {
@@ -109,6 +112,8 @@ private fun PersonalRegistryAppContent(
         }
 
         BottomSheetHandler()
+
+        ToastHandler(toasts)
 
         listOf(
             Pair(settingsOpened) @Composable { SettingsScreen() },

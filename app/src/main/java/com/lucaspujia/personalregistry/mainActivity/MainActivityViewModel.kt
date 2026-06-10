@@ -49,6 +49,7 @@ class MainActivityViewModel @Inject constructor(
     override var viewTogglesOpened by mutableStateOf(false)
     override var settingsOpened by mutableStateOf(false)
     override var registryEditorState by mutableStateOf<RegistryEditorState>(RegistryEditorState.Closed)
+    override var toasts by mutableStateOf<List<RegistryToast>>(emptyList()); private set
 
     init {
         allRegistries
@@ -95,41 +96,66 @@ class MainActivityViewModel @Inject constructor(
     override fun addRecord(value1: Double, value2: Double?, pickerMillis: Long?) {
         val registryId = activeRegistry?.id ?: return
         viewModelScope.launch {
-            val date = pickerMillis?.let { fromDatePicker(it) } ?: now()
-            withContext(Dispatchers.IO) { model.addRecord(registryId, value1, value2, date) }
+            try {
+                val date = pickerMillis?.let { fromDatePicker(it) } ?: now()
+                withContext(Dispatchers.IO) { model.addRecord(registryId, value1, value2, date) }
+                showToast(RegistryToast.Success(R.string.record_added_success))
+            } catch (_: Exception) {
+                showToast(RegistryToast.Error(R.string.generic_error))
+            }
         }
     }
 
     override fun removeRecord(recordItem: RecordItem) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) { model.removeRecord(recordItem) }
+            try {
+                withContext(Dispatchers.IO) { model.removeRecord(recordItem) }
+                showToast(RegistryToast.Success(R.string.record_deleted_success))
+            } catch (_: Exception) {
+                showToast(RegistryToast.Error(R.string.generic_error))
+            }
         }
     }
 
     override fun createRegistry(registry: Registry) {
         viewModelScope.launch {
-            val id = withContext(Dispatchers.IO) { model.insertRegistry(registry) }
-            val newRegistry = registry.copy(id = id)
-            switchRegistry(newRegistry)
-            registryEditorState = RegistryEditorState.Closed
+            try {
+                val id = withContext(Dispatchers.IO) { model.insertRegistry(registry) }
+                val newRegistry = registry.copy(id = id)
+                switchRegistry(newRegistry)
+                registryEditorState = RegistryEditorState.Closed
+                showToast(RegistryToast.Success(R.string.registry_created_success))
+            } catch (_: Exception) {
+                showToast(RegistryToast.Error(R.string.generic_error))
+            }
         }
     }
 
     override fun updateRegistry(registry: Registry) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) { model.updateRegistry(registry) }
-            activeRegistry = registry
-            registryEditorState = RegistryEditorState.Closed
+            try {
+                withContext(Dispatchers.IO) { model.updateRegistry(registry) }
+                activeRegistry = registry
+                registryEditorState = RegistryEditorState.Closed
+                showToast(RegistryToast.Success(R.string.registry_updated_success))
+            } catch (_: Exception) {
+                showToast(RegistryToast.Error(R.string.generic_error))
+            }
         }
     }
 
     override fun deleteRegistry(registry: Registry) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) { model.deleteRegistry(registry) }
-            // Si eliminamos el activo, buscamos otro para mostrar o abrimos creación si no hay más
-            if (activeRegistry?.id == registry.id) {
-                activeRegistry = null
-                registryEditorState = RegistryEditorState.Closed
+            try {
+                withContext(Dispatchers.IO) { model.deleteRegistry(registry) }
+                // Si eliminamos el activo, buscamos otro para mostrar o abrimos creación si no hay más
+                if (activeRegistry?.id == registry.id) {
+                    activeRegistry = null
+                    registryEditorState = RegistryEditorState.Closed
+                }
+                showToast(RegistryToast.Success(R.string.registry_deleted_success))
+            } catch (_: Exception) {
+                showToast(RegistryToast.Error(R.string.generic_error))
             }
         }
     }
@@ -207,6 +233,14 @@ class MainActivityViewModel @Inject constructor(
             goalValue = filters.goalValue,
             dateRange = Pair(forDatePicker(startDate), forDatePicker(endDate))
         )
+    }
+
+    override fun showToast(toast: RegistryToast) {
+        toasts = listOf(toast) + toasts
+    }
+
+    override fun dismissToast(id: String) {
+        toasts = toasts.filter { it.id != id }
     }
 
 

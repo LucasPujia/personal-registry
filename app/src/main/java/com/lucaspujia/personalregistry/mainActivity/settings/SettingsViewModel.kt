@@ -7,7 +7,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.database.registry.Record
 import com.lucaspujia.personalregistry.mainActivity.MainActivityModel
 import com.lucaspujia.personalregistry.notifications.NotificationScheduler
@@ -23,7 +22,6 @@ import javax.inject.Inject
 data class ImportExportState(
     val showError: Boolean = false,
     val showConfirmation: Boolean = false,
-    val successMessageRes: Int? = null,
     val pendingRecords: List<Record> = emptyList()
 )
 
@@ -80,9 +78,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     override fun exportRecords(registryId: Long): String {
-        val json = model.getRecordsAsJSON(registryId)
-        importExportState = importExportState.copy(successMessageRes = R.string.export_success)
-        return json
+        return model.getRecordsAsJSON(registryId)
     }
 
     override fun importRecords(json: String, registryId: Long) {
@@ -101,8 +97,7 @@ class SettingsViewModel @Inject constructor(
             }
             importExportState = importExportState.copy(
                 showConfirmation = false,
-                pendingRecords = emptyList(),
-                successMessageRes = R.string.import_success
+                pendingRecords = emptyList()
             )
         }
     }
@@ -113,9 +108,5 @@ class SettingsViewModel @Inject constructor(
 
     override fun dismissImportConfirmation() {
         importExportState = importExportState.copy(showConfirmation = false, pendingRecords = emptyList())
-    }
-
-    override fun dismissSuccessMessage() {
-        importExportState = importExportState.copy(successMessageRes = null)
     }
 }

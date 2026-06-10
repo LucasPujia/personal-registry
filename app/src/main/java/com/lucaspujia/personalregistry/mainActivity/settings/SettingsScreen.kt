@@ -57,7 +57,6 @@ import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.ExportImpor
 import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.ImportConfirmationDialog
 import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.ImportErrorDialog
 import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.NotificationsDialog
-import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.SuccessDialog
 import com.lucaspujia.personalregistry.mainActivity.settings.dialogs.ThemeSelectionDialog
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
@@ -139,7 +138,6 @@ private fun SettingsScreenContent(
 
     ImportErrorDialog()
     ImportConfirmationDialog()
-    SuccessDialog()
 
     Scaffold(
         topBar = {

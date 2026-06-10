@@ -147,4 +147,11 @@ Texto: Ingresá el valor de hoy para seguir viendo tu progreso.
     <string name="formula_preview_empty">Esperando fórmula…</string>
     <string name="formula_preview_result">Si %2$s=%1$.1f y %4$s=%3$.1f, el resultado es %5$.2f</string>
     <string name="formula_invalid">Fórmula inválida</string>
+    <string name="record_added_success">Registro añadido correctamente</string>
+    <string name="record_deleted_success">Registro eliminado correctamente</string>
+    <string name="registry_created_success">Registro creado correctamente</string>
+    <string name="registry_updated_success">Registro actualizado correctamente</string>
+    <string name="registry_deleted_success">Registro eliminado correctamente</string>
+    <string name="generic_error">Ocurrió un error</string>
+    <string name="more_toasts">+%d más</string>
 </resources>
