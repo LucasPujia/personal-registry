@@ -3,19 +3,20 @@ package com.lucaspujia.personalregistry.mainActivity.bottomSheet
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -23,6 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
 import com.lucaspujia.personalregistry.mainActivity.RegistryToast
@@ -72,22 +75,23 @@ fun ToastHandler(toasts: List<RegistryToast>) {
                     }
                 }
 
-            items(visibleToasts, key = { it.id }) { toast ->
-                // Un toast es "nuevo/encolado" si no era parte de los 3 que estarían visibles
-                // si los mensajes se procesaran estrictamente en orden de llegada.
-                // Usamos la posición en la lista original para determinarlo.
-                val indexInOriginal = toasts.indexOf(toast)
-                val wasEnqueued = indexInOriginal < toasts.size - maxVisible
+                items(visibleToasts, key = { it.id }) { toast ->
+                    // Un toast es "nuevo/encolado" si no era parte de los 3 que estarían visibles
+                    // si los mensajes se procesaran estrictamente en orden de llegada.
+                    // Usamos la posición en la lista original para determinarlo.
+                    val indexInOriginal = toasts.indexOf(toast)
+                    val wasEnqueued = indexInOriginal < toasts.size - maxVisible
 
-                ToastItem(
-                    modifier = Modifier.animateItem(
-                        fadeInSpec = tween(300),
-                        fadeOutSpec = tween(300),
-                        placementSpec = tween(300)
-                    ),
-                    toast = toast,
-                    wasEnqueued = wasEnqueued
-                )
+                    ToastItem(
+                        modifier = Modifier.animateItem(
+                            fadeInSpec = tween(300),
+                            fadeOutSpec = tween(300),
+                            placementSpec = tween(300)
+                        ),
+                        toast = toast,
+                        wasEnqueued = wasEnqueued
+                    )
+                }
             }
         }
     }
@@ -121,29 +125,42 @@ private fun ToastItem(
 ) {
     val actions = LocalMainActivityActions.current
     
+    val dismissState = rememberSwipeToDismissBoxState()
+
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+            actions.dismissToast(toast.id)
+        }
+    }
+
     LaunchedEffect(toast.id) {
         val duration = if (wasEnqueued) 3000L else 4000L
         delay(duration.milliseconds)
         actions.dismissToast(toast.id)
     }
 
-    Surface(
-        modifier = modifier,
-        color = toast.containerColor(MaterialTheme.colorScheme),
-        contentColor = toast.contentColor(MaterialTheme.colorScheme),
-        shape = RoundedCornerShape(16.dp),
-        tonalElevation = 4.dp
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {},
+        modifier = modifier
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Surface(
+            color = toast.containerColor(MaterialTheme.colorScheme),
+            contentColor = toast.contentColor(MaterialTheme.colorScheme),
+            shape = RoundedCornerShape(16.dp),
+            tonalElevation = 4.dp
         ) {
-            Icon(imageVector = toast.icon, contentDescription = null)
-            Text(
-                text = stringResource(id = toast.textRes),
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(imageVector = toast.icon, contentDescription = null)
+                Text(
+                    text = stringResource(id = toast.textRes),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }
