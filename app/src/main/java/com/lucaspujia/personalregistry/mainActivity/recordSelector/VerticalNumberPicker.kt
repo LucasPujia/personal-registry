@@ -40,6 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
@@ -105,21 +107,20 @@ fun VerticalNumberPicker(
         totalDragOffset += delta * directionMultiplier
         
         val offsetUnits = totalDragOffset / pixelsPerUnit
-        val x = abs(offsetUnits)
+        val absOffsetUnits = abs(offsetUnits)
         val valueSensitivity = 1f + (abs(startDraggingValue) / 10000f)
 
         val result = when {
-            x < 0.5f -> x * 0.5f // Tramo 1: Lineal y lento (precisión máxima)
-            x < 1.5f -> {
-                val linearPart = 0.5f * 0.5f
-                val quadraticPart = (x - 0.5f).pow(2.0f) * 5f * valueSensitivity
-                linearPart + quadraticPart // Tramo 2: Cuadrático + Sensibilidad por valor
+            absOffsetUnits < 1f -> absOffsetUnits // Tramo 1: Lineal y lento (precisión máxima)
+            absOffsetUnits < 2f -> absOffsetUnits * 1.5f // Tramo 1bis: Lineal y rápido
+            absOffsetUnits < 3f -> {
+                val quadraticPart = (absOffsetUnits - 1f).pow(1.5f) * valueSensitivity
+                absOffsetUnits + quadraticPart // Tramo 2: Cuadrático + Sensibilidad por valor
             }
             else -> {
-                val linearPart = 0.5f * 0.5f
-                val quadraticPart = (1.5f - 0.5f).pow(2.0f) * 5f * valueSensitivity
-                val exponentialPart = (x - 1.5f).pow(3.0f) * 15f * valueSensitivity
-                linearPart + quadraticPart + exponentialPart // Tramo 3: Exponencial
+                val quadraticPart = (absOffsetUnits - 1f).pow(1.5f) * valueSensitivity
+                val exponentialPart = (absOffsetUnits - 2f).pow(3.0f) * valueSensitivity
+                absOffsetUnits + quadraticPart + exponentialPart // Tramo 3: Exponencial
             }
         }
         val acceleratedUnits = result * sign(offsetUnits)
@@ -280,12 +281,17 @@ private fun ValueInputModal(
     if (showDialog.value) {
         val configuration = LocalConfiguration.current
         val symbols = remember(configuration) { DecimalFormatSymbols(configuration.locales[0]) }
-        
+        val focusRequester = remember { FocusRequester() }
+
         // Estado interno simple: siempre usa punto decimal y sin separadores de miles
         var rawText by remember { 
             mutableStateOf(String.format(Locale.US, "%.${precision}f", value))
         }
         var successfulEdit by remember { mutableStateOf(true) }
+
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+        }
 
         val onConfirm = {
             val parsed = rawText.toDoubleOrNull()
@@ -322,7 +328,9 @@ private fun ValueInputModal(
                         keyboardActions = KeyboardActions(onDone = { onConfirm() }),
                         singleLine = true,
                         textStyle = if (isSmall) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester),
                         isError = !successfulEdit,
                         colors = OutlinedTextFieldDefaults.colors(errorBorderColor = MaterialTheme.colorScheme.error)
                     )
