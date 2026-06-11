@@ -70,5 +70,4 @@ interface SettingsActions {
     fun confirmImport(registryId: Long)
     fun dismissImportError()
     fun dismissImportConfirmation()
-    fun dismissSuccessMessage()
 }

@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
+import com.lucaspujia.personalregistry.mainActivity.RegistryToast
 import com.lucaspujia.personalregistry.mainActivity.settings.LocalSettingsActions
 import com.lucaspujia.personalregistry.ui.theme.DialogPreviews
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
@@ -25,6 +26,7 @@ fun ExportImportDialog(dismissDialog: () -> Unit) {
     ExportImportDialogContent(
         onImport = { json -> settingsViewModel.importRecords(json, activeRegistryId) },
         exportJsonProvider = { settingsViewModel.exportRecords(activeRegistryId) },
+        showToast = { mainViewModel.showToast(it) },
         dismissDialog = dismissDialog
     )
 }
@@ -33,6 +35,7 @@ fun ExportImportDialog(dismissDialog: () -> Unit) {
 private fun ExportImportDialogContent(
     onImport: (String) -> Unit = {},
     exportJsonProvider: () -> String = {""},
+    showToast: (RegistryToast) -> Unit = {},
     dismissDialog: () -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -47,6 +50,7 @@ private fun ExportImportDialogContent(
                         writer.write(exportJsonProvider())
                     }
                 }
+                showToast(RegistryToast.Success(R.string.export_success))
                 dismissDialog()
             }
         }
@@ -115,7 +119,10 @@ fun ImportConfirmationDialog() {
 
     ImportConfirmationDialogContent(
         showConfirmation = settingsViewModel.importExportState.showConfirmation,
-        onConfirm = { settingsViewModel.confirmImport(activeRegistryId) },
+        onConfirm = {
+            settingsViewModel.confirmImport(activeRegistryId)
+            mainViewModel.showToast(RegistryToast.Success(R.string.import_success))
+        },
         onDismiss = { settingsViewModel.dismissImportConfirmation() }
     )
 }
@@ -139,35 +146,6 @@ private fun ImportConfirmationDialogContent(
             dismissButton = {
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.cancel))
-                }
-            }
-        )
-    }
-}
-
-// TODO: Reemplazar por un toast
-@Composable
-fun SuccessDialog() {
-    val viewModel = LocalSettingsActions.current
-    SuccessDialogContent(
-        successMessageRes = viewModel.importExportState.successMessageRes,
-        onDismiss = { viewModel.dismissSuccessMessage() }
-    )
-}
-
-@Composable
-private fun SuccessDialogContent(
-    successMessageRes: Int?,
-    onDismiss: () -> Unit = {},
-) {
-    successMessageRes?.let { messageRes ->
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.success)) },
-            text = { Text(stringResource(messageRes)) },
-            confirmButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.accept))
                 }
             }
         )

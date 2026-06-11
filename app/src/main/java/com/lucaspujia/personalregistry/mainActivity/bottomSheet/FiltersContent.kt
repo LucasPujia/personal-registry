@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -35,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.extensionFunctions.selectedDateRange
 import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
+import com.lucaspujia.personalregistry.mainActivity.RegistryToast
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
 import com.lucaspujia.personalregistry.utils.defaultDatePickerFormatter
@@ -193,7 +193,7 @@ private fun AcceptButton(
     onApplyFilters: (Double?, Double?, Double?, Pair<Long, Long>?) -> Int?,
     onDismissRequest: () -> Unit = {},
 ) {
-    val responseMessage = remember { mutableStateOf<Int?>(null) }
+    val viewModel = LocalMainActivityActions.current
     Button(
         onClick = {
             val response = onApplyFilters(
@@ -203,7 +203,7 @@ private fun AcceptButton(
                 dateRangePickerState.selectedDateRange()
             )
             if (response != null) {
-                responseMessage.value = response
+                viewModel.showToast(RegistryToast.Error(response))
             } else {
                 onDismissRequest()
             }
@@ -211,26 +211,6 @@ private fun AcceptButton(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(stringResource(R.string.apply))
-    }
-
-    responseMessage.value?.let { messageID ->
-        AlertDialog(
-            onDismissRequest = { responseMessage.value = null },
-            confirmButton = {
-                Button(onClick = { responseMessage.value = null }) {
-                    Text(stringResource(R.string.accept))
-                }
-            },
-            title = {
-                Text(stringResource(R.string.warning))
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(messageID))
-                    Text(stringResource(R.string.warning_filters))
-                }
-            }
-        )
     }
 }
 

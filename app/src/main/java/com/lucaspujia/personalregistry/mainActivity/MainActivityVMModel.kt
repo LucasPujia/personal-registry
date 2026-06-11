@@ -1,10 +1,18 @@
 package com.lucaspujia.personalregistry.mainActivity
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material3.ColorScheme
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
+import com.lucaspujia.personalregistry.ui.theme.ExtendedColors
 import com.lucaspujia.personalregistry.utils.lastMonthRange
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
+import java.util.UUID
 
 enum class TimeRange(val label: String, val apply: (LocalDate) -> LocalDate) {
     DAYS_7("7D", { it.minusDays(7) }),
@@ -28,6 +36,33 @@ sealed class RegistryEditorState {
     fun isClosed() = this is Closed
 }
 
+// TODO: revisar
+sealed interface RegistryToast {
+    val id: String
+    val icon: ImageVector
+    val textRes: Int
+    val containerColor: (ColorScheme, ExtendedColors) -> Color
+    val contentColor: (ColorScheme, ExtendedColors) -> Color
+
+    data class Success(
+        override val textRes: Int,
+        override val id: String = UUID.randomUUID().toString()
+    ) : RegistryToast {
+        override val icon = Icons.Default.CheckCircle
+        override val containerColor: (ColorScheme, ExtendedColors) -> Color = { _, extended -> extended.successContainer }
+        override val contentColor: (ColorScheme, ExtendedColors) -> Color = { _, extended -> extended.onSuccessContainer }
+    }
+
+    data class Error(
+        override val textRes: Int,
+        override val id: String = UUID.randomUUID().toString()
+    ) : RegistryToast {
+        override val icon = Icons.Default.Error
+        override val containerColor: (ColorScheme, ExtendedColors) -> Color = { scheme, _ -> scheme.errorContainer }
+        override val contentColor: (ColorScheme, ExtendedColors) -> Color = { scheme, _ -> scheme.onErrorContainer }
+    }
+}
+
 interface MainActivityActions {
     val activeRegistry: Registry?
     val allRegistries: Flow<List<Registry>>
@@ -38,6 +73,7 @@ interface MainActivityActions {
     var viewTogglesOpened: Boolean
     var settingsOpened: Boolean
     var registryEditorState: RegistryEditorState
+    val toasts: List<RegistryToast>
 
     fun switchRegistry(registry: Registry)
     fun addRecord(value1: Double, value2: Double?, pickerMillis: Long?)
@@ -54,6 +90,8 @@ interface MainActivityActions {
     fun createRegistry(registry: Registry)
     fun updateRegistry(registry: Registry)
     fun deleteRegistry(registry: Registry)
+    fun showToast(toast: RegistryToast)
+    fun dismissToast(id: String)
 }
 
 data class ActiveFilters(

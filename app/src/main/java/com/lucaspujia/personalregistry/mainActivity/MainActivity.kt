@@ -25,7 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.bottomSheet.BottomSheetHandler
+import com.lucaspujia.personalregistry.mainActivity.bottomSheet.ToastHandler
 import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
 import com.lucaspujia.personalregistry.mainActivity.recordSelector.RecordSelector
 import com.lucaspujia.personalregistry.mainActivity.recordsViewer.RecordsViewer
@@ -61,9 +63,7 @@ class MainActivity : ComponentActivity() {
 fun PersonalRegistryApp(
     viewModel: MainActivityViewModel = hiltViewModel()
 ) {
-    // TODO: Toasts para errores y éxitos
     // TODO: Modal de confirmación genérico con un service, implementar para eliminar registro
-    // TODO: fórmula para 2 unidades
     // TODO: Revisar notificaciones, creo que no se están encolando más de una a la vez
     // TODO: Distintos textos para notificaciones
     // TODO: Extraer strings.xml en distintos archivos
@@ -73,7 +73,8 @@ fun PersonalRegistryApp(
             records = viewModel.filters.records,
             settingsOpened = viewModel.settingsOpened,
             registryEditorState = viewModel.registryEditorState,
-            hasActiveRegistry = viewModel.activeRegistry != null
+            hasActiveRegistry = viewModel.activeRegistry != null,
+            toasts = viewModel.toasts
         )
     }
 }
@@ -84,7 +85,8 @@ private fun PersonalRegistryAppContent(
     records: List<RecordItem>,
     settingsOpened: Boolean,
     registryEditorState: RegistryEditorState,
-    hasActiveRegistry: Boolean = true
+    hasActiveRegistry: Boolean = true,
+    toasts: List<RegistryToast> = emptyList()
 ) {
     Box(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
         if (hasActiveRegistry) {
@@ -122,6 +124,8 @@ private fun PersonalRegistryAppContent(
                 screen()
             }
         }
+
+        ToastHandler(toasts)
     }
 }
 
@@ -136,7 +140,8 @@ fun PersonalRegistryAppPreview() {
         PersonalRegistryAppContent(
             records = records,
             settingsOpened = false,
-            registryEditorState = RegistryEditorState.Closed
+            registryEditorState = RegistryEditorState.Closed,
+            toasts = listOf(RegistryToast.Error(R.string.generic_error))
         )
     }
 }

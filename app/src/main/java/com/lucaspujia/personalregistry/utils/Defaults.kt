@@ -13,6 +13,7 @@ import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.ActiveFilters
 import com.lucaspujia.personalregistry.mainActivity.MainActivityActions
 import com.lucaspujia.personalregistry.mainActivity.RegistryEditorState
+import com.lucaspujia.personalregistry.mainActivity.RegistryToast
 import com.lucaspujia.personalregistry.mainActivity.TimeRange
 import com.lucaspujia.personalregistry.mainActivity.ViewToggles
 import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
@@ -92,7 +93,6 @@ val mockSettingsViewModel = object : SettingsActions {
     override fun confirmImport(registryId: Long) {}
     override fun dismissImportError() {}
     override fun dismissImportConfirmation() {}
-    override fun dismissSuccessMessage() {}
 }
 
 @Composable
@@ -108,6 +108,7 @@ fun mockMainActivityViewModel(initialValues: List<Double> = listOf(25.0, 30.0, 3
         override var viewTogglesOpened = false
         override var settingsOpened = false
         override var registryEditorState: RegistryEditorState = RegistryEditorState.Closed
+        override val toasts: List<RegistryToast> = listOf()
         override fun switchRegistry(registry: Registry) {}
         override fun addRecord(value1: Double, value2: Double?, pickerMillis: Long?) {}
         override fun removeRecord(recordItem: RecordItem) {}
@@ -118,6 +119,8 @@ fun mockMainActivityViewModel(initialValues: List<Double> = listOf(25.0, 30.0, 3
         override fun createRegistry(registry: Registry) {}
         override fun updateRegistry(registry: Registry) {}
         override fun deleteRegistry(registry: Registry) {}
+        override fun showToast(toast: RegistryToast) {}
+        override fun dismissToast(id: String) {}
     }
 }
 val OUTER_PADDING = 16.dp

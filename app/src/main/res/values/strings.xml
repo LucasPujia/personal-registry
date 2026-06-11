@@ -152,4 +152,11 @@ Text: Add today's value to keep your records up to date.
     <string name="formula_preview_empty">Waiting for formula...</string>
     <string name="formula_preview_result">If %2$s=%1$.1f and %4$s=%3$.1f, result is %5$.2f</string>
     <string name="formula_invalid">Invalid formula</string>
+    <string name="record_added_success">Record added correctly</string>
+    <string name="record_deleted_success">Record deleted correctly</string>
+    <string name="registry_created_success">Registry created correctly</string>
+    <string name="registry_updated_success">Registry updated correctly</string>
+    <string name="registry_deleted_success">Registry deleted correctly</string>
+    <string name="generic_error">An error occurred</string>
+    <string name="more_toasts">+%d more</string>
 </resources>
