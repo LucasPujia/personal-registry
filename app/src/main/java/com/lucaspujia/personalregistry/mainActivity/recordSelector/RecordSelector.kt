@@ -1,5 +1,6 @@
 package com.lucaspujia.personalregistry.mainActivity.recordSelector
 
+import android.content.pm.ApplicationInfo
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.FilterAlt
@@ -41,9 +43,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.lucaspujia.personalregistry.BuildConfig
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.database.registry.MeasureUnit
 import com.lucaspujia.personalregistry.database.registry.Registry
@@ -51,6 +55,7 @@ import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
 import com.lucaspujia.personalregistry.mainActivity.RECORD_DEFAULT_VALUE
 import com.lucaspujia.personalregistry.mainActivity.RECORD_MAX_VALUE
 import com.lucaspujia.personalregistry.mainActivity.RECORD_MIN_VALUE
+import com.lucaspujia.personalregistry.mainActivity.RegistryToast
 import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
 import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
 import com.lucaspujia.personalregistry.ui.theme.ThemePreviews
@@ -222,11 +227,25 @@ fun FilterControls(
     datePickerState: DatePickerState,
 ) {
     val viewModel = LocalMainActivityActions.current
+    var testCount by remember { mutableIntStateOf(0) }
+
     FilterControlsContent(
         datePickerState = datePickerState,
         onViewTogglesOpened = { viewModel.viewTogglesOpened = true },
         onFiltersOpened = { viewModel.filtersOpened = true },
-        onSettingsOpened = { viewModel.settingsOpened = true }
+        onSettingsOpened = { viewModel.settingsOpened = true },
+        onShowTestToast = { 
+            testCount++
+            val res = when (testCount % 3) {
+                0 -> R.string.done
+                1 -> R.string.record_added_success
+                else -> R.string.app_name
+            }
+            viewModel.showToast(RegistryToast.Success(
+                textRes = res,
+                id = "test_$testCount"
+            ))
+        }
     )
 }
 
@@ -236,7 +255,8 @@ private fun FilterControlsContent(
     datePickerState: DatePickerState,
     onViewTogglesOpened: () -> Unit,
     onFiltersOpened: () -> Unit,
-    onSettingsOpened: () -> Unit
+    onSettingsOpened: () -> Unit,
+    onShowTestToast: () -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -264,6 +284,26 @@ private fun FilterControlsContent(
                     contentDescription = "Select date",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+        val isDebugBuild = (LocalContext.current.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        if (isDebugBuild || BuildConfig.DEBUG) {
+            Spacer(Modifier.width(8.dp))
+
+            FilledIconButton(
+                onClick = onShowTestToast,
+                shape = RoundedCornerShape(8.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.secondary
+                ),
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Message,
+                    contentDescription = "Test Toast",
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
