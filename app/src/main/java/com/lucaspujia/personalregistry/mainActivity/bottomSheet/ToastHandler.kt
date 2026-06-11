@@ -1,12 +1,14 @@
 package com.lucaspujia.personalregistry.mainActivity.bottomSheet
 
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,19 +31,16 @@ import androidx.compose.ui.window.PopupProperties
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.LocalMainActivityActions
 import com.lucaspujia.personalregistry.mainActivity.RegistryToast
+import com.lucaspujia.personalregistry.ui.theme.DialogPreviews
+import com.lucaspujia.personalregistry.ui.theme.PersonalRegistryTheme
+import com.lucaspujia.personalregistry.ui.theme.extendedColors
+import com.lucaspujia.personalregistry.utils.mockMainActivityViewModel
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun ToastHandler(toasts: List<RegistryToast>) {
     if (toasts.isEmpty()) return
-
-    val maxVisible = 3
-    // Obtenemos los 3 más antiguos para procesarlos primero (FIFO)
-    val oldestToasts = remember(toasts) { toasts.takeLast(maxVisible) }
-    // Los mostramos invertidos para que el más reciente de ese grupo esté arriba
-    val visibleToasts = remember(oldestToasts) { oldestToasts.reversed() }
-    val enqueuedCount = toasts.size - oldestToasts.size
 
     Popup(
         alignment = Alignment.BottomCenter,
@@ -51,48 +50,47 @@ fun ToastHandler(toasts: List<RegistryToast>) {
             dismissOnClickOutside = false
         )
     ) {
-        Box(
-            modifier = Modifier
-                .navigationBarsPadding()
-                .padding(bottom = 16.dp),
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .wrapContentSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                reverseLayout = false,
-                userScrollEnabled = false
-            ) {
-                if (enqueuedCount > 0) {
-                    item(key = "hint") {
-                        ToastHint(
-                            count = enqueuedCount,
-                            modifier = Modifier.animateItem()
-                        )
-                    }
-                }
+        ToastListContent(toasts = toasts)
+    }
+}
 
-                items(visibleToasts, key = { it.id }) { toast ->
-                    // Un toast es "nuevo/encolado" si no era parte de los 3 que estarían visibles
-                    // si los mensajes se procesaran estrictamente en orden de llegada.
-                    // Usamos la posición en la lista original para determinarlo.
-                    val indexInOriginal = toasts.indexOf(toast)
-                    val wasEnqueued = indexInOriginal < toasts.size - maxVisible
+@Composable
+private fun ToastListContent(toasts: List<RegistryToast>) {
+    val maxVisible = 3
+    // Obtenemos los 3 más antiguos (al final de la lista [newest...oldest])
+    // takeLast(3) preserva el orden -> [T_newest_of_3, T_middle, T_oldest]
+    val visibleToasts = remember(toasts) { toasts.takeLast(maxVisible) }
+    val enqueuedCount = toasts.size - visibleToasts.size
 
-                    ToastItem(
-                        modifier = Modifier.animateItem(
-                            fadeInSpec = tween(300),
-                            fadeOutSpec = tween(300),
-                            placementSpec = tween(300)
-                        ),
-                        toast = toast,
-                        wasEnqueued = wasEnqueued
-                    )
-                }
+    LazyColumn(
+        modifier = Modifier
+            .navigationBarsPadding()
+            .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
+            .fillMaxWidth(),
+        contentPadding = PaddingValues(top = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        userScrollEnabled = false
+    ) {
+        if (enqueuedCount > 0) {
+            item(key = "hint") {
+                ToastHint(
+                    count = enqueuedCount,
+                    modifier = Modifier.animateItem()
+                )
             }
+        }
+
+        items(visibleToasts, key = { it.id }) { toast ->
+            ToastItem(
+                toast = toast,
+                shortDuration = toasts.size > maxVisible,
+                modifier = Modifier.animateItem(
+                    fadeInSpec = tween(300),
+                    fadeOutSpec = tween(300),
+                    placementSpec = tween(300)
+                )
+            )
         }
     }
 }
@@ -119,22 +117,26 @@ private fun ToastHint(
 
 @Composable
 private fun ToastItem(
-    modifier: Modifier = Modifier,
     toast: RegistryToast,
-    wasEnqueued: Boolean
+    shortDuration: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val actions = LocalMainActivityActions.current
     
-    val dismissState = rememberSwipeToDismissBoxState()
+    val dismissState = rememberSwipeToDismissBoxState(
+        positionalThreshold = { distance -> distance * 0.51f }
+    )
 
+    // Solo se descarta cuando se suelta y superó el umbral
     LaunchedEffect(dismissState.currentValue) {
         if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+            delay(150.milliseconds)
             actions.dismissToast(toast.id)
         }
     }
 
     LaunchedEffect(toast.id) {
-        val duration = if (wasEnqueued) 3000L else 4000L
+        val duration = if (shortDuration) 3000L else 4000L
         delay(duration.milliseconds)
         actions.dismissToast(toast.id)
     }
@@ -142,11 +144,11 @@ private fun ToastItem(
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {},
-        modifier = modifier
+        modifier = modifier.padding(vertical = 4.dp)
     ) {
         Surface(
-            color = toast.containerColor(MaterialTheme.colorScheme),
-            contentColor = toast.contentColor(MaterialTheme.colorScheme),
+            color = toast.containerColor(MaterialTheme.colorScheme, MaterialTheme.extendedColors),
+            contentColor = toast.contentColor(MaterialTheme.colorScheme, MaterialTheme.extendedColors),
             shape = RoundedCornerShape(16.dp),
             tonalElevation = 4.dp
         ) {
@@ -161,6 +163,21 @@ private fun ToastItem(
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+        }
+    }
+}
+
+@DialogPreviews
+@Composable
+fun ToastHandlerPreview() {
+    val toasts = listOf(
+        RegistryToast.Success(R.string.record_added_success),
+        RegistryToast.Error(R.string.record_added_success),
+        RegistryToast.Error(R.string.generic_error),
+    )
+    PersonalRegistryTheme(mainActivityViewModel = mockMainActivityViewModel()) {
+        Box(modifier = Modifier.background(color = MaterialTheme.colorScheme.background)) {
+            ToastListContent(toasts = toasts)
         }
     }
 }

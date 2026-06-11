@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
+import com.lucaspujia.personalregistry.ui.theme.ExtendedColors
 import com.lucaspujia.personalregistry.utils.lastMonthRange
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -40,16 +41,16 @@ sealed interface RegistryToast {
     val id: String
     val icon: ImageVector
     val textRes: Int
-    val containerColor: ColorScheme.() -> Color
-    val contentColor: ColorScheme.() -> Color
+    val containerColor: (ColorScheme, ExtendedColors) -> Color
+    val contentColor: (ColorScheme, ExtendedColors) -> Color
 
     data class Success(
         override val textRes: Int,
         override val id: String = UUID.randomUUID().toString()
     ) : RegistryToast {
         override val icon = Icons.Default.CheckCircle
-        override val containerColor: ColorScheme.() -> Color = { primaryContainer }
-        override val contentColor: ColorScheme.() -> Color = { onPrimaryContainer }
+        override val containerColor: (ColorScheme, ExtendedColors) -> Color = { _, extended -> extended.successContainer }
+        override val contentColor: (ColorScheme, ExtendedColors) -> Color = { _, extended -> extended.onSuccessContainer }
     }
 
     data class Error(
@@ -57,8 +58,8 @@ sealed interface RegistryToast {
         override val id: String = UUID.randomUUID().toString()
     ) : RegistryToast {
         override val icon = Icons.Default.Error
-        override val containerColor: ColorScheme.() -> Color = { errorContainer }
-        override val contentColor: ColorScheme.() -> Color = { onErrorContainer }
+        override val containerColor: (ColorScheme, ExtendedColors) -> Color = { scheme, _ -> scheme.errorContainer }
+        override val contentColor: (ColorScheme, ExtendedColors) -> Color = { scheme, _ -> scheme.onErrorContainer }
     }
 }
 

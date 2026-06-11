@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.mainActivity.bottomSheet.BottomSheetHandler
 import com.lucaspujia.personalregistry.mainActivity.bottomSheet.ToastHandler
 import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
@@ -62,9 +63,7 @@ class MainActivity : ComponentActivity() {
 fun PersonalRegistryApp(
     viewModel: MainActivityViewModel = hiltViewModel()
 ) {
-    // TODO: Toasts para errores y éxitos
     // TODO: Modal de confirmación genérico con un service, implementar para eliminar registro
-    // TODO: fórmula para 2 unidades
     // TODO: Revisar notificaciones, creo que no se están encolando más de una a la vez
     // TODO: Distintos textos para notificaciones
     // TODO: Extraer strings.xml en distintos archivos
@@ -141,7 +140,8 @@ fun PersonalRegistryAppPreview() {
         PersonalRegistryAppContent(
             records = records,
             settingsOpened = false,
-            registryEditorState = RegistryEditorState.Closed
+            registryEditorState = RegistryEditorState.Closed,
+            toasts = listOf(RegistryToast.Error(R.string.generic_error))
         )
     }
 }

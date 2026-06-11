@@ -56,29 +56,31 @@ private val DarkColorScheme = darkColorScheme(
 
 @Immutable
 data class ExtendedColors(
-    val trendIncrease: Color,
-    val trendDecrease: Color,
-    val trendNeutral: Color
+    val trendIncrease: Color = Color.Unspecified,
+    val trendDecrease: Color = Color.Unspecified,
+    val trendNeutral: Color = Color.Unspecified,
+    val onSuccessContainer: Color = Color.Unspecified,
+    val successContainer: Color = Color.Unspecified,
 )
 
 val lightExtendedColors = ExtendedColors(
     trendIncrease = TrendIncrease,
     trendDecrease = TrendDecrease,
-    trendNeutral = TrendNeutral
+    trendNeutral = TrendNeutral,
+    onSuccessContainer = PrimaryGreen,
+    successContainer = PrimaryGreenSurface
 )
 
 val darkExtendedColors = ExtendedColors(
     trendIncrease = TrendIncreaseDark,
     trendDecrease = TrendDecreaseDark,
-    trendNeutral = TrendNeutralDark
+    trendNeutral = TrendNeutralDark,
+    onSuccessContainer = PrimaryGreenDark,
+    successContainer = PrimaryGreenSurfaceDark
 )
 
 val LocalExtendedColors = staticCompositionLocalOf {
-    ExtendedColors(
-        trendIncrease = Color.Unspecified,
-        trendDecrease = Color.Unspecified,
-        trendNeutral = Color.Unspecified
-    )
+    ExtendedColors()
 }
 
 @Suppress("UnusedReceiverParameter")
