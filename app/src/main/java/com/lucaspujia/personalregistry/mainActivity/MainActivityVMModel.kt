@@ -92,6 +92,7 @@ interface MainActivityActions {
     fun deleteRegistry(registry: Registry)
     fun showToast(toast: RegistryToast)
     fun dismissToast(id: String)
+    fun testNotification()
 }
 
 data class ActiveFilters(

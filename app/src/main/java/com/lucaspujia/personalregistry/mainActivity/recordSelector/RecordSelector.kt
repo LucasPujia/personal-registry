@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material.icons.filled.Settings
@@ -245,7 +246,8 @@ fun FilterControls(
                 textRes = res,
                 id = "test_$testCount"
             ))
-        }
+        },
+        onTestNotification = { viewModel.testNotification() }
     )
 }
 
@@ -256,7 +258,8 @@ private fun FilterControlsContent(
     onViewTogglesOpened: () -> Unit,
     onFiltersOpened: () -> Unit,
     onSettingsOpened: () -> Unit,
-    onShowTestToast: () -> Unit
+    onShowTestToast: () -> Unit,
+    onTestNotification: () -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -306,6 +309,25 @@ private fun FilterControlsContent(
                     modifier = Modifier.size(18.dp)
                 )
             }
+
+            Spacer(Modifier.width(8.dp))
+
+            FilledIconButton(
+                onClick = onTestNotification,
+                shape = RoundedCornerShape(8.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.secondary
+                ),
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Test Notification",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
         }
 
         Spacer(Modifier.weight(1f))
@@ -405,6 +427,21 @@ fun TwoRecordSelectorsPreview() {
             registry = registry,
             latestRecord = null,
             isSelectableDate = { true },
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun FilterControlsPreview() {
+    PersonalRegistryTheme {
+        FilterControlsContent(
+            datePickerState = rememberDatePickerState(),
+            onViewTogglesOpened = {},
+            onFiltersOpened = {},
+            onSettingsOpened = {},
+            onShowTestToast = {},
+            onTestNotification = {}
         )
     }
 }

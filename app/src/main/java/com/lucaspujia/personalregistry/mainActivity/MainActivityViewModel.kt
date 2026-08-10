@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.lucaspujia.personalregistry.R
 import com.lucaspujia.personalregistry.database.registry.Registry
 import com.lucaspujia.personalregistry.mainActivity.recordItem.RecordItem
+import com.lucaspujia.personalregistry.notifications.NotificationHelper
 import com.lucaspujia.personalregistry.utils.forDatePicker
 import com.lucaspujia.personalregistry.utils.fromDatePicker
 import com.lucaspujia.personalregistry.utils.localDateToDateKey
@@ -30,6 +31,7 @@ val LocalMainActivityActions = staticCompositionLocalOf<MainActivityActions> {
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
     private val model: MainActivityModel,
+    private val notificationHelper: NotificationHelper
 ) : ViewModel(), MainActivityActions {
 
     override var activeRegistry by mutableStateOf<Registry?>(null); private set
@@ -247,6 +249,10 @@ class MainActivityViewModel @Inject constructor(
 
     override fun dismissToast(id: String) {
         toasts = toasts.filter { it.id != id }
+    }
+
+    override fun testNotification() {
+        notificationHelper.showReminderNotification(activeRegistry)
     }
 
 
