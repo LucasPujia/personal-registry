@@ -93,6 +93,8 @@ Texto: Ingresá el valor de hoy para seguir viendo tu progreso.
     <string name="notification_channel_description">Notificaciones para recordarte registrar tu progeso</string>
     <string name="notification_title">¡No olvides tu registro!</string>
     <string name="notification_text">Registra tu progreso hoy.</string>
+    <string name="notification_text_registry">Es hora de registrar tu progreso en %s</string>
+    <string name="notification_reply_title">Ingresar valor</string>
     <string name="notification_time">Hora de notificación</string>
     <string name="monday">Lunes</string>
     <string name="tuesday">Martes</string>

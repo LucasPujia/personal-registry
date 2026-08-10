@@ -98,6 +98,8 @@ Text: Add today's value to keep your records up to date.
     <string name="notification_channel_description">Notifications to remind you to record your progress</string>
     <string name="notification_title">Time to make a record!</string>
     <string name="notification_text">Keep track of your progress by making a record today.</string>
+    <string name="notification_text_registry">Time to log your progress for %s</string>
+    <string name="notification_reply_title">Value</string>
     <string name="notification_time">Notification time</string>
     <string name="monday">Monday</string>
     <string name="tuesday">Tuesday</string>
