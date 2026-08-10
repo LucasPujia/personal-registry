@@ -121,6 +121,7 @@ fun mockMainActivityViewModel(initialValues: List<Double> = listOf(25.0, 30.0, 3
         override fun deleteRegistry(registry: Registry) {}
         override fun showToast(toast: RegistryToast) {}
         override fun dismissToast(id: String) {}
+        override fun testNotification() {}
     }
 }
 val OUTER_PADDING = 16.dp
